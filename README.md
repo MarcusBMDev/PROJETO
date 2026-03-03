@@ -1,82 +1,217 @@
-# 🧠 NeuroSystem - Ecossistema Corporativo Integrado
+# 🧠 NeuroSystem
 
-Bem-vindo ao repositório do **NeuroSystem**, uma solução de intranet modular desenvolvida para otimizar e centralizar os processos internos da **NeuroCenter** (PsicoNeuro).
+## Enterprise Intranet Ecosystem
 
-Este projeto utiliza uma arquitetura de **microsserviços**, onde cada módulo roda de forma independente em sua própria porta, garantindo estabilidade e organização. Todos são conectados a um Portal Central e compartilham uma base de dados unificada.
+```{=html}
+<p align="center">
+```
+`<b>`{=html}Modular • Scalable • Real-Time • On-Premise`</b>`{=html}
+```{=html}
+</p>
+```
 
-![Status do Projeto](https://img.shields.io/badge/Status-Em_Desenvolvimento-yellow) ![NodeJS](https://img.shields.io/badge/Node.js-v18+-green)
+------------------------------------------------------------------------
 
----
+## 📌 Overview
 
-## 🚀 Módulos do Sistema
+**NeuroSystem** is an enterprise-grade intranet ecosystem developed to
+centralize communication, operations, and administrative workflows
+inside NeuroCenter.
 
-O sistema é dividido em aplicações independentes acessíveis através de um Dashboard único:
+The platform was designed to replace fragmented processes with a unified
+modular architecture that prioritizes:
 
-### 1. 💬 NeuroChat (Porta 3000)
-Sistema de comunicação interna em tempo real.
-- **Função:** Substituir mensageiros externos para comunicação segura entre colaboradores.
-- **Recursos:** Chat em grupo, mensagens privadas, histórico de conversas e lista de usuários online.
+-   Operational efficiency
+-   Real-time communication
+-   Service isolation
+-   Data sovereignty (100% on-premise)
+-   Scalable modular growth
 
-### 2. 🛠️ Suporte TI / HelpDesk (Porta 3001)
-Gerenciamento de chamados técnicos e manutenção.
-- **Função:** Organizar as solicitações de suporte dos setores para a equipe de TI.
-- **Recursos:** Abertura de chamados, classificação por urgência (Baixa/Média/Crítica), painel administrativo e notificações.
+------------------------------------------------------------------------
 
-### 3. 📅 NeuroAgenda (Porta 3002)
-Gestão inteligente de espaços compartilhados.
-- **Função:** Evitar conflitos de horário no uso de salas.
-- **Recursos:**
-  - Agendamento da **Sala de Reuniões** e **NeuroCopa**.
-  - Visualização de disponibilidade em grade.
-  - Bloqueio administrativo de horários.
+## 🏗️ Architecture
 
-### 4. 🚗 NeuroCar (Porta 3003)
-Controle de frota e gestão de veículos corporativos.
-- **Função:** Monitorar o uso do veículo oficial da empresa.
-- **Recursos:**
-  - Status visual (Livre/Ocupado) em tempo real.
-  - Check-out (Saída) e Check-in (Devolução) com registro de KM.
-  - Histórico de uso detalhado.
+NeuroSystem follows a **Local Microservices-Oriented Architecture**
+(modular distributed by port).
 
-### 5. 🌐 Portal Corporativo (Frontend Central)
-A interface de entrada (Dashboard).
-- **Função:** Centralizar o acesso a todos os módulos acima.
-- **Design:** Interface moderna com efeito "Glassmorphism", responsiva e com indicadores de status "Online".
+### Core Principles
 
----
+-   Each module runs independently on its own logical port
+-   Unified shared database
+-   Isolated deployment per service
+-   Failure containment between modules
+-   Centralized entry point via Portal Gateway
 
-## 🛠 Tecnologias Utilizadas
+### High-Level Flow
 
-* **Backend:** Node.js com Express.
-* **Banco de Dados:** MySQL (XAMPP/MariaDB).
-* **Frontend:** HTML5, CSS3 (CSS Grid/Flexbox), Javascript Vanilla.
-* **Arquitetura:** Microsserviços locais.
+    User
+      ↓
+    Portal Gateway (Dashboard)
+      ↓
+    ----------------------------------------
+    NeuroChat  |  NeuroAgenda  |  Support TI
+    :3000      |  :3002        |  :3001
+    ----------------------------------------
+              ↓
+         Shared MySQL Database
 
----
+------------------------------------------------------------------------
 
-## ⚙️ Como Rodar o Projeto
+## 🧩 Portal Gateway
 
-### Pré-requisitos
-* **Node.js** instalado.
-* **MySQL** rodando (XAMPP ou similar).
-* Banco de dados `neurochat_db` criado e configurado.
+The Portal acts as:
 
-### 1. Instalação
-Como o projeto é modular, é necessário instalar as dependências em cada pasta de serviço. Abra o terminal na raiz e execute:
+-   Single entry point
+-   Service availability monitor
+-   Unified navigation dashboard
+-   Glassmorphism-based UI interface
 
-```bash
-# Instalar NeuroChat
-cd NEUROCHAT
-npm install
+------------------------------------------------------------------------
 
-# Instalar Suporte
-cd ../"SUPORTE INTERNO"
-npm install
+## 🚀 Modules
 
-# Instalar Agenda
-cd ../NEUROAGENDA
-npm install
+### 📡 Communication & Core
 
-# Instalar NeuroCar
-cd ../NEUROCAR
-npm install
+#### 💬 NeuroChat (Port 3000)
+
+Real-time communication engine powered by WebSockets.
+
+-   Instant messaging
+-   Internal notifications
+-   Core database engine
+
+#### 🌐 Portal Central
+
+Service orchestration and navigation control.
+
+------------------------------------------------------------------------
+
+### 👥 Human Resources
+
+#### 👔 NeuroRH
+
+Employee portal including:
+
+-   Corporate announcements
+-   Vacation requests
+-   Document management
+-   Internal policies
+
+#### 📢 Ouvidoria
+
+Structured feedback channel integrated with internal routing.
+
+------------------------------------------------------------------------
+
+### ⚙️ Operations & Logistics
+
+#### 🚗 NeuroCar (Port 3003)
+
+Fleet management system:
+
+-   Vehicle check-in/out
+-   Mileage tracking
+-   Usage history
+
+#### 📅 NeuroAgenda (Port 3002)
+
+Asset and room reservation system with conflict prevention.
+
+#### 🛠️ Support TI (Port 3001)
+
+Internal HelpDesk system:
+
+-   Ticket classification
+-   SLA management
+-   Full ticket lifecycle history
+
+------------------------------------------------------------------------
+
+### 📊 Supplies & Marketing
+
+#### 🛒 NeuroCompras
+
+Procurement request and approval workflow.
+
+#### 🖨️ NeuroPrint
+
+Print demand management.
+
+#### 🎨 SolicitaMKT
+
+Marketing workflow request system.
+
+------------------------------------------------------------------------
+
+## 🛠️ Technology Stack
+
+  Layer       Technology            Role
+  ----------- --------------------- -----------------------------
+  Backend     Node.js / Laravel     APIs & Business Logic
+  Frontend    Vanilla JS / Blade    UI Rendering
+  Real-Time   Socket.io             Bidirectional Communication
+  Database    MySQL / MariaDB       Unified Persistence
+  Styling     CSS3 (Grid/Flexbox)   Responsive UI
+
+------------------------------------------------------------------------
+
+## 🔧 Environment Setup
+
+### Requirements
+
+-   Node.js v18+
+-   PHP 8.1+
+-   MySQL / MariaDB
+-   Apache or Nginx
+-   npm or yarn
+
+------------------------------------------------------------------------
+
+## 🗄️ Data Strategy
+
+All modules share a centralized database using logical schema separation
+to ensure:
+
+-   Referential integrity
+-   Identity consistency
+-   Reduced redundancy
+-   Simplified maintenance
+
+------------------------------------------------------------------------
+
+## 🎯 Architectural Decisions
+
+-   On-Premise deployment for data sovereignty
+-   Port-based isolation to prevent global downtime
+-   Shared database to simplify identity management
+-   WebSockets for real-time experience
+-   Modular scalability for future expansion
+
+------------------------------------------------------------------------
+
+## 📈 Future Improvements
+
+-   Docker containerization
+-   Centralized SSO authentication
+-   API Gateway formalization
+-   Structured logging & monitoring
+-   CI/CD pipeline integration
+
+------------------------------------------------------------------------
+
+## 👨‍💻 Author
+
+**Marcus Bandeira Morais**\
+IT Analyst \| Systems Developer\
+Specialized in Internal Systems Architecture & Process Automation
+
+------------------------------------------------------------------------
+
+```{=html}
+<p align="center">
+```
+`<i>`{=html}Enterprise-grade internal systems built with modular
+intelligence.`</i>`{=html}
+```{=html}
+</p>
+```
