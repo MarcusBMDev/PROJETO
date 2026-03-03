@@ -1,201 +1,146 @@
 # 🧠 NeuroSystem
 
-## Enterprise Intranet Ecosystem
-
 ```{=html}
 <p align="center">
 ```
-`<b>`{=html}Modular • Scalable • Real-Time • On-Premise`</b>`{=html}
+`<strong>`{=html}Enterprise Modular Intranet
+Ecosystem`</strong>`{=html}`<br>`{=html} Scalable • Real-Time •
+On-Premise • Service-Isolated Architecture
 ```{=html}
 </p>
 ```
 
 ------------------------------------------------------------------------
 
-## 📌 Overview
+## 🚀 Project Overview
 
-**NeuroSystem** is an enterprise-grade intranet ecosystem developed to
-centralize communication, operations, and administrative workflows
-inside NeuroCenter.
+**NeuroSystem** is an enterprise-grade modular intranet ecosystem
+designed to centralize communication, operations, HR workflows,
+logistics, and internal services within NeuroCenter.
 
-The platform was designed to replace fragmented processes with a unified
-modular architecture that prioritizes:
+The platform replaces fragmented tools with a unified, service-isolated
+architecture optimized for:
 
--   Operational efficiency
--   Real-time communication
--   Service isolation
--   Data sovereignty (100% on-premise)
--   Scalable modular growth
+-   Operational efficiency\
+-   Real-time collaboration\
+-   Fault isolation between modules\
+-   Data sovereignty (100% on-premise deployment)\
+-   Modular scalability
 
 ------------------------------------------------------------------------
 
-## 🏗️ Architecture
+## 🧠 Architecture Strategy
 
-NeuroSystem follows a **Local Microservices-Oriented Architecture**
-(modular distributed by port).
+NeuroSystem follows a **Local Microservices-Oriented Architecture**,
+where:
 
-### Core Principles
-
--   Each module runs independently on its own logical port
--   Unified shared database
--   Isolated deployment per service
--   Failure containment between modules
--   Centralized entry point via Portal Gateway
+-   Each module runs independently on its own port\
+-   Services share a centralized MySQL database\
+-   Failures in one module do not impact the entire system\
+-   Deployment can be performed per module
 
 ### High-Level Flow
 
     User
       ↓
-    Portal Gateway (Dashboard)
+    Portal Gateway (Unified Dashboard)
       ↓
-    ----------------------------------------
-    NeuroChat  |  NeuroAgenda  |  Support TI
-    :3000      |  :3002        |  :3001
-    ----------------------------------------
-              ↓
-         Shared MySQL Database
+    -------------------------------------------------
+    NeuroChat | NeuroAgenda | Support TI | NeuroCar
+    -------------------------------------------------
+                        ↓
+                Shared MySQL Database
 
 ------------------------------------------------------------------------
 
-## 🧩 Portal Gateway
+## 🧩 Core Modules
 
-The Portal acts as:
+### 📡 Communication Layer
 
--   Single entry point
--   Service availability monitor
--   Unified navigation dashboard
--   Glassmorphism-based UI interface
+-   **NeuroChat (Port 3000)** -- Real-time messaging powered by
+    WebSockets\
+-   **Portal Gateway** -- Centralized service navigation and status
+    monitoring
 
-------------------------------------------------------------------------
+### 👥 HR & Governance
 
-## 🚀 Modules
-
-### 📡 Communication & Core
-
-#### 💬 NeuroChat (Port 3000)
-
-Real-time communication engine powered by WebSockets.
-
--   Instant messaging
--   Internal notifications
--   Core database engine
-
-#### 🌐 Portal Central
-
-Service orchestration and navigation control.
-
-------------------------------------------------------------------------
-
-### 👥 Human Resources
-
-#### 👔 NeuroRH
-
-Employee portal including:
-
--   Corporate announcements
--   Vacation requests
--   Document management
--   Internal policies
-
-#### 📢 Ouvidoria
-
-Structured feedback channel integrated with internal routing.
-
-------------------------------------------------------------------------
+-   **NeuroRH** -- Employee portal and internal request cockpit\
+-   **Ouvidoria** -- Structured internal feedback routing
 
 ### ⚙️ Operations & Logistics
 
-#### 🚗 NeuroCar (Port 3003)
+-   **NeuroCar (Port 3003)** -- Fleet control and mileage tracking\
+-   **NeuroAgenda (Port 3002)** -- Asset & room reservation system\
+-   **Support TI (Port 3001)** -- Internal HelpDesk with SLA control
 
-Fleet management system:
+### 📊 Procurement & Marketing
 
--   Vehicle check-in/out
--   Mileage tracking
--   Usage history
-
-#### 📅 NeuroAgenda (Port 3002)
-
-Asset and room reservation system with conflict prevention.
-
-#### 🛠️ Support TI (Port 3001)
-
-Internal HelpDesk system:
-
--   Ticket classification
--   SLA management
--   Full ticket lifecycle history
+-   **NeuroCompras** -- Supply request and approval workflow\
+-   **NeuroPrint** -- Print demand management\
+-   **SolicitaMKT** -- Marketing workflow system
 
 ------------------------------------------------------------------------
 
-### 📊 Supplies & Marketing
+## 🛠 Technology Dashboard
 
-#### 🛒 NeuroCompras
+### Backend
 
-Procurement request and approval workflow.
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
 
-#### 🖨️ NeuroPrint
+### Frontend
 
-Print demand management.
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![Blade](https://img.shields.io/badge/Blade-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
 
-#### 🎨 SolicitaMKT
+### Real-Time Communication
 
-Marketing workflow request system.
+![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
 
-------------------------------------------------------------------------
+### Database
 
-## 🛠️ Technology Stack
-
-  Layer       Technology            Role
-  ----------- --------------------- -----------------------------
-  Backend     Node.js / Laravel     APIs & Business Logic
-  Frontend    Vanilla JS / Blade    UI Rendering
-  Real-Time   Socket.io             Bidirectional Communication
-  Database    MySQL / MariaDB       Unified Persistence
-  Styling     CSS3 (Grid/Flexbox)   Responsive UI
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=for-the-badge&logo=mariadb&logoColor=white)
 
 ------------------------------------------------------------------------
 
-## 🔧 Environment Setup
+## 🗄 Data Strategy
 
-### Requirements
+-   Shared relational database\
+-   Logical schema separation\
+-   Referential integrity enforcement\
+-   Centralized collaborator identity management
 
--   Node.js v18+
--   PHP 8.1+
--   MySQL / MariaDB
--   Apache or Nginx
+------------------------------------------------------------------------
+
+## 🎯 Key Architectural Decisions
+
+✔ On-Premise deployment for data sovereignty\
+✔ Port-based service isolation\
+✔ Centralized database for simplified identity control\
+✔ WebSockets for real-time interaction\
+✔ Modular scalability for future expansion
+
+------------------------------------------------------------------------
+
+## 🔧 Environment Requirements
+
+-   Node.js v18+\
+-   PHP 8.1+\
+-   MySQL / MariaDB\
+-   Apache or Nginx\
 -   npm or yarn
 
 ------------------------------------------------------------------------
 
-## 🗄️ Data Strategy
+## 📈 Roadmap
 
-All modules share a centralized database using logical schema separation
-to ensure:
-
--   Referential integrity
--   Identity consistency
--   Reduced redundancy
--   Simplified maintenance
-
-------------------------------------------------------------------------
-
-## 🎯 Architectural Decisions
-
--   On-Premise deployment for data sovereignty
--   Port-based isolation to prevent global downtime
--   Shared database to simplify identity management
--   WebSockets for real-time experience
--   Modular scalability for future expansion
-
-------------------------------------------------------------------------
-
-## 📈 Future Improvements
-
--   Docker containerization
--   Centralized SSO authentication
--   API Gateway formalization
--   Structured logging & monitoring
--   CI/CD pipeline integration
+-   Docker containerization\
+-   Centralized SSO authentication\
+-   API Gateway abstraction layer\
+-   Structured logging & monitoring\
+-   CI/CD integration
 
 ------------------------------------------------------------------------
 
@@ -203,15 +148,14 @@ to ensure:
 
 **Marcus Bandeira Morais**\
 IT Analyst \| Systems Developer\
-Specialized in Internal Systems Architecture & Process Automation
+Specialist in Internal Systems Architecture & Process Automation
 
 ------------------------------------------------------------------------
 
 ```{=html}
 <p align="center">
 ```
-`<i>`{=html}Enterprise-grade internal systems built with modular
-intelligence.`</i>`{=html}
+Enterprise-grade internal systems engineered with modular intelligence.
 ```{=html}
 </p>
 ```
