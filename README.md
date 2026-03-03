@@ -1,87 +1,95 @@
 # 🧠 NeuroSystem
 
-```{=html}
-<p align="center">
-```
-`<strong>`{=html}Enterprise Modular Intranet
-Ecosystem`</strong>`{=html}`<br>`{=html} Scalable • Real-Time •
-On-Premise • Service-Isolated Architecture
-```{=html}
-</p>
-```
+## Enterprise Modular Intranet Ecosystem
+
+### Ecossistema Modular Corporativo de Intranet
 
 ------------------------------------------------------------------------
 
-## 🚀 Project Overview
+## 📌 Visão Geral \| Overview
 
-**NeuroSystem** is an enterprise-grade modular intranet ecosystem
-designed to centralize communication, operations, HR workflows,
-logistics, and internal services within NeuroCenter.
+**PT-BR:**\
+O **NeuroSystem** é um ecossistema corporativo de intranet desenvolvido
+para centralizar comunicação, operações, RH, logística e serviços
+internos da NeuroCenter em uma arquitetura modular e escalável.
 
-The platform replaces fragmented tools with a unified, service-isolated
-architecture optimized for:
+A plataforma substitui processos fragmentados por um sistema unificado
+com isolamento de serviços e soberania de dados (100% on-premise).
 
--   Operational efficiency\
--   Real-time collaboration\
--   Fault isolation between modules\
--   Data sovereignty (100% on-premise deployment)\
--   Modular scalability
+**EN:**\
+**NeuroSystem** is an enterprise intranet ecosystem designed to
+centralize communication, operations, HR workflows, logistics, and
+internal services within a modular and scalable architecture.
+
+The platform replaces fragmented processes with a unified
+service-isolated system ensuring full on-premise data sovereignty.
 
 ------------------------------------------------------------------------
 
-## 🧠 Architecture Strategy
+## 🏗️ Arquitetura \| Architecture
 
-NeuroSystem follows a **Local Microservices-Oriented Architecture**,
-where:
+### Estratégia Arquitetural
 
--   Each module runs independently on its own port\
--   Services share a centralized MySQL database\
--   Failures in one module do not impact the entire system\
--   Deployment can be performed per module
+**PT-BR:**\
+O sistema segue um modelo de microsserviços locais distribuídos por
+porta lógica:
 
-### High-Level Flow
+-   Cada módulo roda de forma independente\
+-   Banco de dados MySQL compartilhado\
+-   Isolamento de falhas entre serviços\
+-   Deploy independente por módulo
 
-    User
-      ↓
-    Portal Gateway (Unified Dashboard)
-      ↓
+**EN:**\
+The system follows a local microservices-oriented approach distributed
+by logical ports:
+
+-   Each module runs independently\
+-   Shared MySQL database\
+-   Service-level fault isolation\
+-   Independent deployment per module
+
+### Fluxo Geral
+
+    Usuário | User
+          ↓
+    Portal Gateway (Dashboard Unificado)
+          ↓
     -------------------------------------------------
     NeuroChat | NeuroAgenda | Support TI | NeuroCar
     -------------------------------------------------
-                        ↓
-                Shared MySQL Database
+                          ↓
+                  Shared MySQL Database
 
 ------------------------------------------------------------------------
 
-## 🧩 Core Modules
+## 🚀 Módulos \| Modules
 
-### 📡 Communication Layer
+### 📡 Comunicação \| Communication
 
--   **NeuroChat (Port 3000)** -- Real-time messaging powered by
+-   **NeuroChat (Porta 3000)** -- Mensagens em tempo real com
     WebSockets\
--   **Portal Gateway** -- Centralized service navigation and status
-    monitoring
+-   **Portal Gateway** -- Navegação e monitoramento dos serviços
 
-### 👥 HR & Governance
+### 👥 RH & Governança \| HR & Governance
 
--   **NeuroRH** -- Employee portal and internal request cockpit\
--   **Ouvidoria** -- Structured internal feedback routing
+-   **NeuroRH** -- Portal do colaborador\
+-   **Ouvidoria** -- Canal estruturado de feedback
 
-### ⚙️ Operations & Logistics
+### ⚙️ Operações & Logística \| Operations & Logistics
 
--   **NeuroCar (Port 3003)** -- Fleet control and mileage tracking\
--   **NeuroAgenda (Port 3002)** -- Asset & room reservation system\
--   **Support TI (Port 3001)** -- Internal HelpDesk with SLA control
+-   **NeuroCar (Porta 3003)** -- Gestão de frota\
+-   **NeuroAgenda (Porta 3002)** -- Reservas com prevenção de conflito\
+-   **Support TI (Porta 3001)** -- HelpDesk com SLA
 
-### 📊 Procurement & Marketing
+### 📊 Suprimentos & Marketing \| Procurement & Marketing
 
--   **NeuroCompras** -- Supply request and approval workflow\
--   **NeuroPrint** -- Print demand management\
--   **SolicitaMKT** -- Marketing workflow system
+-   **NeuroCompras** -- Fluxo de requisições\
+-   **NeuroPrint** -- Gestão de impressão\
+-   **SolicitaMKT** -- Workflow de marketing
 
 ------------------------------------------------------------------------
 
-## 🛠 Technology Dashboard
+## 🛠 Dashboard Tecnológico \| Technology Dashboard
 
 ### Backend
 
@@ -94,7 +102,7 @@ where:
 ![Blade](https://img.shields.io/badge/Blade-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
 
-### Real-Time Communication
+### Real-Time
 
 ![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
 
@@ -105,57 +113,58 @@ where:
 
 ------------------------------------------------------------------------
 
-## 🗄 Data Strategy
+## 🗄 Estratégia de Dados \| Data Strategy
 
--   Shared relational database\
--   Logical schema separation\
--   Referential integrity enforcement\
--   Centralized collaborator identity management
+**PT-BR:**\
+- Banco relacional compartilhado\
+- Separação lógica por esquemas\
+- Integridade referencial\
+- Identidade centralizada de colaboradores
 
-------------------------------------------------------------------------
-
-## 🎯 Key Architectural Decisions
-
-✔ On-Premise deployment for data sovereignty\
-✔ Port-based service isolation\
-✔ Centralized database for simplified identity control\
-✔ WebSockets for real-time interaction\
-✔ Modular scalability for future expansion
+**EN:**\
+- Shared relational database\
+- Logical schema separation\
+- Referential integrity\
+- Centralized collaborator identity
 
 ------------------------------------------------------------------------
 
-## 🔧 Environment Requirements
+## 🎯 Decisões Arquiteturais \| Architectural Decisions
+
+✔ Deploy on-premise\
+✔ Isolamento por porta\
+✔ Banco compartilhado para identidade única\
+✔ WebSockets para experiência em tempo real\
+✔ Estrutura modular para expansão futura
+
+------------------------------------------------------------------------
+
+## 🔧 Requisitos de Ambiente \| Environment Requirements
 
 -   Node.js v18+\
 -   PHP 8.1+\
 -   MySQL / MariaDB\
--   Apache or Nginx\
--   npm or yarn
+-   Apache ou Nginx\
+-   npm ou yarn
 
 ------------------------------------------------------------------------
 
 ## 📈 Roadmap
 
--   Docker containerization\
--   Centralized SSO authentication\
--   API Gateway abstraction layer\
--   Structured logging & monitoring\
--   CI/CD integration
+-   Containerização com Docker\
+-   Autenticação SSO centralizada\
+-   API Gateway formal\
+-   Monitoramento estruturado\
+-   CI/CD pipeline
 
 ------------------------------------------------------------------------
 
-## 👨‍💻 Author
+## 👨‍💻 Autor \| Author
 
 **Marcus Bandeira Morais**\
-IT Analyst \| Systems Developer\
-Specialist in Internal Systems Architecture & Process Automation
+Analista de TI \| Desenvolvedor de Sistemas\
+IT Analyst \| Systems Developer
 
 ------------------------------------------------------------------------
 
-```{=html}
-<p align="center">
-```
-Enterprise-grade internal systems engineered with modular intelligence.
-```{=html}
-</p>
-```
+NeuroSystem • Modularidade • Performance • Escalabilidade
