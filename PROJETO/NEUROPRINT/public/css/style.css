@@ -1,0 +1,123 @@
+/* public/css/style.css */
+:root {
+    --primary: #0d6efd; /* Azul NeuroChat */
+    --secondary: #6c757d;
+    --bg-color: #eef2f6;
+    --card-bg: #ffffff;
+    --text-main: #333;
+    --danger: #dc3545;
+    --success: #198754;
+    --warning: #ffc107;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+body { 
+    background: url('../wallpaper.png') no-repeat center center fixed; 
+    background-size: cover;
+    min-height: 100vh; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    padding-top: 40px; 
+    color: var(--text-main); 
+    backdrop-filter: blur(2px);
+}
+
+/* Containers */
+.container { width: 100%; max-width: 600px; padding: 20px; } /* Login e Pedido */
+.container-wide { width: 95%; max-width: 1200px; padding: 20px; } /* Painel Admin */
+
+.card {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Tipografia e Cabeçalhos */
+h2 { color: var(--primary); margin-bottom: 0.5rem; text-align: center; font-size: 1.8rem; }
+.subtitle { text-align: center; color: #666; margin-bottom: 2rem; display: block; font-size: 1.1rem; }
+
+/* Formulários */
+.form-group { margin-bottom: 1.5rem; }
+label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #444; font-size: 1rem; }
+
+input, select, textarea {
+    width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: 0.3s; background-color: #fafafa;
+}
+
+input:focus, select:focus, textarea:focus { border-color: var(--primary); background-color: #fff; outline: none; }
+
+/* Botões */
+button {
+    width: 100%; padding: 15px; background-color: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(13, 110, 253, 0.2);
+}
+button:hover { background-color: #0b5ed7; transform: translateY(-2px); box-shadow: 0 8px 15px rgba(13, 110, 253, 0.3); }
+button:active { transform: translateY(0); }
+
+button.secondary { background-color: var(--secondary); margin-bottom: 20px; box-shadow: 0 4px 6px rgba(108, 117, 125, 0.2); }
+button.secondary:hover { background-color: #5c636a; box-shadow: 0 8px 15px rgba(108, 117, 125, 0.3); }
+
+/* Toggle Switch Style for Checkboxes */
+.toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    background: #f1f3f5;
+    padding: 10px 15px;
+    border-radius: 50px;
+    transition: 0.3s;
+    border: 2px solid transparent;
+}
+.toggle-container:hover { background: #e9ecef; }
+.toggle-container input { display: none; }
+.toggle-container .slider {
+    width: 40px;
+    height: 20px;
+    background-color: #ccc;
+    border-radius: 20px;
+    position: relative;
+    transition: .4s;
+}
+.toggle-container .slider:before {
+    content: "";
+    position: absolute;
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: .4s;
+}
+.toggle-container input:checked + .slider { background-color: var(--primary); }
+.toggle-container input:checked + .slider:before { transform: translateX(20px); }
+.toggle-container.urgent input:checked + .slider { background-color: var(--danger); }
+.toggle-container.duplex input:checked + .slider { background-color: var(--success); }
+
+/* --- TABELA DO ADMIN (Dashboard) --- */
+.dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.refresh-btn { width: auto; padding: 10px 20px; display: flex; align-items: center; gap: 8px; }
+
+table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; }
+th { background-color: #f8f9fa; text-align: left; padding: 16px; border-bottom: 2px solid #dee2e6; color: #555; font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; }
+td { padding: 16px; border-bottom: 1px solid #eee; vertical-align: middle; background: white; }
+
+/* Efeito Zebra e Hover na Tabela */
+tr:hover td { background-color: #f8faff; }
+tr:last-child td { border-bottom: none; }
+
+/* Badges de Status */
+.status-tag { padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; display: inline-block; }
+.status-pendente { background: #fff8e1; color: #b7791f; border: 1px solid #fce8b2; }
+.status-em_andamento { background: #e0f2f1; color: #00695c; border: 1px solid #b2dfdb; }
+.status-impresso { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+
+.btn-action { width: auto; padding: 8px 16px; font-size: 0.9rem; margin-right: 5px; }
+.urgent-row td { background-color: #fff5f5; border-bottom: 1px solid #fed7d7; }
+.urgent-badge { color: var(--danger); font-weight: bold; display: flex; align-items: center; gap: 5px; }
