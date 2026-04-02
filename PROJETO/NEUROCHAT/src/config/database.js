@@ -10,7 +10,8 @@ const pool = mysql.createPool({
     database: process.env.DB_NAME || 'neurochat',
     waitForConnections: true,
     connectionLimit: 10, // Aguenta até 10 conexões simultâneas
-    queueLimit: 0
+    queueLimit: 0,
+    charset: 'utf8mb4'
 });
 
 // Função para testar se o banco ligou (usaremos no server.js)

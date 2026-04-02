@@ -179,8 +179,8 @@ class ChatService {
         const msg = await messageRepository.findByIdWithDetails(messageId);
         if (!msg) throw new Error("Mensagem não encontrada.");
 
-        // Atualiza no Banco
-        await messageRepository.updateText(messageId, "🚫 Mensagem apagada");
+        // Atualiza no Banco (Limpa texto e anexo)
+        await messageRepository.softDelete(messageId);
 
         // Avisa o Socket
         const io = socketStore.getIO();

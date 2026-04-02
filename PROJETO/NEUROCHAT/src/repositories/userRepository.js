@@ -5,7 +5,7 @@ class UserRepository {
     // Busca usuário pelo nome (usado no Login)
     async findByUsername(username) {
         const [rows] = await pool.execute(
-            "SELECT * FROM users WHERE username = ?", 
+            "SELECT * FROM users WHERE username = ? AND is_active = 1", 
             [username]
         );
         return rows[0];
@@ -42,7 +42,7 @@ class UserRepository {
             SELECT u.id, u.username, u.department, u.photo, u.is_super_admin,
             (SELECT timestamp FROM messages WHERE (user_id = u.id AND target_id = ? AND target_type = 'private') OR (user_id = ? AND target_id = u.id AND target_type = 'private') ORDER BY timestamp DESC LIMIT 1) as last_interaction,
             (SELECT COUNT(*) FROM messages WHERE user_id = u.id AND target_id = ? AND target_type = 'private' AND is_read = 0) as unread
-            FROM users u WHERE u.id != ?
+            FROM users u WHERE u.id != ? AND u.is_active = 1
         `, [userId, userId, userId, userId]);
         return rows;
     }
@@ -69,13 +69,11 @@ class UserRepository {
         return this.findById(id);
     }
 
-    // Deleta usuário e seus rastros (Transaction seria ideal, mas vamos manter simples e robusto)
+    // Deleta usuário (Soft Delete: apenas inativa para manter histórico de mensagens)
     async deleteComplete(id) {
         await pool.execute("DELETE FROM group_members WHERE user_id = ?", [id]);
-        await pool.execute("DELETE FROM message_reactions WHERE user_id = ?", [id]);
         await pool.execute("DELETE FROM user_restrictions WHERE user_id = ?", [id]);
-        await pool.execute("DELETE FROM messages WHERE user_id = ?", [id]);
-        await pool.execute("DELETE FROM users WHERE id = ?", [id]);
+        await pool.execute("UPDATE users SET is_active = 0 WHERE id = ?", [id]);
         return true;
     }
 

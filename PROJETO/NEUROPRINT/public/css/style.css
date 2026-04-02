@@ -8,6 +8,10 @@
     --danger: #dc3545;
     --success: #198754;
     --warning: #ffc107;
+    
+    /* Variáveis adicionadas do Admin */
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.4);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -22,6 +26,12 @@ body {
     padding-top: 40px; 
     color: var(--text-main); 
     backdrop-filter: blur(2px);
+}
+
+/* Para o body específico do admin (sobrepõe o geral se necessário) */
+body.admin-body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding-top: 20px;
 }
 
 /* Containers */
@@ -104,7 +114,10 @@ button.secondary:hover { background-color: #5c636a; box-shadow: 0 8px 15px rgba(
 .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .refresh-btn { width: auto; padding: 10px 20px; display: flex; align-items: center; gap: 8px; }
 
-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; }
+table { 
+    width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; 
+    font-size: 0.85rem; table-layout: fixed; word-wrap: break-word; /* Ajustes do Admin */
+}
 th { background-color: #f8f9fa; text-align: left; padding: 16px; border-bottom: 2px solid #dee2e6; color: #555; font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; }
 td { padding: 16px; border-bottom: 1px solid #eee; vertical-align: middle; background: white; }
 
@@ -117,7 +130,84 @@ tr:last-child td { border-bottom: none; }
 .status-pendente { background: #fff8e1; color: #b7791f; border: 1px solid #fce8b2; }
 .status-em_andamento { background: #e0f2f1; color: #00695c; border: 1px solid #b2dfdb; }
 .status-impresso { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+.status-cancelado { background: #6c757d; color: white; border: 1px solid #5a6268; } /* Adicionado */
 
 .btn-action { width: auto; padding: 8px 16px; font-size: 0.9rem; margin-right: 5px; }
 .urgent-row td { background-color: #fff5f5; border-bottom: 1px solid #fed7d7; }
 .urgent-badge { color: var(--danger); font-weight: bold; display: flex; align-items: center; gap: 5px; }
+
+
+/* =========================================
+   ESTILOS EXCLUSIVOS DO PAINEL ADMIN 
+   ========================================= */
+
+.navbar {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    margin-bottom: 20px;
+    padding: 15px 30px;
+    border-radius: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    width: 95%;
+    max-width: 1200px;
+}
+
+.filter-section {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-end;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+
+.filter-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 150px; }
+.filter-group label { font-size: 0.85rem; color: #777; }
+.filter-group input, .filter-group select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
+
+.btn-filter, .btn-excel {
+    color: white; padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; width: auto;
+}
+.btn-filter { background: var(--primary); }
+.btn-excel { background: var(--success); }
+
+.stat-card { border-left: 5px solid var(--primary); }
+
+.quota-container {
+    background: #f8f9fa; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #eee;
+}
+
+.quota-bar-wrapper {
+    background: #e9ecef; border-radius: 8px; height: 20px; overflow: hidden; position: relative;
+}
+
+.quota-bar {
+    height: 100%; width: 0%; background: linear-gradient(90deg, #198754, #ffc107); transition: width 0.5s ease-in-out;
+}
+
+.table-responsive {
+    overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+
+.info-sub { font-size: 0.75rem; color: #888; }
+.obs-text { font-style: italic; color: #666; background: #fffcf0; padding: 4px 8px; border-radius: 6px; border: 1px solid #ffeeba; }
+.deadline-badge { color: #dc3545; font-weight: 600; font-size: 0.75rem; }
+
+/* Tabs Styling */
+.tab-btn {
+    background: none; border: none; padding: 10px 20px; font-size: 0.95rem; font-weight: 600; color: #777; cursor: pointer; transition: all 0.3s; border-bottom: 3px solid transparent; width: auto;
+}
+.tab-btn:hover { color: var(--primary); }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+.btn-cancel {
+    background: #6c757d; color: white; padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.75rem; margin-top: 5px; display: inline-flex; align-items: center; gap: 4px; width: auto;
+}
+.btn-cancel:hover { background: #5a6268; }

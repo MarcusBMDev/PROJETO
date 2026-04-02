@@ -27,6 +27,27 @@
 
             <form id="printForm">
                 <input type="hidden" name="user_id" id="userId">
+                
+                <div class="form-group" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6; margin-bottom: 20px;">
+                    <label style="font-weight: bold; color: #333;">📍 Setor / Especialidade (Obrigatório):</label>
+                    <select name="sector" id="sectorSelect" required style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ccc; font-size: 1rem;">
+                        <option value="" disabled selected>Selecione o setor...</option>
+                        <option value="Neuropsicopedagogia">Neuropsicopedagogia (Cota: 300)</option>
+                        <option value="Equipe ABA">Equipe ABA (Cota: 200)</option>
+                        <option value="Psicologia">Psicologia (Cota: 50)</option>
+                        <option value="Fonoterapia">Fonoterapia (Cota: 150)</option>
+                        <option value="Terapia Ocupacional">Terapia Ocupacional (Cota: 150)</option>
+                        <option value="Musicoterapia">Musicoterapia (Cota: 50)</option>
+                        <option value="Psicomotricidade">Psicomotricidade (Cota: 50)</option>
+                        <option value="Coordenação">Coordenação (Cota: 50)</option>
+                        <option value="Outros">Outros (Sem Cota)</option>
+                    </select>
+
+                    <div id="quotaInfo" style="margin-top: 10px; padding: 10px; border-radius: 5px; display: none; font-size: 0.9rem;">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+
                 <div class="form-group">
                      <label>Arquivos (PDF):</label>
     
@@ -59,14 +80,20 @@
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-                    <label class="toggle-container duplex" style="flex: 1;">
+                <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <label class="toggle-container duplex" style="flex: 1; min-width: 140px;">
                         <input type="checkbox" name="is_duplex">
                         <span class="slider"></span>
                         <span style="font-weight: bold; font-size: 0.9rem;">📄 Frente e Verso</span>
                     </label>
 
-                    <label class="toggle-container urgent" style="flex: 1;">
+                    <label class="toggle-container" style="flex: 1; min-width: 140px; background: #e7f3ff; border: 1px solid #b3d7ff;">
+                        <input type="checkbox" name="two_per_page">
+                        <span class="slider"></span>
+                        <span style="font-weight: bold; font-size: 0.9rem; color: #0056b3;">🌓 2 Pág/Folha</span>
+                    </label>
+
+                    <label class="toggle-container urgent" style="flex: 1; min-width: 140px;">
                         <input type="checkbox" name="is_urgent">
                         <span class="slider"></span>
                         <span style="font-weight: bold; font-size: 0.9rem; color: #dc3545;">🔥 Urgente</span>
@@ -152,6 +179,12 @@
                         cor = '#198754'; // Verde
                         bg = '#e8f5e9';
                     }
+                    if(req.status === 'cancelado') { 
+                        icon = '❌'; 
+                        label = 'Cancelado'; 
+                        cor = '#6c757d'; // Cinza
+                        bg = '#f8f9fa';
+                    }
 
                     // Formata lista de arquivos
                     const arquivos = req.file_name ? req.file_name.split(';').join(', ') : 'Arquivo';
@@ -217,6 +250,51 @@
         
         // ATUALIZAÇÃO AUTOMÁTICA
         setInterval(loadMyRequests, 5000); 
+
+        // --- LÓGICA DE COTA EM TEMPO REAL ---
+        document.getElementById('sectorSelect').addEventListener('change', async (e) => {
+            const sector = e.target.value;
+            const infoDiv = document.getElementById('quotaInfo');
+            
+            if (!sector || sector === 'Outros') {
+                infoDiv.style.display = 'none';
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/print/quota/${sector}`);
+                const data = await res.json();
+                
+                infoDiv.style.display = 'block';
+                
+                if (data.limit > 0) {
+                    const percent = Math.min(100, (data.used / data.limit) * 100);
+                    let color = '#28a745'; // Verde
+                    if (percent > 70) color = '#ffc107'; // Amarelo
+                    if (percent >= 100) color = '#dc3545'; // Vermelho
+
+                    infoDiv.style.backgroundColor = color === '#dc3545' ? '#f8d7da' : '#e7f3ff';
+                    infoDiv.style.border = `1px solid ${color}`;
+                    
+                    infoDiv.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                            <span><b>Consumo do Setor:</b> ${data.used} / ${data.limit} págs</span>
+                            <span>${percent.toFixed(0)}%</span>
+                        </div>
+                        <div style="background:#eee; height:8px; border-radius:4px; overflow:hidden;">
+                            <div style="background:${color}; height:100%; width:${percent}%;"></div>
+                        </div>
+                        ${percent >= 100 && !userData.isAdmin ? `<p style="color:#d9534f; margin-top:5px; font-weight:bold;">⚠️ Limite atingido! Apenas administradores poderão imprimir.</p>` : ''}
+                    `;
+                } else {
+                    infoDiv.style.backgroundColor = '#e2e3e5';
+                    infoDiv.style.border = '1px solid #6c757d';
+                    infoDiv.innerHTML = `<b>Setor:</b> ${sector} | <b>Consumo:</b> ${data.used} págs (Sem limite)`;
+                }
+            } catch (err) {
+                console.error("Erro ao carregar cota:", err);
+            }
+        });
 
 // --- FUNÇÃO PARA ADICIONAR CAMPOS DE ARQUIVO (Versão Corrigida) ---
 function addFileInput() {

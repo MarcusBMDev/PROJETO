@@ -16,21 +16,23 @@ class MessageRepository {
             targetType: row.target_type,     
             isForwarded: row.is_forwarded,   // <--- NOVO
             text: row.text,
+            senderName: row.sender_name, // <--- ADICIONADO
             fileName: row.file_name,
             msgType: row.msg_type,
             time: formatSmartDate(row.timestamp),
             raw_time: row.timestamp,
-            is_read: row.is_read
+            is_read: row.is_read,
+            is_deleted: row.text === '🚫 Mensagem apagada'
         };
     }
 
     async create(data) {
-        const { userId, text, msg, targetId, targetType, msgType, fileName, replyToId, isForwarded } = data; // <--- isForwarded
-        const finalText = text || msg; 
+        const { userId, text, msg, senderName, targetId, targetType, msgType, fileName, replyToId, isForwarded } = data; // <--- senderName
+        const finalText = msg || text; 
 
         const [result] = await pool.execute(
-            `INSERT INTO messages (user_id, text, target_id, target_type, is_read, msg_type, file_name, reply_to_id, is_forwarded) VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?)`,
-            [userId, finalText, targetId, targetType, msgType || 'text', fileName || null, replyToId || null, isForwarded ? 1 : 0]
+            `INSERT INTO messages (user_id, text, sender_name, target_id, target_type, is_read, msg_type, file_name, reply_to_id, is_forwarded) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
+            [userId, finalText || '', senderName || null, targetId, targetType, msgType || 'text', fileName || null, replyToId || null, isForwarded ? 1 : 0]
         );
         
         return this.findByIdWithDetails(result.insertId);
@@ -39,7 +41,7 @@ class MessageRepository {
     async findByIdWithDetails(id) {
         const [rows] = await pool.execute(`
             SELECT m.*, u.username, u.department, u.photo, 
-            r.text as reply_text, r.msg_type as reply_type, ru.username as reply_user 
+            r.text as reply_text, r.sender_name as reply_sender_name, r.msg_type as reply_type, ru.username as reply_user 
             FROM messages m 
             JOIN users u ON m.user_id = u.id 
             LEFT JOIN messages r ON m.reply_to_id = r.id 
@@ -53,7 +55,7 @@ class MessageRepository {
     async getHistory(userId, targetId, type, offset = 0, limit = 30) {
         let sql = `
             SELECT m.*, u.username, u.department, u.photo, m.is_read, 
-            r.text as reply_text, r.msg_type as reply_type, ru.username as reply_user 
+            r.text as reply_text, r.sender_name as reply_sender_name, r.msg_type as reply_type, ru.username as reply_user 
             FROM messages m 
             JOIN users u ON m.user_id = u.id 
             LEFT JOIN messages r ON m.reply_to_id = r.id 
@@ -159,6 +161,14 @@ class MessageRepository {
         );
     }
 
+    // Soft Delete: Limpa texto e anexo
+    async softDelete(messageId) {
+        await pool.execute(
+            "UPDATE messages SET text = '🚫 Mensagem apagada', file_name = NULL, is_edited = 0 WHERE id = ?",
+            [messageId]
+        );
+    }
+
     // Busca apenas data original para validar tempo de edição
     async getTimestamp(messageId) {
         const [rows] = await pool.execute("SELECT timestamp FROM messages WHERE id = ?", [messageId]);
@@ -205,7 +215,7 @@ class MessageRepository {
         let sql = `
             SELECT id, file_name, text, msg_type, timestamp, user_id 
             FROM messages 
-            WHERE file_name IS NOT NULL AND file_name != ''`;
+            WHERE file_name IS NOT NULL AND file_name != '' AND text != '🚫 Mensagem apagada'`;
         
         let params = [];
         if (type === 'private') {

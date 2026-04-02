@@ -46,6 +46,26 @@ app.post('/api/auth/register', (req, res) => {
     authController.register(req, res);
 });
 
+// PROXY: AGENDAMENTOS DE SALAS DO NEUROAGENDA (somente hoje)
+app.get('/api/agenda/bookings', async (req, res) => {
+    try {
+        const response = await fetch('http://localhost:3002/api/bookings');
+        const data = await response.json();
+
+        // Filtra somente os do dia atual (timezone Brasil -03:00)
+        const now = new Date();
+        const brazilOffset = -3 * 60; // minutos
+        const localNow = new Date(now.getTime() + (brazilOffset - now.getTimezoneOffset()) * 60000);
+        const todayStr = localNow.toISOString().slice(0, 10); // "YYYY-MM-DD"
+
+        const todayBookings = data.filter(b => b.date_str === todayStr);
+        res.json(todayBookings);
+    } catch (err) {
+        // Falha silenciosa: retorna array vazio se NEUROAGENDA estiver offline
+        res.json([]);
+    }
+});
+
 // NOVA ROTA: LISTAR DEPARTAMENTOS
 app.get('/api/departments', (req, res) => {
     try {

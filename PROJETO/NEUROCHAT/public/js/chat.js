@@ -74,6 +74,22 @@ window.updateMyInfo = () => {
     document.getElementById('user-name').textContent = currentUser.username;
     document.getElementById('user-dept').textContent = currentUser.department;
     document.getElementById('my-avatar-img').src = getAvatarUrl(currentUser.photo);
+
+    // Controle de Visibilidade Exclusivo (V117): Apenas RH (ID 79) e AGENDAMENTO (ID 112)
+    const allowedIds = [79, 112];
+    const isSharedAccount = allowedIds.includes(parseInt(currentUser.id));
+    const idContainer = document.querySelector('.identifier-container');
+    
+    if (idContainer) {
+        idContainer.style.display = isSharedAccount ? 'flex' : 'none';
+    }
+
+    // Carrega identificador do localStorage (V117)
+    const savedId = localStorage.getItem('neurochat_identifier');
+    if (savedId) {
+        const idInput = document.getElementById('identifier-input');
+        if (idInput) idInput.value = savedId;
+    }
 };
 
 window.updateDateSeparators = () => {
@@ -410,23 +426,30 @@ window.addMessageToScreen = (data, prepend=false) => {
     if(data.raw_time) div.setAttribute('data-date', data.raw_time);
 
     let editedHtml = data.is_edited ? `<small class="edited-label" style="font-size:0.7rem; color:#999; margin-left:5px;">Editada ${new Date(data.raw_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</small>` : '';
-    let content = `<span id="msg-text-${data.id}" class="msg-text">${formatMessage(data.text)}</span>${editedHtml}`;
+    let replyHtml = '';
     
     if(data.reply_text) {
-        content = `<div class="reply-container" onclick="window.scrollToMsg(${data.reply_to_id})"><div class="reply-author">${data.reply_user}</div><div class="reply-preview">${formatMessage(data.reply_text).substring(0,60)}...</div></div>` + content;
+        replyHtml = `<div class="reply-container" onclick="window.scrollToMsg(${data.reply_to_id})"><div class="reply-author">${data.reply_user}</div><div class="reply-preview">${formatMessage(data.reply_text).substring(0,60)}...</div></div>`;
     }
 
+    let mediaHtml = '';
     if(data.fileName) {
         const ext = data.fileName.split('.').pop().toLowerCase();
         const isImg = ['jpg','jpeg','png','gif','webp'].includes(ext);
         const url = `/uploads/${data.fileName}`;
         if(isImg) {
-            content = `<div class="image-wrapper"><img src="${url}" class="chat-image-preview" onclick="event.stopPropagation(); window.openImageZoom('${url}')"><a href="${url}" download="${data.fileName}" class="download-btn-overlay">⬇️ Baixar</a></div>`;
-            if(data.text && data.text!==data.fileName) content += `<div class="image-caption"><span id="msg-text-${data.id}">${formatMessage(data.text)}</span>${editedHtml}</div>`;
+            mediaHtml = `<div class="image-wrapper"><img src="${url}" class="chat-image-preview" onclick="event.stopPropagation(); window.openImageZoom('${url}')"><a href="${url}" download="${data.fileName}" class="download-btn-overlay">⬇️ Baixar</a></div>`;
         } else {
-            content = `<a href="${url}" target="_blank" class="chat-file-link">📎 ${data.fileName}</a>`;
+            mediaHtml = `<a href="${url}" target="_blank" class="chat-file-link">📎 ${data.fileName}</a>`;
         }
     }
+
+    let textHtml = `<span id="msg-text-${data.id}" class="msg-text">${formatMessage(data.text)}</span>${editedHtml}`;
+    if(data.fileName && data.text && data.text!==data.fileName) {
+        textHtml = `<div class="image-caption">${textHtml}</div>`;
+    }
+
+    let content = replyHtml + mediaHtml + textHtml;
     if(data.is_deleted) content = `<span class="deleted">🚫 Apagada</span>`;
     
     let reactionsHtml = `<div class="reactions-bar" id="reacts-${data.id}">`;
@@ -486,9 +509,11 @@ window.addMessageToScreen = (data, prepend=false) => {
     }
 
     if(isMine) {
-        div.innerHTML = `${menuBtn}<div class="message-bubble" id="msg-bubble-${data.id}"><div class="msg-header"><b>Você</b> <small>${data.time}</small></div>${content}${reactionsHtml}<div style="text-align:right; margin-top:-5px;">${statusHtml}</div></div>${menuHtml}`;
+        const nameDisplay = data.senderName ? `Você (${data.senderName})` : 'Você';
+        div.innerHTML = `${menuBtn}<div class="message-bubble" id="msg-bubble-${data.id}"><div class="msg-header"><b>${nameDisplay}</b> <small>${data.time}</small></div>${content}${reactionsHtml}<div style="text-align:right; margin-top:-5px;">${statusHtml}</div></div>${menuHtml}`;
     } else {
-        div.innerHTML = `${avatarHtml}<div class="message-bubble" id="msg-bubble-${data.id}"><div class="msg-header"><b>${data.user||data.username}</b> <small>${data.time}</small></div>${content}${reactionsHtml}</div>${menuBtn}${menuHtml}`;
+        const nameDisplay = data.senderName ? `${data.user||data.username} (${data.senderName})` : (data.user||data.username);
+        div.innerHTML = `${avatarHtml}<div class="message-bubble" id="msg-bubble-${data.id}"><div class="msg-header"><b>${nameDisplay}</b> <small>${data.time}</small></div>${content}${reactionsHtml}</div>${menuBtn}${menuHtml}`;
     }
         
     const container = document.getElementById('messages'); 
@@ -514,10 +539,18 @@ window.toggleMsgMenu = (id, btnElement) => {
 
 window.sendMessage = () => {
     const input = document.getElementById('input');
+    const idInput = document.getElementById('identifier-input');
+    const senderName = idInput ? idInput.value.trim() : '';
+
+    if(senderName) {
+        localStorage.setItem('neurochat_identifier', senderName);
+    }
+
     if(input.value.trim() && currentChatId) {
         socket.emit('chat message', { 
             userId: currentUser.id, 
             msg: input.value, 
+            senderName: senderName || null, // <--- ADICIONADO (V117)
             targetId: currentChatId, 
             targetType: currentChatType, 
             replyToId: replyingTo ? replyingTo.id : null 
@@ -757,7 +790,7 @@ socket.on('refresh group members', () => {
     });
 
 // OUTROS
-window.uploadFile=async function(f=null){if(isUploading)return;let file=f instanceof File?f:document.getElementById('file-input').files[0];if(!file||!currentChatId)return;const caption=document.getElementById('input').value.trim();isUploading=true;document.body.style.cursor='wait';try{const fd=new FormData();fd.append('file',file);const r=await fetch('/upload',{method:'POST',body:fd});const d=await r.json();if(d.success){socket.emit('chat message',{userId:currentUser.id,msg:caption.length>0?caption:d.originalName,targetId:currentChatId,targetType:currentChatType,msgType:'file',fileName:d.filename});document.getElementById('input').value=''}}catch(e){alert("Erro upload")}finally{document.body.style.cursor='default';document.getElementById('file-input').value='';isUploading=false}};
+window.uploadFile=async function(f=null){if(isUploading)return;let file=f instanceof File?f:document.getElementById('file-input').files[0];if(!file||!currentChatId)return;const caption=document.getElementById('input').value.trim();const idInput=document.getElementById('identifier-input');const senderName=idInput?idInput.value.trim():'';if(senderName)localStorage.setItem('neurochat_identifier',senderName);isUploading=true;document.body.style.cursor='wait';try{const fd=new FormData();fd.append('file',file);const r=await fetch('/upload',{method:'POST',body:fd});const d=await r.json();if(d.success){socket.emit('chat message',{userId:currentUser.id,msg:caption.length>0?caption:d.originalName,senderName:senderName||null,targetId:currentChatId,targetType:currentChatType,msgType:'file',fileName:d.filename,replyToId:replyingTo?replyingTo.id:null});document.getElementById('input').value='';window.cancelReply()}}catch(e){alert("Erro upload")}finally{document.body.style.cursor='default';document.getElementById('file-input').value='';isUploading=false}};
 window.openAdminControl=async function(tid){
     const m=document.getElementById('admin-control-modal');
     if(!m)return;

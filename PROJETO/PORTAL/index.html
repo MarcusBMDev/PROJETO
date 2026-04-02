@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -212,7 +212,7 @@
             <div class="icon-box" style="background: linear-gradient(135deg, #d35400, #e67e22);">
                 <div class="icon">🛠️</div>
             </div>
-            <h2>Suporte TI</h2>
+            <h2>NeuroHelp</h2>
             <p>Abertura de chamados e assistência técnica.</p>
         </a>
 
@@ -239,7 +239,7 @@
             <div class="icon-box" style="background: linear-gradient(135deg, #d81b60, #ec407a);">
                 <div class="icon">🎨</div>
             </div>
-            <h2>Marketing</h2>
+            <h2>NeuroMKT</h2>
             <p>Solicitação de artes, vídeos e comunicados.</p>
         </a>
 
@@ -266,18 +266,28 @@
             <div class="icon-box" style="background: linear-gradient(135deg, #0d47a1, #00d2ff);">
                 <div class="icon">🧠</div>
             </div>
-            <h2>NeuroRH</h2>
-            <p>Portal do Colaborador e Benefícios.</p>
+            <h2>NeuroGente</h2>
+            <p>Portal do Colaborador e Gestão de Benefícios.</p>
         </a>
 
-        <a class="card" style="opacity: 0.5; filter: grayscale(100%); cursor: not-allowed; pointer-events: none;">
-            <span class="badge badge-new" style="background-color: #95a5a6;">Em Breve</span>
-            <div class="icon-box" style="background: linear-gradient(135deg, #7f8c8d, #95a5a6);">
+        <a href="#" id="link-gestao" class="card">
+            <span class="badge badge-new">Online!</span>
+            <div class="icon-box" style="background: linear-gradient(135deg, #2c3e50, #34495e);">
+                <div class="icon">⚙️</div>
+            </div>
+            <h2>NeuroGestão</h2>
+            <p>Gestão de Agendamentos e Faturamento.</p>
+        </a>
+
+        <a href="#" id="link-escuta" class="card">
+            <span class="badge badge-new">Online!</span>
+            <div class="icon-box" style="background: linear-gradient(135deg, #FF5722, #FF9800);">
                 <div class="icon">📢</div>
             </div>
-            <h2 style="color: #555;">Ouvidoria Geral</h2>
-            <p>Canal de recebimento de reclamações, sugestões e elogios.</p>
+            <h2>NeuroEscuta</h2>
+            <p>Canal de recebimento de reclamações e sugestões.</p>
         </a>
+
 
     </div>
 
@@ -298,13 +308,14 @@
         
         document.getElementById('link-chat').href = `${protocol}//${host}:3000`;      // NeuroChat
         document.getElementById('link-suporte').href = `${protocol}//${host}:3001`;   // Suporte 
-        document.getElementById('link-agenda').href = `${protocol}//${host}:3002`;    // Agenda (
-        document.getElementById('link-carro').href = `${protocol}//${host}:3003`;     // Carro 
-        document.getElementById('link-marketing').href = `${protocol}//${host}:3005`; // Marketing (SOLICITAMKT)
+        document.getElementById('link-agenda').href = `${protocol}//${host}:3002`;    // NeuroAgenda
+        document.getElementById('link-carro').href = `${protocol}//${host}:3003`;     // NeuroCar 
+        document.getElementById('link-marketing').href = `${protocol}//${host}:3005`; // Marketing
         document.getElementById('link-print').href = `${protocol}//${host}:3006`;     // NeuroPrint
         document.getElementById('link-compras').href = `${protocol}//${host}:3007`;   // NeuroCompras
-        document.getElementById('link-rh').href = `${protocol}//${host}:3008`;        // NeuroRH
-        
+        document.getElementById('link-rh').href = `${protocol}//${host}:3008`;        // NeuroGente
+        document.getElementById('link-gestao').href = `${protocol}//${host}:3011`;    // NeuroGestão
+        document.getElementById('link-escuta').href = `${protocol}//${host}:3010`;    // NeuroEscuta
         // Links "Em Breve" (mantém # para não clicar)
         // document.getElementById('link-compras').href = "#"; 
         // document.getElementById('link-print').href = "#"; 

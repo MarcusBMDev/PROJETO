@@ -218,31 +218,130 @@
 
     <main class="main-area">
         <div id="welcome-screen">
-            <div class="welcome-box" style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; max-width: 500px; width: 90%;">
-                <h1 style="color: #0d47a1; margin: 0; font-size: 2.5rem;">NeuroChat</h1>
-                <p style="color: #666; margin-top: 10px; margin-bottom: 30px;">Bem-vindo à central de comunicação interna.</p>
+            <div class="welcome-box" style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; max-width: 960px; width: 95%;">
+                <h1 style="color: #0d47a1; margin: 0; font-size: 2.5rem;">NeuroChat 🧠</h1>
+                <p style="color: #666; margin-top: 10px; margin-bottom: 25px;">Bem-vindo à central de comunicação interna.</p>
 
-                <div style="background: #e8eaf6; border-left: 5px solid #1a237e; padding: 20px; text-align: left; border-radius: 8px; margin-bottom: 30px;">
-                    <h4 style="color: #0d47a1; margin-top: 0; margin-bottom: 10px;">📌 Avisos Importantes</h4>
-                    <p style="font-weight: bold; margin-bottom: 5px; color: #333;">Olá pessoal!</p>
-                    <p style="font-size: 0.9rem; color: #555; margin-bottom: 10px;">Seguem as instruções para o uso do Neurochat:</p>
-                    <ul style="padding-left: 20px; color: #444; font-size: 0.9rem; line-height: 1.5;">
-                        <li>1 - Insira seu nome e primeiro sobrenome.</li>
-                        <li>2 - Solicite ao Marketing uma foto institucional para adicionar ao seu perfil.</li>
-                        <li>3 - Foi criado o "MANUAL & NOVIDADES" que traz todas as melhorias do chat.</li>
-                        <li>4 - Foi feito uma atualização para correção de problemas, qualquer outro problema refente ao chat tratar com o TI.</li>
-                    </ul>
+                <!-- LINHA PRINCIPAL: AVISOS + AGENDA LADO A LADO -->
+                <div style="display: flex; gap: 20px; align-items: flex-start; text-align: left;">
+
+                    <!-- COLUNA ESQUERDA: Avisos + Botão -->
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 14px;">
+                        <div style="background: #e8eaf6; border-left: 5px solid #1a237e; padding: 20px; border-radius: 8px;">
+                            <h4 style="color: #0d47a1; margin-top: 0; margin-bottom: 10px;">📌 Avisos Importantes</h4>
+                            <p style="font-weight: bold; margin-bottom: 5px; color: #333;">Olá pessoal!</p>
+                            <p style="font-size: 0.9rem; color: #555; margin-bottom: 10px;">Seguem as instruções para o uso do Neurochat:</p>
+                            <ul style="padding-left: 20px; color: #444; font-size: 0.9rem; line-height: 1.5; margin: 0;">
+                                <li>1 - Insira seu nome e primeiro sobrenome.</li>
+                                <li>2 - Solicite ao Marketing uma foto institucional para adicionar ao seu perfil.</li>
+                                <li>3 - Foi criado o "MANUAL &amp; NOVIDADES" que traz todas as melhorias do chat.</li>
+                                <li>4 - Foi feito uma atualização para correção de problemas, qualquer outro problema refente ao chat tratar com o TI.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Botão Manual abaixo do aviso -->
+                        <button class="btn-news-center" onclick="openUpdatesModal()" style="background: #e3f2fd; color: #0d47a1; border: 1px solid #bbdefb; padding: 12px 20px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: all 0.3s; width: 100%; text-align: center;">
+                            📚 Manual &amp; Novidades
+                        </button>
+                    </div>
+
+                    <!-- COLUNA DIREITA: Card de Agendamentos -->
+                    <div style="flex: 1; display: flex; flex-direction: column;">
+                        <div id="agenda-card" style="background: #f0f4ff; border: 1px solid #c5cae9; border-radius: 12px; padding: 18px; height: 100%; box-sizing: border-box;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                <h4 style="color: #283593; margin: 0; font-size: 1rem;">📅 Salas Agendadas Hoje</h4>
+                                <span id="agenda-date-label" style="font-size: 0.78rem; color: #7986cb; font-weight: 600;"></span>
+                            </div>
+                            <div id="agenda-list">
+                                <div style="text-align: center; color: #9fa8da; font-size: 0.9rem; padding: 10px 0;">
+                                    <span style="font-size: 1.4rem;">⏳</span><br>Carregando agendamentos...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
+                <!-- FIM DA LINHA PRINCIPAL -->
 
-                <button class="btn-news-center" onclick="openUpdatesModal()" style="background: #e3f2fd; color: #0d47a1; border: 1px solid #bbdefb; padding: 12px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: all 0.3s;">
-                    📚 Manual & Novidades
-                </button>
-                
-                <p style="margin-top: 30px; font-size: 0.85rem; color: #aaa;">
+                <p style="margin-top: 25px; font-size: 0.85rem; color: #aaa; text-align: center;">
                     👈 Selecione um colega ou grupo no menu lateral para iniciar.
                 </p>
             </div>
         </div>
+
+        <script>
+            // ─── CARD DE AGENDAMENTOS DE SALAS ─────────────────────────────
+            (function initAgendaCard() {
+                const ROOM_ICONS = { 1: '🏠', 2: '☕' };
+                const DEFAULT_ICON = '🚪';
+
+                function formatTime(timeStr) {
+                    if (!timeStr) return '?';
+                    const parts = String(timeStr).trim().split(' ');
+                    return parts[parts.length - 1].slice(0, 5);
+                }
+
+                function getTodayLabel() {
+                    return new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' });
+                }
+
+                function renderBookings(bookings) {
+                    const list = document.getElementById('agenda-list');
+                    if (!list) return;
+
+                    if (!bookings || bookings.length === 0) {
+                        list.innerHTML = `
+                            <div style="text-align: center; color: #9fa8da; font-size: 0.9rem; padding: 12px 0;">
+                                <span style="font-size: 1.6rem;">🎉</span><br>
+                                Nenhuma sala agendada para hoje.
+                            </div>`;
+                        return;
+                    }
+
+                    bookings.sort((a, b) => (a.time_str || '').localeCompare(b.time_str || ''));
+
+                    const rows = bookings.map((b, i) => {
+                        const icon = ROOM_ICONS[b.room_id] || DEFAULT_ICON;
+                        const endTime = formatTime(b.end_time);
+                        const isLast = i === bookings.length - 1;
+                        return `
+                            <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;${isLast ? '' : 'border-bottom:1px solid #dde2ff;'}">
+                                <div style="font-size:1.3rem;min-width:28px;text-align:center;margin-top:2px;">${icon}</div>
+                                <div style="flex:1;">
+                                    <div style="font-weight:700;color:#1a237e;font-size:0.9rem;">
+                                        ${b.time_str || '?'} – ${endTime}
+                                        <span style="font-weight:400;color:#5c6bc0;font-size:0.82rem;margin-left:4px;">${b.room_name || ''}</span>
+                                    </div>
+                                    <div style="font-size:0.82rem;color:#555;margin-top:2px;">
+                                        👤 <b>${b.username || ''}</b>${b.department ? `<span style="color:#9e9e9e;"> · ${b.department}</span>` : ''}
+                                    </div>
+                                    
+                                </div>
+                            </div>`;
+                    });
+
+                    list.innerHTML = rows.join('');
+                }
+
+                async function loadAgenda() {
+                    const label = document.getElementById('agenda-date-label');
+                    if (label) label.textContent = getTodayLabel();
+                    try {
+                        const res = await fetch('/api/agenda/bookings');
+                        const data = await res.json();
+                        renderBookings(data);
+                    } catch (e) {
+                        const list = document.getElementById('agenda-list');
+                        if (list) list.innerHTML = `<div style="text-align:center;color:#bbb;font-size:0.85rem;padding:10px 0;">Agenda indisponível no momento.</div>`;
+                    }
+                }
+
+                loadAgenda();
+                setInterval(loadAgenda, 5 * 60 * 1000);
+            })();
+        </script>
+
+
 
         <div id="chat-interface">
             <div class="chat-header">
@@ -272,6 +371,12 @@
             <div id="reply-area" class="reply-area" style="display:none">
                 <div class="quoted-msg"><div class="quoted-user" id="reply-user"></div><div class="quoted-text" id="reply-text"></div></div>
                 <button onclick="cancelReply()">✕</button>
+            </div>
+
+            <div class="identifier-container">
+                <span>👤 Seu nome/ID:</span>
+                <input type="text" id="identifier-input" placeholder="Ex: Fulano" maxlength="20">
+                <small style="color:#999; font-size:0.75rem;">(Identifica quem está teclando nesta conta)</small>
             </div>
 
             <form id="form" action="">

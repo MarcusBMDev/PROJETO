@@ -129,6 +129,32 @@ body { margin: 0; font-family: 'Nunito', sans-serif; background-color: #f8faff; 
 .upload-btn { background: #eee; color: #555; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 1.5rem; cursor: pointer; margin-right: 8px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
 #form > button { background: #0d47a1; border: none; padding: 0 20px; margin-left: 8px; border-radius: 20px; color: #fff; cursor: pointer; font-weight: bold; height: 40px; flex-shrink: 0; }
 
+/* IDENTIFICADOR DE USUÁRIO (V117) */
+.identifier-container {
+    display: none; /* Escondido por padrão (V117) */
+    align-items: center;
+    background: #fff;
+    padding: 5px 15px;
+    border-top: 1px solid #eee;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: #666;
+}
+#identifier-input {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 0.8rem;
+    width: 150px;
+    color: #0d47a1;
+    font-weight: bold;
+    background: #f8faff;
+}
+#identifier-input:focus {
+    border-color: #0d47a1;
+    background: #fff;
+}
+
 /* MÍDIAS E ARQUIVOS */
 .image-wrapper { position: relative; display: inline-block; max-width: 300px; border-radius: 8px; overflow: hidden; margin-bottom: 5px; background-color: #f0f0f0; }
 .chat-image-preview { width: 100%; height: auto; display: block; cursor: zoom-in; }

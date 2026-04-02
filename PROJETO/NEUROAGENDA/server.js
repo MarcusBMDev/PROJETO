@@ -17,16 +17,24 @@ const pool = mysql.createPool({
     database: 'neurochat_db',
     waitForConnections: true, 
     connectionLimit: 10,
-    charset: 'utf8mb4',      // <--- CORRIGE OS ACENTOS
-    timezone: '-03:00'       // <--- GARANTE HORÁRIO CERTO (BRASIL)
+    charset: 'utf8mb4',
+    timezone: '-03:00'
 });
+
+// --- LISTA DE ADMINISTRADORES DO NEUROAGENDA ---
+// Adicione ou remova IDs de usuário aqui para controlar quem tem acesso admin.
+// Independente do is_super_admin do Neurochat.
+const NEUROAGENDA_ADMIN_IDS = [1, 29]; // Ex: 1 = você, 29 = outro admin
 
 // --- LOGIN ---
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     pool.query("SELECT * FROM users WHERE username = ? AND password = ?", [username, password], (err, rows) => {
         if (err || rows.length === 0) return res.json({ success: false });
-        res.json({ success: true, user: rows[0] });
+        const user = rows[0];
+        // Verifica se o usuário é admin do NeuroAgenda pela lista local
+        user.is_agenda_admin = NEUROAGENDA_ADMIN_IDS.includes(user.id) ? 1 : 0;
+        res.json({ success: true, user });
     });
 });
 
@@ -105,7 +113,7 @@ function sendNotification(data) {
                            `📦 Materiais: ${data.materials || 'Nenhum'}`;
 
         const ts = getCurrentTimestamp();
-        const targetAdminId = 2; // Maria Júlia
+        const targetAdminId = 29; // Nay
 
         const sqlMsg = `INSERT INTO messages (user_id, target_id, target_type, text, msg_type, timestamp, is_read, is_pinned, is_edited, is_deleted) VALUES (?, ?, 'private', ?, 'text', ?, 0, 0, 0, 0)`;
         pool.query(sqlMsg, [data.userId, targetAdminId, msgContent, ts], (e, res) => {

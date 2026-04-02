@@ -100,11 +100,11 @@ let selectedTimeSlot = null;
 let refreshInterval = null; // Variável para controlar a atualização
 
 function initAgenda() {
-    const adminLabel = currentUser.is_super_admin ? ' (Admin)' : '';
+    const adminLabel = currentUser.is_agenda_admin ? ' (Admin)' : '';
     document.getElementById('user-name-display').innerText = `Olá, ${currentUser.username}${adminLabel}`;
     
-    // Adiciona botão Admin se for super admin
-    if (currentUser.is_super_admin) {
+    // Adiciona botão Admin se for admin da NeuroAgenda
+    if (currentUser.is_agenda_admin) {
         const headerDiv = document.querySelector('.app-header div:last-child');
         const adminBtn = document.createElement('a');
         adminBtn.href = '/admin';
@@ -115,7 +115,7 @@ function initAgenda() {
 
     const dateInput = document.getElementById('date-picker');
     dateInput.value = currentDate;
-    if (!currentUser.is_super_admin) dateInput.min = currentDate; 
+    if (!currentUser.is_agenda_admin) dateInput.min = currentDate; 
     
     // Carrega a primeira vez
     loadSlots();
@@ -190,7 +190,7 @@ function renderGrid(bookings) {
                 div.innerHTML = `🚫 ${time}<br><span class="taken-info">${booking.username}<br>${booking.title || ''}</span>`;
             }
             
-            if (currentUser.is_super_admin || booking.user_id === currentUser.id) {
+            if (currentUser.is_agenda_admin || booking.user_id === currentUser.id) {
                 div.style.cursor = 'pointer';
                 div.onclick = () => openAdminCancelModal(booking);
             }
@@ -227,7 +227,7 @@ function openBookingModal(time) {
     // Esconde botões de ação
     const btnBlock = document.getElementById('btn-block-slot');
     const btnCancel = document.getElementById('btn-force-cancel');
-    if(btnBlock) btnBlock.style.display = currentUser.is_super_admin ? 'inline-block' : 'none';
+    if(btnBlock) btnBlock.style.display = currentUser.is_agenda_admin ? 'inline-block' : 'none';
     if(btnCancel) btnCancel.style.display = 'none';
 
     document.getElementById('booking-modal').style.display = 'flex';

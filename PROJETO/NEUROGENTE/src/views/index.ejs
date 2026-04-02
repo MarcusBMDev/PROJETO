@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEUROGENTE</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+    <div class="main-container">
+        <header style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; width: 100%;">
+            <div style="text-align: left;">
+                <p style="margin:0; font-size: 0.9rem;">Olá, <strong><%= user.username %></strong> | <a href="/logout" style="color: #00d2ff;">Sair</a></p>
+            </div>
+            <div style="text-align: center;">
+                <h1 style="margin: 0; font-size: 1.8rem; letter-spacing: 1px;">NEUROGENTE</h1>
+            </div>
+            <div style="text-align: right;">
+                <a href="http://neurocenter.local" class="btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; text-decoration: none; padding: 8px 15px; border-radius: 8px; font-size: 0.85rem; display: inline-block;">⬅ Voltar ao Portal</a>
+            </div>
+        </header>
+
+        <% if (msg) { %> <div class="success-msg" style="text-align:center;"><%= msg %></div> <% } %>
+        <% if (erro) { %> <div class="error-msg" style="text-align:center;"><%= erro %></div> <% } %>
+
+        <nav>
+    <button class="tab-link active" onclick="openTab(event, 'gestao')">📢 Mural</button>
+    <button class="tab-link" onclick="openTab(event, 'regimento')">📜 Regimento</button>
+    <button class="tab-link" onclick="openTab(event, 'hierarquia')">👥 Hierarquia</button>
+    
+    <button class="tab-link" onclick="openTab(event, 'sst')">⛑️ SST</button>
+    <button class="tab-link" onclick="openTab(event, 'beneficios')">🎁 Solicitações & Benefícios</button>
+    
+    <% 
+        const isAba = (user.setor && user.setor.toUpperCase().includes('ABA')) || (user.department && user.department.toUpperCase().includes('ABA'));
+        const isRh = (user.setor && user.setor.toUpperCase().includes('RH')) || (user.department && user.department.toUpperCase().includes('RH'));
+    %>
+
+    <% if (isAdmin || isAba) { %>
+        <button class="tab-link" style="color: #8e44ad;" onclick="openTab(event, 'aba_coord')">🧩 Coordenação ABA</button>
+    <% } %>
+    
+    <% if (isAdmin || isRh) { %>
+        <button class="tab-link" style="color: #c0392b;" onclick="openTab(event, 'restrito')">🔒 Painel Gestão</button>
+    <% } %>
+</nav>
+
+<%- include('partials/gestao') %>
+<%- include('partials/regimento') %>
+<%- include('partials/hierarquia') %>
+
+<%- include('partials/sst') %>
+<%- include('partials/beneficios') %>
+<%- include('partials/clube_descontos') %>
+<%- include('partials/aba') %>
+<%- include('partials/admin') %>
+
+    </div>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>

@@ -38,4 +38,7 @@ router.put('/jobs/:id', authAdmin, PrintController.updateStatus);
 router.get('/stats', authAdmin, PrintController.stats);
 router.get('/report', authAdmin, PrintController.downloadReport);
 
+// Cotas
+router.get('/quota/:sector', PrintController.getQuotaStatus);
+
 module.exports = router;

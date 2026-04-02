@@ -265,7 +265,7 @@
 
     <script>
         const userData = JSON.parse(localStorage.getItem('agendaUser'));
-        if (!userData || !userData.is_super_admin) {
+        if (!userData || !userData.is_agenda_admin) {
             window.location.href = '/index.html';
         }
         document.getElementById('admin-name').innerText = userData.username;
