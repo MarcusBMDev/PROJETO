@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  paciente: one
+  de_profissional: one
+  para_profissional: one
+  status: MyString
+  motivo: MyText
+
+two:
+  paciente: two
+  de_profissional: two
+  para_profissional: two
+  status: MyString
+  motivo: MyText

@@ -1,0 +1,15 @@
+# Fixtures para a tabela profissionais
+
+profissional_ativo:
+  nome: "Dra. Ana Lima"
+  especialidade: "Psicologia"
+  ativo: true
+  min_age: 5
+  max_age: 18
+
+profissional_inativo:
+  nome: "Dr. Carlos Motta"
+  especialidade: "Fonoaudiologia"
+  ativo: false
+  min_age: null
+  max_age: null

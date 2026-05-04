@@ -1,0 +1,46 @@
+/* public/css/neurogestao.css */
+body {
+    background-color: #f8fafc;
+    min-height: 100vh;
+}
+
+/* Painéis com contraste aprimorado */
+.glass-panel, 
+.bg-white.rounded-\[2rem\], 
+.bg-white.rounded-\[2\.5rem\] {
+    background: rgba(248, 250, 252, 0.92) !important;
+    backdrop-filter: blur(20px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Ajuste fino para modais */
+#modal-paciente > div, 
+#modal-editar > div, 
+#modal-vagas > div,
+#modal-cadastro > div {
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(30px) !important;
+    border: 1px solid rgba(226, 232, 240, 1) !important;
+}
+
+/* Tabelas e elementos internos mais leves */
+table thead {
+    background: rgba(241, 245, 249, 1) !important;
+    border-bottom: 2px solid rgba(226, 232, 240, 1) !important;
+}
+
+table thead th {
+    color: #475569 !important; /* Slate-600 */
+    font-weight: 800 !important;
+}
+
+table tbody tr:hover {
+    background: rgba(59, 130, 246, 0.08) !important;
+}
+
+/* Forçar nomes e textos críticos */
+.text-slate-900, .text-slate-800 {
+    color: #0f172a !important; /* Slate-900 puro */
+}

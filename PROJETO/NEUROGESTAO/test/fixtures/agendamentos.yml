@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  profissional: one
+  paciente: one
+  convenio: one
+  dia_semana: MyString
+  horario: MyString
+  observacoes: MyText
+
+two:
+  profissional: two
+  paciente: two
+  convenio: two
+  dia_semana: MyString
+  horario: MyString
+  observacoes: MyText

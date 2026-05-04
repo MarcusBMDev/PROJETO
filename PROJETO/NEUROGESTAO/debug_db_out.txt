@@ -1,0 +1,4 @@
+---ANA CAROLINA---
+TERÇA: [["08:00", "terça-feira"], ["08:40", "terça-feira"], ["11:20", "terça-feira"], ["14:40", "terça-feira"], ["16:40", "terça-feira"], ["17:20", "terça-feira"]]
+---DAYANE---
+TERÇA: [["08:00", "terça-feira"], ["08:40", "terça-feira"], ["09:20", "terça-feira"], ["10:00", "terça-feira"], ["10:40", "terça-feira"], ["11:20", "terça-feira"], ["14:00", "terça-feira"], ["14:40", "terça-feira"], ["15:20", "terça-feira"], ["16:00", "terça-feira"], ["16:40", "terça-feira"], ["17:20", "terça-feira"]]

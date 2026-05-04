@@ -1,0 +1,43 @@
+default: &default
+  adapter: mysql2
+  encoding: utf8mb4
+  pool: 5
+  username: root
+  password: ""
+  host: 127.0.0.1
+
+development:
+  # BANCO 1: O banco do nosso Microserviço (Leitura e Escrita)
+  primary:
+    <<: *default
+    database: agendamentos_clinica_dev
+
+  # BANCO 2: O banco do NeuroChatService (Somente Leitura)
+  neurochat:
+    <<: *default
+    database: neurochat_db
+    database_tasks: false
+    replica: true
+
+test:
+  # BANCO 1: Banco de testes principal
+  primary:
+    <<: *default
+    database: agendamentos_clinica_test
+
+  # BANCO 2: Banco neurochat isolado para testes
+  neurochat:
+    <<: *default
+    database: neurochat_test
+    database_tasks: false
+    replica: true
+
+production:
+  primary:
+    <<: *default
+    database: agendamentos_clinica_prod
+  neurochat:
+    <<: *default
+    database: neurochat_db
+    database_tasks: false
+    replica: true

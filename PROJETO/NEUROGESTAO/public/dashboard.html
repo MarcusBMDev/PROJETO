@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8"><title>Neuro Gestão - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/neurogestao.css">
+    <script src="/js/auth.js"></script>
+<style>
+        body { font-family: 'Outfit', sans-serif; margin: 0; overflow-x: hidden; }
+        .sidebar-item:hover { background: #f1f5f9; transform: translateX(5px); }
+        .active-menu { background: #eff6ff; color: #2563eb; border-right: 4px solid #2563eb; }
+        .card-blue { background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); }
+        .card-green { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
+        .card-purple { background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%); }
+        .card-indigo { background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn 0.6s ease-out; }
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.5); }
+    </style>
+</head>
+<body class="flex min-h-screen overflow-x-hidden">
+
+    <aside class="w-20 hover:w-72 bg-gradient-to-b from-slate-900 to-slate-800 border-r border-slate-800 flex flex-col fixed h-screen z-50 transition-all duration-300 overflow-hidden group shadow-2xl">
+        <div class="p-5 mb-4 flex items-center gap-4 border-b border-slate-700/50 pb-6">
+            <div class="min-w-[40px] h-10 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20"><span class="text-xl">🧠</span></div>
+            <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                <h1 class="text-lg font-black tracking-tight leading-none text-white">Neuro Gestão</h1>
+                <p class="text-[8px] font-black uppercase tracking-widest text-blue-400 mt-1">Gestão de Elite</p>
+            </div>
+        </div>
+        <nav class="flex-1 px-3 space-y-2 mt-4">
+            <a href="/dashboard" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold bg-gradient-to-r from-blue-600/20 to-transparent text-blue-400 border-l-4 border-blue-500">
+                <span class="text-xl min-w-[24px] text-center">📊</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Painel de Comando</span>
+            </a>
+            <a href="/grade" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                <span class="text-xl min-w-[24px] text-center">📅</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Grade Horária</span>
+            </a>
+            <a href="/equipe" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                <span class="text-xl min-w-[24px] text-center">👥</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Gestão de Equipe</span>
+            </a>
+            <a href="/espera" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                <span class="text-xl min-w-[24px] text-center">⏳</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Lista de Espera</span>
+            </a>
+            <a href="/pacientes" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                <span class="text-xl min-w-[24px] text-center">🧑‍⚕️</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Pacientes</span>
+            </a>
+            <a href="/convenios_view" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                <span class="text-xl min-w-[24px] text-center">🏢</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Convênios</span>
+            </a>
+            <a href="/transferencias" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                <span class="text-xl min-w-[24px] text-center">📋</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Central de Aprovação</span>
+            </a>
+        </nav>
+        <div class="p-4 border-t border-slate-700/50">
+            <button onclick="localStorage.clear(); window.location.href='/'" class="w-full flex items-center gap-6 bg-slate-950 text-white p-4 rounded-2xl transition-all hover:bg-red-500 hover:shadow-lg hover:shadow-red-500/20">
+                <span class="text-xl min-w-[24px] text-center">🚪</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap font-black text-[10px] uppercase tracking-widest">Sair do Sistema</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 ml-20 p-10 animate-fade">
+        <header class="flex justify-between items-center mb-16">
+            <div>
+                <span class="bg-blue-100 text-blue-700 px-3 py-1 text-[10px] font-black uppercase rounded-full mb-3 inline-block">Visão Geral</span>
+                <h2 class="text-4xl font-black text-slate-900 tracking-tight">Painel de <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Comando</span></h2>
+                <p class="text-slate-400 font-medium mt-2">Neuro Gestão - Unidade Palmas.</p>
+            </div>
+            <div class="w-12 h-12 bg-slate-200 rounded-full border-4 border-white shadow-sm overflow-hidden">
+                <img src="https://ui-avatars.com/api/?name=Marcus+Morais&background=0D8ABC&color=fff" alt="Perfil">
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
+            <div onclick="window.location.href='/grade'" class="card-blue p-8 rounded-[2.5rem] text-white shadow-xl shadow-blue-500/20 group transition-all hover:-translate-y-2 relative overflow-hidden cursor-pointer">
+                <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl">📅</div>
+                <div class="relative z-10 flex flex-col h-full">
+                    <p class="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Total de Atendimentos</p>
+                    <div id="total-pacientes" class="text-6xl font-black mt-auto tabular-nums">---</div>
+                </div>
+            </div>
+            
+            <div onclick="abrirModalVagas()" class="card-green p-8 rounded-[2.5rem] text-white shadow-xl shadow-green-500/20 group transition-all hover:-translate-y-2 relative overflow-hidden cursor-pointer">
+                <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl">🟢</div>
+                <div class="relative z-10 flex flex-col h-full">
+                    <p class="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Vagas Disponíveis</p>
+                    <div id="vagas-livres" class="text-6xl font-black mt-auto tabular-nums">---</div>
+                </div>
+            </div>
+            
+            <div onclick="window.location.href='/espera'" class="card-purple p-8 rounded-[2.5rem] text-white shadow-xl shadow-purple-500/20 group transition-all hover:-translate-y-2 relative overflow-hidden cursor-pointer">
+                <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl">⏳</div>
+                <div class="relative z-10 flex flex-col h-full">
+                    <p class="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Aguardando na Lista</p>
+                    <div id="total-espera" class="text-6xl font-black mt-auto tabular-nums">---</div>
+                </div>
+            </div>
+ 
+            <div onclick="window.location.href='/pacientes'" class="card-indigo p-8 rounded-[2.5rem] text-white shadow-xl shadow-indigo-500/20 group transition-all hover:-translate-y-2 relative overflow-hidden cursor-pointer">
+                <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl">👥</div>
+                <div class="relative z-10 flex flex-col h-full">
+                    <p class="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Pacientes Cadastrados</p>
+                    <div id="total-db-pacientes" class="text-6xl font-black mt-auto tabular-nums">---</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="modal-vagas" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-md bg-slate-900/40">
+        <div class="bg-white w-full max-w-4xl rounded-[3rem] shadow-2xl overflow-hidden animate-fade border border-white/20">
+            <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div>
+                    <h3 id="modal-vagas-titulo" class="text-2xl font-black text-slate-900 tracking-tight">Vagas Disponíveis</h3>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Breakdown por Especialidade</p>
+                </div>
+                <button onclick="document.getElementById('modal-vagas').classList.add('hidden')" class="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 hover:bg-red-50 transition-all shadow-sm">✕</button>
+            </div>
+            <div id="lista-vagas-especialidade" class="p-8 max-h-[70vh] overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Conteúdo carregado via JS -->
+            </div>
+            <div class="p-6 bg-slate-50 border-t border-slate-100 text-center">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Neuro Gestão - Sistema Inteligente de Vagas</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function load() {
+            // Atualiza o avatar com o nome do usuário logado
+            const userName = localStorage.getItem('userName') || 'Usuário';
+            const avatarImg = document.querySelector('header img');
+            if (avatarImg) {
+                avatarImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=0D8ABC&color=fff`;
+            }
+
+            try {
+                const res = await fetch('/api/dashboard/stats?_=' + new Date().getTime());
+                const stats = await res.json();
+                
+                document.getElementById('total-pacientes').innerText = stats.total_agendamentos || 0;
+                document.getElementById('vagas-livres').innerText = stats.vagas_disponiveis || 0;
+                document.getElementById('total-espera').innerText = stats.total_espera || 0;
+                document.getElementById('total-db-pacientes').innerText = stats.total_pacientes || 0;
+            } catch (err) { console.error("Erro ao puxar métricas", err); }
+        }
+        load();
+
+        /* Funções para o Modal de Vagas */
+        async function abrirModalVagas() {
+            const modal = document.getElementById('modal-vagas');
+            const lista = document.getElementById('lista-vagas-especialidade');
+            const titulo = document.getElementById('modal-vagas-titulo');
+            
+            titulo.innerText = "Vagas Disponíveis";
+            modal.classList.remove('hidden');
+            lista.innerHTML = '<div class="col-span-full text-center py-20"><div class="animate-spin inline-block w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div><p class="text-slate-400 font-black uppercase text-[10px] tracking-widest">Sincronizando Agenda...</p></div>';
+
+            try {
+                const res = await fetch('/api/agendamentos/vagas_por_especialidade');
+                const dados = await res.json();
+                
+                lista.innerHTML = '';
+                dados.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = "p-8 rounded-[2rem] border border-slate-100 hover:border-blue-200 hover:bg-blue-50/40 transition-all cursor-pointer group bg-white shadow-sm hover:shadow-md";
+                    card.onclick = () => verDetalhesEspecialidade(item.especialidade);
+                    
+                    const corVagas = item.vagas > 0 ? 'text-emerald-500' : 'text-slate-300';
+                    
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="font-black text-slate-800 uppercase text-xs tracking-tight group-hover:text-blue-600 transition-colors">${item.especialidade}</h4>
+                                <p class="text-[10px] font-bold text-slate-400 mt-1">Clique para ver horários</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-3xl font-black ${corVagas} tabular-nums">${item.vagas}</span>
+                                <p class="text-[8px] font-black uppercase tracking-widest text-slate-400">Vagas</p>
+                            </div>
+                        </div>
+                    `;
+                    lista.appendChild(card);
+                });
+
+                if (dados.length === 0) {
+                    lista.innerHTML = '<p class="col-span-full text-center py-20 text-slate-400 font-bold uppercase text-[10px]">Nenhuma especialidade cadastrada na equipe.</p>';
+                }
+            } catch (err) {
+                lista.innerHTML = '<p class="col-span-full text-center text-red-500 font-bold py-20">Erro ao carregar dados do servidor.</p>';
+            }
+        }
+
+        async function verDetalhesEspecialidade(esp) {
+            const lista = document.getElementById('lista-vagas-especialidade');
+            const titulo = document.getElementById('modal-vagas-titulo');
+            titulo.innerText = esp;
+            
+            lista.innerHTML = '<div class="col-span-full text-center py-20"><div class="animate-spin inline-block w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div><p class="text-slate-400 font-black uppercase text-[10px] tracking-widest">Mapeando Horários...</p></div>';
+
+            try {
+                const res = await fetch(`/api/agendamentos/vagas?especialidade=${encodeURIComponent(esp)}`);
+                const profissionais = await res.json();
+                
+                lista.innerHTML = '';
+                // Botão Voltar
+                const btnVoltar = document.createElement('button');
+                btnVoltar.className = "col-span-full mb-6 py-4 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-blue-600 font-black uppercase text-[10px] tracking-widest flex items-center gap-4 hover:bg-white hover:shadow-sm transition-all w-fit";
+                btnVoltar.innerHTML = "<span>←</span> Voltar para Visão Geral";
+                btnVoltar.onclick = () => abrirModalVagas();
+                lista.appendChild(btnVoltar);
+
+                profissionais.forEach(p => {
+                    const profCard = document.createElement('div');
+                    profCard.className = "col-span-full bg-slate-50/50 rounded-[2.5rem] p-10 mb-6 border border-slate-100";
+                    
+                    let htmlHorarios = '<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mt-8">';
+                    
+                    Object.entries(p.horarios_disponiveis).forEach(([dia, slots]) => {
+                        if (slots.length > 0) {
+                            htmlHorarios += `
+                                <div class="bg-white p-4 rounded-2xl shadow-sm border border-emerald-100 hover:border-emerald-300 transition-colors">
+                                    <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-4 border-b border-emerald-50 pb-2 flex justify-between">
+                                        <span>${dia.split('-')[0]}</span>
+                                        <span class="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">${slots.length} livres</span>
+                                    </p>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${slots.map(s => `<span class="px-2.5 py-1.5 bg-emerald-50 rounded-lg text-[10px] font-black text-emerald-700" title="Horário Livre">${s}</span>`).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            htmlHorarios += `
+                                <div class="bg-slate-50 opacity-60 p-4 rounded-2xl shadow-inner border border-slate-200">
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2">${dia.split('-')[0]}</p>
+                                    <div class="flex flex-col items-center justify-center p-2 opacity-70">
+                                        <span class="text-sm">🚫</span>
+                                        <p class="text-center text-[9px] font-black text-red-500 mt-1 tracking-widest uppercase">LOTADO</p>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                    htmlHorarios += '</div>';
+
+                    profCard.innerHTML = `
+                        <div class="flex items-center gap-5">
+                            <div class="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-white text-xl font-black shadow-lg shadow-blue-500/20">
+                                ${p.profissional.charAt(0)}
+                            </div>
+                            <div>
+                                <h5 class="font-black text-slate-900 text-lg tracking-tight uppercase">${p.profissional} (#${p.id})</h5>
+                                <div class="flex gap-2 mt-1">
+                                    <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">${p.especialidade}</span>
+                                    ${p.min_age || p.max_age ? `<span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Faixa: ${p.min_age || 0}-${p.max_age || '∞'} anos</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        ${htmlHorarios}
+                    `;
+                    lista.appendChild(profCard);
+                });
+
+                if (profissionais.length === 0) {
+                    lista.innerHTML += '<div class="col-span-full text-center py-20 bg-slate-50 rounded-[2rem] border border-dashed border-slate-200 mt-4"><p class="text-slate-400 font-black uppercase text-[10px] tracking-widest">Nenhum profissional com vaga nesta especialidade no momento.</p></div>';
+                }
+            } catch (err) {
+                lista.innerHTML = '<p class="col-span-full text-center text-red-500 font-bold py-20">Erro ao sincronizar detalhes da especialidade.</p>';
+            }
+        }
+    </script>
+</body>
+</html>

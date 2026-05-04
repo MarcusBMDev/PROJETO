@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8"><title>Neuro Gestão - Equipe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/neurogestao.css">
+    <script src="/js/auth.js"></script>
+<style>
+        body { font-family: 'Outfit', sans-serif; margin: 0; overflow-x: hidden; }
+        .animate-fade { animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.5); }
+    </style>
+</head>
+<body class="flex min-h-screen border-x-hidden">
+    <aside class="w-20 hover:w-72 bg-gradient-to-b from-slate-900 to-slate-800 border-r border-slate-800 flex flex-col fixed h-screen z-50 transition-all duration-300 overflow-hidden group shadow-2xl">
+        <div class="p-5 mb-4 flex items-center gap-4 border-b border-slate-700/50 pb-6">
+            <div class="min-w-[40px] h-10 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20"><span class="text-xl">🧠</span></div>
+            <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                <h1 class="text-lg font-black tracking-tight leading-none text-white">Neuro Gestão</h1>
+                <p class="text-[8px] font-black uppercase tracking-widest text-blue-400 mt-1">Gestão de Elite</p>
+            </div>
+        </div>
+        <nav class="flex-1 px-3 space-y-2 mt-4">
+            <a href="/dashboard" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">📊 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Painel de Comando</span></a>
+            <a href="/grade" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">📅 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Grade Horária</span></a>
+            <a href="/equipe" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold bg-gradient-to-r from-blue-600/20 to-transparent text-blue-400 border-l-4 border-blue-500">👥 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Gestão de Equipe</span></a>
+            <a href="/espera" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">⏳ <span class="opacity-0 group-hover:opacity-100 transition-opacity">Lista de Espera</span></a>
+            <a href="/pacientes" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">🧑‍⚕️ <span class="opacity-0 group-hover:opacity-100 transition-opacity">Pacientes</span></a>
+            <a href="/convenios_view" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">🏢 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Convênios</span></a>
+            <a href="/transferencias" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">📋 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Central de Aprovação</span></a>
+        </nav>
+        <div class="p-4 border-t border-slate-700/50">
+            <button onclick="window.location.href='/'" class="w-full flex items-center gap-6 bg-slate-950 text-white p-4 rounded-2xl transition-all hover:bg-red-500 hover:shadow-lg hover:shadow-red-500/20">🚪 <span class="opacity-0 group-hover:opacity-100 transition-opacity font-black text-[10px] uppercase">Sair do Sistema</span></button>
+        </div>
+    </aside>
+
+    <main class="flex-1 ml-20 p-10 animate-fade">
+        <header class="mb-12">
+            <span class="bg-blue-100 text-blue-700 px-3 py-1 text-[10px] font-black uppercase rounded-full mb-3 inline-block">Módulo RH</span>
+            <h1 class="text-4xl font-black text-slate-900 tracking-tight">Gestão de <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Equipe</span></h1>
+            <p class="text-slate-500 mt-2 font-medium">Controle de profissionais, especialidades e faixas etárias de atendimento.</p>
+        </header>
+        <div class="glass-panel p-8 rounded-[2rem] shadow-xl shadow-slate-200/50 mb-8 border border-white">
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-6 items-end">
+                <div class="md:col-span-2"><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Nome Completo</label><input type="text" id="p-nome" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold uppercase"></div>
+                <div class="md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Especialidades</label>
+                    <div id="p-esp-container" class="max-h-32 overflow-y-auto p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2"></div>
+                </div>
+                <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Idade Mín.</label><input type="number" id="p-min-age" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" placeholder="Ex: 1"></div>
+                <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Idade Máx.</label><input type="number" id="p-max-age" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" placeholder="Ex: 18"></div>
+                <div>
+                   <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Mini Currículo (PDF/IMG)</label>
+                   <input type="file" id="p-curriculo" class="hidden" onchange="document.getElementById('p-curriculo-label').innerText = this.files[0] ? '📎 Selecionado' : '📎 Anexar'">
+                   <button onclick="document.getElementById('p-curriculo').click()" id="p-curriculo-label" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-400 text-xs text-center border-dashed">📎 Anexar</button>
+                </div>
+                <div class="md:col-span-1"><button onclick="salvarNovoProfissional()" class="w-full bg-blue-600 text-white p-3 rounded-xl font-bold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">Adicionar</button></div>
+            </div>
+        </div>
+        <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-6 border-b border-slate-100 bg-slate-50/30 flex justify-between items-center">
+                <div class="relative flex-1 max-w-md">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+                    <input type="text" id="busca-equipe" placeholder="Pesquisar profissional por nome..." 
+                           class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-slate-700 uppercase text-xs"
+                           onkeyup="filtrarEquipe()">
+                </div>
+                <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest" id="stats-equipe">Total: 0 Profissionais</div>
+            </div>
+            <table class="min-w-full">
+                <thead class="bg-slate-50/50 border-b border-slate-100">
+                    <tr>
+                        <th class="p-5 text-left text-[10px] font-black text-slate-400 uppercase">Profissional</th>
+                        <th class="p-5 text-left text-[10px] font-black text-slate-400 uppercase">Especialidade</th>
+                        <th class="p-5 text-left text-[10px] font-black text-slate-400 uppercase">Atendimento (Idade)</th>
+                        <th class="p-5 text-left text-[10px] font-black text-slate-400 uppercase">Currículo</th>
+                        <th class="p-5 text-right text-[10px] font-black text-slate-400 uppercase">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-equipe" class="divide-y divide-slate-50"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Formulário de Adição (Movido para um Modal ou expandido) -->
+    <!-- Vou manter no topo mas adicionar o campo de arquivo -->
+
+    <div id="modal-editar" class="fixed inset-0 bg-slate-900/40 hidden flex items-center justify-center p-6 z-50 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-10 shadow-2xl">
+            <h2 class="text-2xl font-black text-slate-900 mb-6">Editar Profissional</h2>
+            <div class="space-y-4">
+                <input type="hidden" id="edit-id">
+                <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Nome Completo</label><input type="text" id="edit-nome" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold uppercase"></div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Especialidades</label>
+                    <div id="edit-esp-container" class="max-h-40 overflow-y-auto p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Idade Mínima</label><input type="number" id="edit-min-age" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold"></div>
+                    <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Idade Máxima</label><input type="number" id="edit-max-age" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold"></div>
+                </div>
+                <div>
+                   <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Trocar Mini Currículo</label>
+                   <input type="file" id="edit-curriculo" class="hidden" onchange="document.getElementById('edit-curriculo-label').innerText = this.files[0] ? '📎 Selecionado' : '📎 Alterar arquivo'">
+                   <button onclick="document.getElementById('edit-curriculo').click()" id="edit-curriculo-label" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-400 text-xs text-center border-dashed">📎 Alterar arquivo</button>
+                   <p id="edit-curriculo-info" class="text-[9px] font-bold text-blue-500 mt-1 ml-2 hidden"></p>
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button onclick="fecharModal()" class="flex-1 py-4 text-slate-500 font-bold">Cancelar</button>
+                    <button onclick="salvarEdicao()" class="flex-1 py-4 bg-amber-500 text-white font-bold rounded-2xl shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition-all">Salvar Edição</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let especGlobais = [];
+        let equipeGlobal = [];
+
+        async function init() { await Promise.all([carregarEspecialidades(), carregarEquipe()]); }
+        
+        async function carregarEspecialidades() {
+            try {
+                const res = await fetch('/api/profissionais/especialidades?_=' + new Date().getTime());
+                especGlobais = await res.json();
+                const container = document.getElementById('p-esp-container');
+                const containerEdit = document.getElementById('edit-esp-container');
+                
+                container.innerHTML = '';
+                containerEdit.innerHTML = '';
+                
+                especGlobais.forEach(esp => {
+                    const espUpper = esp.toUpperCase();
+                    const html = `
+                        <label class="flex items-center gap-2 cursor-pointer group">
+                            <input type="checkbox" value="${espUpper}" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-[10px] font-bold text-slate-600 group-hover:text-blue-600 transition-colors uppercase">${espUpper}</span>
+                        </label>`;
+                    container.innerHTML += html;
+                    containerEdit.innerHTML += html;
+                });
+            } catch (error) {
+                console.error("Erro ao carregar especialidades:", error);
+            }
+        }
+        
+        async function carregarEquipe() {
+            try {
+                const res = await fetch('/api/profissionais?_=' + new Date().getTime());
+                equipeGlobal = (await res.json()).filter(p => p.ativo !== false);
+                renderizarEquipe(equipeGlobal);
+            } catch (error) {
+                console.error("Erro ao carregar equipe:", error);
+            }
+        }
+
+        function renderizarEquipe(dados) {
+            const tbody = document.getElementById('tabela-equipe');
+            tbody.innerHTML = '';
+            document.getElementById('stats-equipe').innerText = `Total: ${dados.length} Profissionais`;
+            
+            dados.forEach(p => {
+                const nomeUpper = p.nome.toUpperCase();
+                const esps = (p.especialidade || 'PENDENTE').split(',').map(e => e.trim());
+                const badgesEsp = esps.map(e => `<span class="inline-block px-2 py-1 bg-blue-50 text-blue-600 text-[9px] font-black rounded-lg mr-1 mb-1 uppercase">${e}</span>`).join('');
+                
+                const faixaEtaria = (p.min_age !== null || p.max_age !== null) 
+                    ? `${p.min_age || 0} a ${p.max_age || '∞'} anos`
+                    : 'NÃO DEFINIDA';
+
+                const btnCurriculo = p.curriculo_url 
+                    ? `<div class="flex items-center gap-2">
+                        <a href="${p.curriculo_url}" target="_blank" title="Visualizar" class="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all text-xs shadow-md shadow-blue-500/20 active:scale-95">📄</a>
+                        <button onclick="copiarLinkCurriculo('${p.curriculo_url}')" title="Copiar Link" class="p-2.5 bg-slate-800 text-white rounded-xl hover:bg-slate-900 transition-all text-xs shadow-md shadow-slate-500/20 active:scale-95">🔗</button>
+                        <button onclick="encaminharNeurochat(${p.id})" title="Encaminhar Neurochat" class="p-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all text-sm shadow-md shadow-green-500/20 active:scale-95">💬</button>
+                       </div>`
+                    : `<span class="text-[9px] font-black text-slate-400 italic uppercase tracking-tighter bg-slate-100 px-2 py-1 rounded-md">Sem anexo</span>`;
+
+                tbody.innerHTML += `
+                <tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="p-5">
+                        <div class="font-bold uppercase text-slate-900">${nomeUpper}</div>
+                    </td>
+                    <td class="p-5">${badgesEsp}</td>
+                    <td class="p-5">
+                        <span class="px-2 py-1 bg-slate-100 text-slate-600 text-[10px] font-black rounded-lg">${faixaEtaria}</span>
+                    </td>
+                    <td class="p-5">${btnCurriculo}</td>
+                    <td class="p-5 text-right w-40">
+                        <button onclick='editarProfissional(${JSON.stringify(p)})' class="text-amber-500 hover:text-amber-700 mr-4 text-[10px] font-black uppercase transition-colors">Editar</button>
+                        <button onclick="excluirProfissional(${p.id})" class="text-red-500 hover:text-red-700 text-[10px] font-black uppercase transition-colors">Excluir</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        async function copiarLinkCurriculo(url) {
+            const absoluteUrl = window.location.origin + url;
+            try {
+                await navigator.clipboard.writeText(absoluteUrl);
+                alert('Link do currículo copiado!');
+            } catch (err) {
+                prompt('Copie o link abaixo:', absoluteUrl);
+            }
+        }
+
+        async function encaminharNeurochat(id) {
+            if(!confirm('Deseja encaminhar este currículo para o Neurochat?')) return;
+            try {
+                const res = await fetch(`/api/profissionais/${id}/share_curriculo`, { method: 'POST' });
+                const data = await res.json();
+                alert(data.message || data.error);
+            } catch (error) {
+                alert('Erro ao encaminhar currículo.');
+            }
+        }
+
+        function filtrarEquipe() {
+            const termo = document.getElementById('busca-equipe').value.toLowerCase();
+            const filtrados = equipeGlobal.filter(p => (p.nome || '').toLowerCase().includes(termo));
+            renderizarEquipe(filtrados);
+        }
+
+        async function salvarNovoProfissional() {
+            const nome = document.getElementById('p-nome').value.trim().toUpperCase();
+            const checkedEsps = Array.from(document.querySelectorAll('#p-esp-container input:checked')).map(i => i.value);
+            const esp = checkedEsps.join(',');
+            const min_age = document.getElementById('p-min-age').value || '';
+            const max_age = document.getElementById('p-max-age').value || '';
+            const fileInput = document.getElementById('p-curriculo');
+
+            if(!nome) return alert('Por favor, informe o nome do profissional.');
+            if(checkedEsps.length === 0) return alert('Selecione ao menos uma especialidade.');
+            
+            const formData = new FormData();
+            formData.append('profissional[nome]', nome);
+            formData.append('profissional[especialidade]', esp);
+            formData.append('profissional[min_age]', min_age);
+            formData.append('profissional[max_age]', max_age);
+            if (fileInput.files[0]) formData.append('profissional[curriculo]', fileInput.files[0]);
+
+            try {
+                const res = await fetch('/api/profissionais', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (res.ok) {
+                    document.getElementById('p-nome').value = '';
+                    document.querySelectorAll('#p-esp-container input').forEach(i => i.checked = false);
+                    document.getElementById('p-min-age').value = '';
+                    document.getElementById('p-max-age').value = '';
+                    document.getElementById('p-curriculo').value = '';
+                    document.getElementById('p-curriculo-label').innerText = '📎 Anexar';
+                    carregarEquipe(); 
+                } else {
+                    const data = await res.json();
+                    alert(data.errors ? data.errors.join('\n') : 'Erro ao cadastrar profissional.');
+                }
+            } catch (error) {
+                alert('Erro na comunicação com o servidor.');
+            }
+        }
+
+        async function excluirProfissional(id) {
+            if(confirm('Tem certeza que deseja excluir permanentemente este profissional do sistema?')) {
+                try {
+                    const res = await fetch(`/api/profissionais/${id}`, { method: 'DELETE' });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.mensagem) alert(data.mensagem);
+                        carregarEquipe();
+                    } else {
+                        const data = await res.json();
+                        alert(data.errors ? data.errors.join('\n') : 'Erro ao excluir profissional.');
+                    }
+                } catch (error) {
+                    alert('Erro na comunicação com o servidor.');
+                }
+            }
+        }
+        
+        function editarProfissional(p) {
+            document.getElementById('edit-id').value = p.id;
+            document.getElementById('edit-nome').value = (p.nome || '').toUpperCase();
+            
+            const pEsps = (p.especialidade || '').split(',').map(e => e.trim().toUpperCase());
+            document.querySelectorAll('#edit-esp-container input').forEach(i => {
+                i.checked = pEsps.includes(i.value.toUpperCase());
+            });
+
+            document.getElementById('edit-min-age').value = p.min_age || '';
+            document.getElementById('edit-max-age').value = p.max_age || '';
+            
+            const fileInput = document.getElementById('edit-curriculo');
+            fileInput.value = '';
+            document.getElementById('edit-curriculo-label').innerText = '📎 Alterar arquivo';
+            
+            const info = document.getElementById('edit-curriculo-info');
+            if (p.curriculo_url) {
+                info.innerText = "📄 Arquivo atual: " + p.curriculo_nome;
+                info.classList.remove('hidden');
+            } else {
+                info.classList.add('hidden');
+            }
+
+            document.getElementById('modal-editar').classList.remove('hidden');
+        }
+
+        function fecharModal() {
+            document.getElementById('modal-editar').classList.add('hidden');
+        }
+
+        async function salvarEdicao() {
+            const id = document.getElementById('edit-id').value;
+            const nome = document.getElementById('edit-nome').value.trim().toUpperCase();
+            const checkedEsps = Array.from(document.querySelectorAll('#edit-esp-container input:checked')).map(i => i.value);
+            const especialidade = checkedEsps.join(',');
+            const min_age = document.getElementById('edit-min-age').value || '';
+            const max_age = document.getElementById('edit-max-age').value || '';
+            const fileInput = document.getElementById('edit-curriculo');
+
+            if(!nome) return alert('O nome não pode estar vazio.');
+            if(checkedEsps.length === 0) return alert('Selecione ao menos uma especialidade.');
+
+            const formData = new FormData();
+            formData.append('profissional[nome]', nome);
+            formData.append('profissional[especialidade]', especialidade);
+            formData.append('profissional[min_age]', min_age);
+            formData.append('profissional[max_age]', max_age);
+            if (fileInput.files[0]) formData.append('profissional[curriculo]', fileInput.files[0]);
+
+            try {
+                const res = await fetch(`/api/profissionais/${id}`, {
+                    method: 'PUT',
+                    body: formData
+                });
+
+                if (res.ok) {
+                    fecharModal();
+                    carregarEquipe();
+                } else {
+                    const data = await res.json();
+                    alert(data.errors ? data.errors.join('\n') : 'Erro ao salvar a edição do profissional.');
+                }
+            } catch (error) {
+                alert('Erro na comunicação com o servidor.');
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8"><title>Neuro Gestão - Grade Estratégica</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Include html2pdf.js for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/neurogestao.css">
+    <script src="/js/auth.js"></script>
+    <style>
+        body { font-family: 'Outfit', sans-serif; margin: 0; overflow-x: hidden; }
+        .slot-free { border: 2px dashed #cbd5e1; color: #94a3b8; transition: all 0.2s; cursor: pointer; }
+        .slot-free:hover { border-color: #3b82f6; background: #eff6ff; color: #3b82f6; }
+        .slot-occupied { background: white; border: 2px solid #3b82f6; box-shadow: 0 10px 15px -3px rgb(59 130 246 / 0.1); }
+        .slot-blocked { background: #fffbeb; border: 2px solid #f59e0b; box-shadow: 0 10px 15px -3px rgb(245 158 11 / 0.1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn 0.5s ease-out; }
+    </style>
+</head>
+<body class="flex min-h-screen border-x-hidden">
+
+    <aside class="w-20 hover:w-72 bg-gradient-to-b from-slate-900 to-slate-800 border-r border-slate-800 flex flex-col fixed h-screen z-50 transition-all duration-300 overflow-hidden group shadow-2xl" data-html2canvas-ignore="true">
+        <div class="p-5 mb-4 flex items-center gap-4 border-b border-slate-700/50 pb-6">
+            <div class="min-w-[40px] h-10 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20"><span class="text-xl">🧠</span></div>
+            <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                <h1 class="text-lg font-black tracking-tight leading-none text-white">Neuro Gestão</h1>
+                <p class="text-[8px] font-black uppercase tracking-widest text-blue-400 mt-1">Gestão de Elite</p>
+            </div>
+        </div>
+        <nav class="flex-1 px-3 space-y-2 mt-4">
+            <a href="/dashboard" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">📊 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Painel de Comando</span></a>
+            <a href="/grade" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold bg-gradient-to-r from-blue-600/20 to-transparent text-blue-400 border-l-4 border-blue-500">📅 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Grade Horária</span></a>
+            <a href="/equipe" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">👥 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Gestão de Equipe</span></a>
+            <a href="/espera" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">⏳ <span class="opacity-0 group-hover:opacity-100 transition-opacity">Lista de Espera</span></a>
+            <a href="/pacientes" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                <span class="text-xl min-w-[24px] text-center">🧑‍⚕️</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Pacientes</span>
+            </a>
+            <a href="/convenios_view" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                <span class="text-xl min-w-[24px] text-center">🏢</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Convênios</span>
+            </a>
+            <a href="/transferencias" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                <span class="text-xl min-w-[24px] text-center">📋</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Central de Aprovação</span>
+            </a>
+        </nav>
+        <div class="p-4 border-t border-slate-700/50">
+            <button onclick="localStorage.clear(); window.location.href='/'" class="w-full flex items-center gap-6 bg-slate-950 text-white p-4 rounded-2xl transition-all hover:bg-red-500 hover:shadow-lg hover:shadow-red-500/20">🚪 <span class="opacity-0 group-hover:opacity-100 transition-opacity font-black text-[10px] uppercase">Sair do Sistema</span></button>
+        </div>
+    </aside>
+
+    <main class="flex-1 ml-20 p-10 animate-fade pt-10" id="conteudo-principal">
+        <header class="flex justify-between items-end mb-10" data-html2canvas-ignore="true">
+            <div>
+                <span class="bg-blue-100 text-blue-700 px-3 py-1 text-[10px] font-black uppercase rounded-full mb-3 inline-block">Módulo Clínico</span>
+                <h1 class="text-4xl font-black text-slate-900 tracking-tight">Grade <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Estratégica</span></h1>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="exportarPDF()" class="bg-white text-blue-600 px-6 py-3 rounded-2xl font-bold border border-blue-100 hover:bg-blue-50 hover:border-blue-200 transition-all text-[10px] uppercase shadow-sm flex items-center gap-2">📄 Exportar PDF</button>
+                <button onclick="abrirModalTransferir()" class="bg-amber-50 text-amber-600 px-6 py-3 rounded-2xl font-bold border border-amber-100 hover:bg-amber-100 transition-all text-[10px] uppercase flex items-center gap-2">🔄 Transferir</button>
+            </div>
+        </header>
+
+        <div data-html2canvas-ignore="true">
+            <select id="select-prof" onchange="carregarGradeProfissional()" class="w-full p-4 bg-white border border-slate-200 rounded-2xl shadow-sm font-bold text-slate-800 mb-10 outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                <option value="">Selecione o Profissional para Exibir a Grade...</option>
+            </select>
+        </div>
+
+        <div id="grid-container" class="hidden grid grid-cols-1 md:grid-cols-5 gap-6">
+            <div class="space-y-4"><div class="bg-white p-3 rounded-xl text-center font-black text-blue-600 text-[10px] uppercase border">Segunda</div><div id="dia-seg" class="space-y-3"></div></div>
+            <div class="space-y-4"><div class="bg-white p-3 rounded-xl text-center font-black text-blue-600 text-[10px] uppercase border">Terça</div><div id="dia-ter" class="space-y-3"></div></div>
+            <div class="space-y-4"><div class="bg-white p-3 rounded-xl text-center font-black text-blue-600 text-[10px] uppercase border">Quarta</div><div id="dia-qua" class="space-y-3"></div></div>
+            <div class="space-y-4"><div class="bg-white p-3 rounded-xl text-center font-black text-blue-600 text-[10px] uppercase border">Quinta</div><div id="dia-qui" class="space-y-3"></div></div>
+            <div class="space-y-4"><div class="bg-white p-3 rounded-xl text-center font-black text-blue-600 text-[10px] uppercase border">Sexta</div><div id="dia-sex" class="space-y-3"></div></div>
+        </div>
+    </main>
+
+    <div id="modal-transferir" class="fixed inset-0 bg-slate-900/40 hidden flex items-center justify-center p-6 z-50 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-10 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h2 id="modal-transferir-titulo" class="text-2xl font-black text-slate-900 mb-6">Transferência de Pacientes</h2>
+            <div class="space-y-4">
+                <div><label class="text-[10px] font-black text-slate-400 uppercase">Profissional de Saída</label><select id="trans-origem" onchange="carregarPacientesTransferencia()" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold"></select></div>
+                <div><label class="text-[10px] font-black text-slate-400 uppercase">Paciente a Transferir</label><select id="trans-paciente" onchange="carregarHorariosAtuais()" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold"><option value="">Selecione o profissional de saída primeiro...</option></select></div>
+                <div><label class="text-[10px] font-black text-slate-400 uppercase">Horário Atual (na agenda de saída)</label><select id="trans-agendamento-origem" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold"><option value="">Selecione o paciente primeiro...</option></select></div>
+                <div class="h-px bg-slate-100 my-2"></div>
+                <div><label class="text-[10px] font-black text-slate-400 uppercase">Profissional de Destino</label><select id="trans-destino" onchange="carregarHorariosVagosDestino()" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold"></select></div>
+                <div><label class="text-[10px] font-black text-slate-400 uppercase">Novo Horário (Filtro por Vagas)</label><select id="trans-horario-destino" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold"><option value="">Selecione o profissional de destino...</option></select></div>
+                <div class="flex items-center gap-3 p-4 bg-purple-50 rounded-2xl border border-purple-100">
+                    <input type="checkbox" id="trans-check-encaixe" class="w-5 h-5 rounded-lg text-purple-600 focus:ring-purple-500">
+                    <label for="trans-check-encaixe" class="text-xs font-black text-purple-700 uppercase cursor-pointer">Marcar como ENCAIXE (Permite horários ocupados)</label>
+                </div>
+                <div class="h-px bg-slate-100 my-2"></div>
+                <div><label class="text-[10px] font-black text-slate-400 uppercase">Motivo / Justificativa</label><textarea id="trans-motivo" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold text-sm" rows="3" placeholder="Explique por que esta transferência é necessária..."></textarea></div>
+                <div class="flex gap-4 pt-4">
+                    <button onclick="fecharModais()" class="flex-1 py-4 text-slate-500 font-bold">Cancelar</button>
+                    <button onclick="executarTransferencia()" class="flex-1 py-4 bg-amber-500 text-white font-bold rounded-2xl">Enviar Pedido para Gestão</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Bloqueio de Vaga -->
+    <div id="modal-bloqueio" class="fixed inset-0 bg-slate-900/40 hidden flex items-center justify-center p-6 z-50 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl">
+            <h2 class="text-2xl font-black text-slate-900 mb-6">Bloquear Horário</h2>
+            <div class="space-y-4">
+                <input type="hidden" id="block-prof-id">
+                <input type="hidden" id="block-dia">
+                <input type="hidden" id="block-hora">
+                
+                <p id="block-info" class="text-xs font-bold text-slate-500 uppercase mb-4"></p>
+
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase">Responsável pelo Bloqueio</label>
+                    <input type="text" id="block-usuario" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold" placeholder="Seu nome...">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase">Motivo / Observação</label>
+                    <textarea id="block-motivo" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold text-sm" rows="3" placeholder="Ex: Paciente aguardando confirmação..."></textarea>
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button onclick="fecharModais()" class="flex-1 py-4 text-slate-500 font-bold">Cancelar</button>
+                    <button onclick="salvarBloqueio()" class="flex-1 py-4 bg-amber-500 text-white font-bold rounded-2xl shadow-lg shadow-amber-500/20">Bloquear Vaga</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Encaixe Direto -->
+    <div id="modal-encaixe" class="fixed inset-0 bg-slate-900/40 hidden flex items-center justify-center p-6 z-50 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl">
+            <h2 class="text-2xl font-black text-slate-900 mb-2">⚡ Encaixe Direto</h2>
+            <p class="text-[10px] font-black text-purple-600 uppercase mb-6 tracking-widest">Adicionar paciente extra no horário</p>
+            
+            <div class="space-y-4">
+                <input type="hidden" id="enc-prof-id">
+                <input type="hidden" id="enc-dia">
+                <input type="hidden" id="enc-hora">
+                
+                <p id="enc-info" class="text-xs font-bold text-slate-500 uppercase mb-4"></p>
+
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase">Paciente</label>
+                    <select id="enc-paciente" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold">
+                        <option value="">Carregando pacientes...</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase">Convênio</label>
+                    <select id="enc-convenio" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold">
+                        <option value="">Selecione o convênio...</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase">Data do Encaixe</label>
+                    <input type="date" id="enc-data" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold">
+                    <p class="text-[9px] text-slate-400 mt-1 italic">* O encaixe aparecerá na grade apenas nesta data.</p>
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button onclick="fecharModais()" class="flex-1 py-4 text-slate-500 font-bold">Cancelar</button>
+                    <button onclick="salvarEncaixeDireto()" class="flex-1 py-4 bg-purple-600 text-white font-bold rounded-2xl shadow-lg shadow-purple-500/20">Confirmar Encaixe</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Solicitar Remoção -->
+    <div id="modal-solicitar-remocao" class="fixed inset-0 bg-slate-900/40 hidden flex items-center justify-center p-6 z-50 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl">
+            <h2 class="text-2xl font-black text-slate-900 mb-6">Solicitar Remoção</h2>
+            <div class="space-y-4">
+                <input type="hidden" id="remocao-agendamento-id">
+                <input type="hidden" id="remocao-paciente-id">
+                <input type="hidden" id="remocao-prof-id">
+                
+                <div class="p-4 bg-red-50 rounded-2xl border border-red-100 mb-4">
+                    <p id="remocao-info" class="text-xs font-bold text-red-600 uppercase"></p>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase">Setor Solicitante</label>
+                    <select id="remocao-setor" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold">
+                        <option value="RECEPÇÃO">RECEPÇÃO</option>
+                        <option value="AGENDAMENTO">AGENDAMENTO</option>
+                        <option value="FATURAMENTO">FATURAMENTO</option>
+                        <option value="DIRETORIA">DIRETORIA</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase">Motivo da Remoção</label>
+                    <textarea id="remocao-motivo" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold text-sm" rows="3" placeholder="Por que este paciente deve ser removido?"></textarea>
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button onclick="fecharModais()" class="flex-1 py-4 text-slate-500 font-bold">Cancelar</button>
+                    <button onclick="enviarSolicitacaoRemocao()" class="flex-1 py-4 bg-red-500 text-white font-black rounded-2xl shadow-lg shadow-red-500/20 uppercase text-xs">Solicitar Remoção</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Observação do Atendimento -->
+    <div id="modal-observacao" class="fixed inset-0 bg-slate-900/40 hidden flex items-center justify-center p-6 z-50 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-xl">📝</div>
+                <h2 class="text-2xl font-black text-slate-900">Observação do Atendimento</h2>
+            </div>
+            <div id="obs-info-header" class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-6"></div>
+            <div class="space-y-4">
+                <input type="hidden" id="obs-agendamento-id">
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase">Observação / Nota do Atendimento</label>
+                    <textarea id="obs-texto" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-sm text-slate-700 mt-1 resize-none focus:outline-none focus:ring-2 focus:ring-blue-400" rows="5" placeholder="Ex: Paciente faltou. Retorno marcado para... / Evoluiu bem na sessão..."></textarea>
+                </div>
+                <div class="flex gap-4 pt-2">
+                    <button onclick="fecharModais()" class="flex-1 py-4 text-slate-500 font-bold hover:text-slate-800 transition-colors">Cancelar</button>
+                    <button onclick="salvarObservacao()" class="flex-1 py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors">💾 Salvar Observação</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let profissionaisGlobais = [];
+        let especialidadesGlobais = [];
+
+        async function init() {
+            const [resP, resE] = await Promise.all([fetch('/api/profissionais'), fetch('/api/profissionais/especialidades')]);
+            profissionaisGlobais = await resP.json();
+            especialidadesGlobais = await resE.json();
+            
+            // Popula o seletor principal
+            const select = document.getElementById('select-prof');
+            select.innerHTML = '<option value="">Escolha um profissional...</option>';
+            
+            const isGestor = leadsGestao();
+            const loggedUserName = (localStorage.getItem('userName') || '').toUpperCase();
+            let profEncontrado = null;
+
+            profissionaisGlobais.forEach(p => {
+                let label = p.nome.toUpperCase();
+                if (p.ativo === false) label = `[INATIVO] ${label}`;
+                
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = label;
+                select.appendChild(option);
+
+                // Se não é gestor, tenta encontrar o profissional correspondente ao usuário logado
+                if (!isGestor && loggedUserName && label.includes(loggedUserName)) {
+                    profEncontrado = p.id;
+                }
+            });
+
+            // Se for terapeuta (não gestor), seleciona e trava o seletor
+            if (!isGestor) {
+                if (profEncontrado) {
+                    select.value = profEncontrado;
+                    select.disabled = true;
+                    carregarGradeProfissional();
+                } else {
+                    select.innerHTML = '<option value="">Profissional não vinculado ao seu usuário.</option>';
+                    select.disabled = true;
+                }
+                
+                // Oculta botões de gestão na grade
+                document.querySelector('button[onclick="abrirModalTransferir()"]')?.classList.add('hidden');
+            }
+        }
+
+        function abrirModalTransferir() {
+            document.getElementById('modal-transferir-titulo').innerText = "Transferência de Pacientes";
+            popularSeletoresTransferencia();
+            document.getElementById('trans-paciente').innerHTML = '<option value="">Selecione o profissional de saída primeiro...</option>';
+            document.getElementById('trans-agendamento-origem').innerHTML = '<option value="">Selecione o paciente primeiro...</option>';
+            document.getElementById('trans-horario-destino').innerHTML = '<option value="">Selecione o profissional de destino...</option>';
+            document.getElementById('trans-check-encaixe').checked = false;
+            document.getElementById('trans-motivo').value = '';
+            document.getElementById('modal-transferir').classList.remove('hidden');
+        }
+
+        async function abrirModalNovoHorario(agId, pacienteId, profId, pacienteNome) {
+            document.getElementById('modal-transferir-titulo').innerText = "Novo Horário / Alteração";
+            popularSeletoresTransferencia();
+            
+            // Pré-seleciona Profissional de Origem e Destino (mesmo por padrão)
+            document.getElementById('trans-origem').value = profId;
+            document.getElementById('trans-destino').value = profId;
+            
+            // Carrega pacientes do profissional e pré-seleciona
+            const selectPaciente = document.getElementById('trans-paciente');
+            selectPaciente.innerHTML = `<option value="${pacienteId}" selected>${pacienteNome}</option>`;
+            
+            // Carrega horários atuais e pré-seleciona o agId
+            const selectAg = document.getElementById('trans-agendamento-origem');
+            selectAg.innerHTML = '<option value="">Buscando dados...</option>';
+            
+            try {
+                // Força o carregamento dos horários do paciente
+                const res = await fetch(`/api/agendamentos/por_profissional/${profId}`);
+                const agendamentos = await res.json();
+                const agsPaciente = agendamentos.filter(a => a.paciente_id == pacienteId);
+                
+                selectAg.innerHTML = '';
+                agsPaciente.forEach(a => {
+                    const sel = (a.id == agId) ? 'selected' : '';
+                    selectAg.innerHTML += `<option value="${a.id}" ${sel}>${a.dia_semana} às ${a.horario}</option>`;
+                });
+                
+                // Carrega vagas para o profissional de destino
+                carregarHorariosVagosDestino();
+                
+                document.getElementById('trans-check-encaixe').checked = false;
+                document.getElementById('trans-motivo').value = 'Alteração de horário solicitada pelo paciente/profissional.';
+                document.getElementById('modal-transferir').classList.remove('hidden');
+            } catch(e) {
+                alert("Erro ao carregar dados para alteração.");
+            }
+        }
+
+        function popularSeletoresTransferencia() {
+            const orig = document.getElementById('trans-origem');
+            const dest = document.getElementById('trans-destino');
+            [orig, dest].forEach(s => {
+                s.innerHTML = '<option value="">Selecione...</option>';
+                profissionaisGlobais.forEach(p => {
+                    let label = p.nome;
+                    if (p.ativo === false) label = `[INATIVO] ${label}`;
+                    s.innerHTML += `<option value="${p.id}">${label}</option>`;
+                });
+            });
+        }
+
+        function fecharModais() {
+            document.querySelectorAll('[id^="modal-"]').forEach(m => m.classList.add('hidden'));
+        }
+
+        async function carregarGradeProfissional() {
+            const id = document.getElementById('select-prof').value;
+            if(!id) return;
+            document.getElementById('grid-container').classList.remove('hidden');
+            const res = await fetch(`/api/agendamentos/por_profissional/${id}`);
+            const agendamentos = await res.json();
+            
+            const diasMap = [
+                { id: 'seg', db: 'SEGUNDA-FEIRA' },
+                { id: 'ter', db: 'TERÇA-FEIRA' },
+                { id: 'qua', db: 'QUARTA-FEIRA' },
+                { id: 'qui', db: 'QUINTA-FEIRA' },
+                { id: 'sex', db: 'SEXTA-FEIRA' }
+            ];
+            const slotsMatutino = [480, 520, 560, 600, 640, 680];
+            const slotsVespertino = [840, 880, 920, 960, 1000, 1040];
+
+            function formatarHoraPadrao(minutos) {
+                const h = Math.floor(minutos / 60).toString().padStart(2, '0');
+                const m = (minutos % 60).toString().padStart(2, '0');
+                return `${h}:${m}`;
+            }
+
+            function timeToMinutes(timeStr) {
+                if (!timeStr) return -1;
+                const startStr = timeStr.toString().split('-')[0].trim();
+                const str = startStr.toLowerCase().replace('h', ':');
+                let [h, m] = str.split(':');
+                return parseInt(h) * 60 + (parseInt(m) || 0);
+            }
+
+            diasMap.forEach(diaObj => {
+                const container = document.getElementById(`dia-${diaObj.id}`);
+                container.innerHTML = '';
+
+                // --- Função auxiliar que renderiza um slot (livre, simples ou dividido) ---
+                function renderSlot(minutos, skipRef) {
+                    if (minutos < skipRef.val) return;
+
+                    const hStr = formatarHoraPadrao(minutos);
+                    const agsNoSlot = agendamentos.filter(a => {
+                        const dDB = (a.dia_semana || "").trim().toUpperCase();
+                        return dDB === diaObj.db.trim().toUpperCase() && timeToMinutes(a.horario) === minutos;
+                    });
+
+                    if (agsNoSlot.length === 0) {
+                        // Slot livre — clicar bloqueia ou abre encaixe direto
+                        container.innerHTML += `<div class="slot-free p-4 rounded-2xl text-center flex flex-col justify-center min-h-[90px] mb-2" onclick="abrirModalBloqueio(${id}, '${diaObj.db}', '${hStr}')"><p class="text-[10px] font-black uppercase mb-1">${hStr}</p><p class="text-[9px] font-bold">VAGO</p></div>`;
+                        return;
+                    }
+
+                    // Calcula isDuplo com base no primeiro agendamento do slot
+                    let isDuplo = false;
+                    const primeiroAg = agsNoSlot[0];
+                    if (primeiroAg.horario && primeiroAg.horario.includes('-')) {
+                        const partes = primeiroAg.horario.split('-');
+                        const inicio = timeToMinutes(partes[0].trim());
+                        const fimStr = partes[1].trim().toLowerCase().replace('h', ':');
+                        let [fh, fm] = fimStr.split(':');
+                        const fim = parseInt(fh) * 60 + (parseInt(fm) || 0);
+                        if (fim - inicio > 45) {
+                            isDuplo = true;
+                            skipRef.val = fim;
+                        }
+                    }
+                    const alturaDouble = isDuplo ? 'min-h-[160px]' : 'mb-2';
+                    const tagHora = isDuplo ? primeiroAg.horario : hStr;
+
+                    // BLOQUEADO — só mostra se for o único no slot
+                    if (agsNoSlot.length === 1 && agsNoSlot[0].status === 'bloqueado') {
+                        const ag = agsNoSlot[0];
+                        container.innerHTML += `
+                            <div class="slot-blocked p-4 rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform ${alturaDouble}" onclick="desbloquearVaga(${ag.id})">
+                                <p class="text-[10px] font-black text-amber-600 uppercase mb-1">${tagHora} - BLOQUEADO</p>
+                                <p class="font-bold text-slate-800 text-xs truncate" title="${ag.motivo_bloqueio}">${ag.motivo_bloqueio || 'Sem motivo'}</p>
+                                <p class="text-[10px] font-black text-amber-700 uppercase mt-2 pt-2 border-t border-amber-100">
+                                    🔒 Bloqueado por: ${ag.bloqueado_por || '???'}
+                                </p>
+                            </div>`;
+                        return;
+                    }
+
+                    // CARD DIVIDIDO — múltiplos pacientes no mesmo slot (encaixe)
+                    const pacsNormais   = agsNoSlot.filter(a => !a.encaixe && a.status !== 'bloqueado');
+                    const pacsEncaixe   = agsNoSlot.filter(a =>  a.encaixe);
+                    const temDivisao    = pacsNormais.length > 0 && pacsEncaixe.length > 0;
+
+                    if (temDivisao) {
+                        const partes = [...pacsNormais, ...pacsEncaixe].map(ag => {
+                            const nome = ag.paciente ? ag.paciente.nome : 'Sem Nome';
+                            const enc  = !!ag.encaixe;
+                            return `
+                                <div class="flex-1 p-2 border-r last:border-r-0 border-slate-200 group/subslot">
+                                    <p class="text-[9px] font-black ${enc ? 'text-purple-600' : 'text-blue-600'} uppercase mb-1">${enc ? '⚡ ENCAIXE' : 'REGULAR'}</p>
+                                    <p class="font-bold text-slate-800 text-[10px] leading-tight" title="${nome}">${nome}</p>
+                                    <div class="flex gap-1 mt-1 opacity-0 group-hover/subslot:opacity-100 transition-all">
+                                        <button onclick="abrirModalRemocao(${ag.id}, '${nome.replace(/'/g, "\\'")}',' ${diaObj.db}', '${tagHora}', ${id})" class="w-5 h-5 bg-red-100 text-red-600 rounded flex items-center justify-center text-[10px] hover:bg-red-600 hover:text-white" title="Remover">×</button>
+                                    </div>
+                                </div>`;
+                        }).join('');
+                        container.innerHTML += `
+                            <div class="slot-occupied rounded-2xl ${alturaDouble} border-2 border-purple-400 bg-purple-50/20 shadow-md overflow-hidden mb-2">
+                                <p class="text-[9px] font-black text-purple-600 uppercase px-3 pt-2">${tagHora} ⚡ ENCAIXE ATIVO</p>
+                                <div class="flex divide-x divide-slate-200">${partes}</div>
+                            </div>`;
+                        return;
+                    }
+
+                    // CARD SIMPLES (1 paciente ou todos da mesma categoria)
+                    agsNoSlot.filter(a => a.status !== 'bloqueado').forEach(ag => {
+                        const nomePaciente = ag.paciente ? ag.paciente.nome : 'Sem Nome';
+                        const isEncaixe = !!ag.encaixe;
+
+                        // Especialidade do profissional atual
+                        const profAtual = profissionaisGlobais.find(p => p.id == id);
+                        const especialidadeLabel = profAtual?.especialidade || '';
+
+                        // Observação existente (ícone de indicação)
+                        const temObs = ag.observacoes && ag.observacoes.trim() !== '';
+                        const obsTitle = temObs ? ag.observacoes.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+
+                        container.innerHTML += `
+                            <div class="slot-occupied p-4 rounded-2xl ${alturaDouble} group/slot relative border-2 ${isEncaixe ? 'border-purple-500 bg-purple-50/20' : 'border-blue-500 bg-white'} shadow-md cursor-pointer"
+                                 onclick="abrirModalObservacao(${ag.id}, '${nomePaciente.replace(/'/g, "\\'")}',' ${diaObj.db}', '${tagHora}', '${obsTitle}')">
+                                <div class="flex justify-between items-start mb-1">
+                                    <p class="text-[10px] font-black ${isEncaixe ? 'text-purple-600' : 'text-blue-600'} uppercase">
+                                        ${tagHora} ${isEncaixe ? '⚡ ENCAIXE' : ''}
+                                    </p>
+                                    <div class="flex gap-1 opacity-0 group-hover/slot:opacity-100 transition-all" onclick="event.stopPropagation()">
+                                        ${!isEncaixe ? `<button onclick="abrirEncaixeDireto(${id}, '${diaObj.db}', '${tagHora}')" class="w-6 h-6 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center hover:bg-purple-600 hover:text-white" title="Encaixar paciente aqui">⚡</button>` : ''}
+                                        <button onclick="abrirModalNovoHorario('${ag.id}', '${ag.paciente_id}', '${id}', '${nomePaciente.replace(/'/g, "\\'")}')"
+                                                class="w-6 h-6 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-600 hover:text-white" title="Mudar Horário">
+                                            🕒
+                                        </button>
+                                        <button onclick="abrirModalRemocao(${ag.id}, '${nomePaciente.replace(/'/g, "\\'")}',' ${diaObj.db}', '${tagHora}', ${id})"
+                                                class="w-6 h-6 bg-red-100 text-red-600 rounded-lg flex items-center justify-center hover:bg-red-600 hover:text-white" title="Solicitar Remoção">
+                                            ×
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="font-bold text-slate-800 text-xs whitespace-normal leading-tight" title="${nomePaciente}">${nomePaciente}</p>
+                                <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
+                                    ${especialidadeLabel ? `<span class="text-[9px] font-black uppercase tracking-wide px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full truncate max-w-[80%]">${especialidadeLabel}</span>` : '<span></span>'}
+                                    ${temObs ? `<span class="text-[10px]" title="${obsTitle}">📝</span>` : '<span class="text-[10px] text-slate-300">📝</span>'}
+                                </div>
+                            </div>`;
+                    });
+                }
+
+                // Divisor Matutino
+                container.innerHTML += `<div class="text-[9px] font-black uppercase text-slate-400 bg-slate-100 text-center py-2 rounded-lg tracking-widest border border-slate-200 shadow-inner mb-3">🌤️ Manhã</div>`;
+                const skipM = { val: 0 };
+                slotsMatutino.forEach(min => renderSlot(min, skipM));
+
+                // Divisor Vespertino
+                container.innerHTML += `<div class="text-[9px] font-black uppercase text-amber-600 bg-amber-50 text-center py-2 rounded-lg tracking-widest border border-amber-100 shadow-inner mt-5 mb-3">🏇 Tarde</div>`;
+                const skipV = { val: 0 };
+                slotsVespertino.forEach(min => renderSlot(min, skipV));
+            });
+        }
+
+        async function carregarPacientesTransferencia() {
+            const id = document.getElementById('trans-origem').value;
+            const selectPaciente = document.getElementById('trans-paciente');
+            if(!id) {
+                selectPaciente.innerHTML = '<option value="">Selecione o profissional de saída primeiro...</option>';
+                return;
+            }
+            selectPaciente.innerHTML = '<option value="">Carregando pacientes...</option>';
+            
+            try {
+                const res = await fetch(`/api/agendamentos/por_profissional/${id}`);
+                const agendamentos = await res.json();
+                
+                const pacientesMap = new Map();
+                agendamentos.forEach(ag => {
+                    if (ag.paciente && !pacientesMap.has(ag.paciente.id)) {
+                        pacientesMap.set(ag.paciente.id, ag.paciente.nome);
+                    }
+                });
+                
+                selectPaciente.innerHTML = '<option value="">Selecione o paciente...</option>';
+                if (pacientesMap.size === 0) {
+                    selectPaciente.innerHTML = '<option value="">Nenhum paciente agendado</option>';
+                } else {
+                    pacientesMap.forEach((nome, pId) => {
+                        selectPaciente.innerHTML += `<option value="${pId}">${nome}</option>`;
+                    });
+                }
+            } catch (error) {
+                selectPaciente.innerHTML = '<option value="">Erro ao carregar</option>';
+            }
+        }
+
+        async function carregarHorariosAtuais() {
+            const profId = document.getElementById('trans-origem').value;
+            const pacienteId = document.getElementById('trans-paciente').value;
+            const selectAg = document.getElementById('trans-agendamento-origem');
+
+            if(!profId || !pacienteId) {
+                selectAg.innerHTML = '<option value="">Selecione o paciente primeiro...</option>';
+                return;
+            }
+
+            selectAg.innerHTML = '<option value="">Buscando horários...</option>';
+            try {
+                const res = await fetch(`/api/agendamentos/por_profissional/${profId}`);
+                const agendamentos = await res.json();
+                
+                const filtrados = agendamentos.filter(a => a.paciente_id == pacienteId);
+                
+                selectAg.innerHTML = '<option value="">Selecione qual horário deseja mover...</option>';
+                filtrados.forEach(ag => {
+                    selectAg.innerHTML += `<option value="${ag.id}">${ag.dia_semana} às ${ag.horario}</option>`;
+                });
+            } catch (err) {
+                selectAg.innerHTML = '<option value="">Erro ao buscar horários</option>';
+            }
+        }
+
+        async function carregarHorariosVagosDestino() {
+            const destId = document.getElementById('trans-destino').value;
+            const selectHora = document.getElementById('trans-horario-destino');
+
+            if(!destId) {
+                selectHora.innerHTML = '<option value="">Selecione o profissional de destino...</option>';
+                return;
+            }
+
+            selectHora.innerHTML = '<option value="">Consultando vagas...</option>';
+            try {
+                // Notificar que encaixe permite ver tudo
+                const isEncaixe = document.getElementById('trans-check-encaixe').checked;
+                
+                const res = await fetch(`/api/agendamentos/vagas`);
+                const profs = await res.json();
+                
+                const prof = profs.find(p => p.id == destId);
+                if (!prof) {
+                    selectHora.innerHTML = '<option value="">Não há vagas mapeadas para este profissional.</option>';
+                    return;
+                }
+
+                selectHora.innerHTML = '<option value="">Selecione o novo horário...</option>';
+                
+                // Slots ocupados (Apenas se for encaixe)
+                if (isEncaixe) {
+                   const resOcupado = await fetch(`/api/agendamentos/por_profissional/${destId}`);
+                   const ocupados = await resOcupado.json();
+                   
+                   selectHora.innerHTML += `<optgroup label="HORÁRIOS OCUPADOS (PARA ENCAIXE)">`;
+                   ocupados.forEach(o => {
+                       selectHora.innerHTML += `<option value="${o.dia_semana.toUpperCase()}|${o.horario}">${o.dia_semana.toUpperCase()} às ${o.horario} (Ocupado por ${o.paciente_nome})</option>`;
+                   });
+                   selectHora.innerHTML += `</optgroup>`;
+                }
+
+                selectHora.innerHTML += `<optgroup label="HORÁRIOS VAGOS">`;
+                for (const [dia, horas] of Object.entries(prof.horarios_disponiveis)) {
+                    if (horas.length > 0) {
+                        horas.forEach(h => {
+                            selectHora.innerHTML += `<option value="${dia}|${h}">${dia} às ${h}</option>`;
+                        });
+                    }
+                }
+                selectHora.innerHTML += `</optgroup>`;
+            } catch (err) {
+                selectHora.innerHTML = '<option value="">Erro ao consultar vagas</option>';
+            }
+        }
+
+        async function executarTransferencia() {
+            const deProfId = document.getElementById('trans-origem').value;
+            const pacienteId = document.getElementById('trans-paciente').value;
+            const agOrigemId = document.getElementById('trans-agendamento-origem').value;
+            const paraProfId = document.getElementById('trans-destino').value;
+            const novoHorarioRaw = document.getElementById('trans-horario-destino').value;
+            const encaixe = document.getElementById('trans-check-encaixe').checked;
+            const motivo = document.getElementById('trans-motivo').value;
+
+            if(!deProfId || !paraProfId || !pacienteId || !motivo.trim() || !agOrigemId || !novoHorarioRaw) {
+                return alert("Preencha todos os campos, incluindo os horários e a justificativa.");
+            }
+            if(deProfId === paraProfId) {
+                return alert("Profissional de origem e destino não podem ser os mesmos.");
+            }
+
+            const [novoDia, novoHora] = novoHorarioRaw.split('|');
+
+            if(confirm("Confirma o envio desta solicitação para a gestão? O paciente será movido para o novo horário após aprovação.")) {
+                const res = await fetch('/api/transferencias', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        transferencia: {
+                            de_profissional_id: deProfId,
+                            para_profissional_id: paraProfId,
+                            paciente_id: pacienteId,
+                            agendamento_origem_id: agOrigemId,
+                            novo_dia_semana: novoDia,
+                            novo_horario: novoHora,
+                            encaixe: encaixe,
+                            motivo: motivo,
+                            tipo: 'transferencia',
+                            solicitante: (localStorage.getItem('userRole') || 'Terapeutas').toUpperCase()
+                        }
+                    })
+                });
+
+                if(res.ok) {
+                    alert("Solicitação de transferência enviada com sucesso! Aguarde a aprovação da gestão.");
+                    fecharModais();
+                } else {
+                    const data = await res.json();
+                    alert("Erro: " + (data.errors ? data.errors.join('\n') : 'Não foi possível enviar a solicitação.'));
+                }
+            }
+        }
+
+        function exportarPDF() {
+            const profissionalId = document.getElementById('select-prof').value;
+            if(!profissionalId) return alert("Selecione um profissional antes de exportar a grade!");
+            
+            const profSelectOptions = document.getElementById('select-prof').options;
+            const profNome = profSelectOptions[document.getElementById('select-prof').selectedIndex].text;
+            
+            const elementToPrint = document.getElementById('grid-container').cloneNode(true);
+            elementToPrint.classList.remove('hidden');
+            
+            const pdfContainer = document.createElement('div');
+            pdfContainer.className = "p-8 bg-white";
+            
+            const titulo = document.createElement('h2');
+            titulo.className = "text-2xl font-black text-slate-800 mb-6";
+            titulo.innerHTML = `Grade Estratégica: <span class="text-blue-600">${profNome}</span>`;
+            
+            pdfContainer.appendChild(titulo);
+            pdfContainer.appendChild(elementToPrint);
+            
+            const opt = {
+                margin:       10,
+                filename:     `Grade_Neuro_Gestao_${profNome.replace(/\\s+/g, '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(pdfContainer).save();
+        }
+
+        function abrirModalBloqueio(profId, dia, hora) {
+            document.getElementById('block-prof-id').value = profId;
+            document.getElementById('block-dia').value = dia;
+            document.getElementById('block-hora').value = hora;
+            document.getElementById('block-info').innerText = `${dia.split('-')[0]} às ${hora}`;
+            
+            // Tenta puxar o nome do usuário logado
+            const loggedUserName = localStorage.getItem('userName') || localStorage.getItem('username') || '';
+            const inputUser = document.getElementById('block-usuario');
+            
+            if (loggedUserName) {
+                inputUser.value = loggedUserName.toUpperCase();
+                inputUser.readOnly = true;
+                inputUser.classList.add('bg-slate-100', 'text-slate-500');
+                inputUser.classList.remove('bg-white', 'text-slate-900');
+            } else {
+                // Caso o usuário ainda não tenha feito um novo login após a atualização
+                inputUser.value = '';
+                inputUser.readOnly = false;
+                inputUser.placeholder = "Sua identificação...";
+                inputUser.classList.remove('bg-slate-100', 'text-slate-500');
+                inputUser.classList.add('bg-white', 'text-slate-900');
+                alert("⚠️ Seu usuário não foi identificado automaticamente. Por favor, preencha manualmente desta vez e realize o LOGOUT/LOGIN na próxima vez para automatizar.");
+            }
+
+            document.getElementById('block-motivo').value = '';
+            document.getElementById('modal-bloqueio').classList.remove('hidden');
+        }
+
+        async function salvarBloqueio() {
+            const ag = {
+                profissional_id: document.getElementById('block-prof-id').value,
+                dia_semana: document.getElementById('block-dia').value,
+                horario: document.getElementById('block-hora').value,
+                bloqueado_por: document.getElementById('block-usuario').value.trim().toUpperCase(),
+                motivo_bloqueio: document.getElementById('block-motivo').value.trim(),
+                status: 'bloqueado'
+            };
+
+            if(!ag.bloqueado_por || !ag.motivo_bloqueio) {
+                return alert("Nome do responsável e motivo são obrigatórios para bloquear a vaga.");
+            }
+
+            const res = await fetch('/api/agendamentos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    agendamento: ag,
+                    user_id: localStorage.getItem('userId') // Enviamos o ID para o backend puxar do DB
+                })
+            });
+
+            if(res.ok) {
+                fecharModais();
+                carregarGradeProfissional();
+            } else {
+                const data = await res.json();
+                alert("Erro ao bloquear: " + (data.errors ? data.errors.join(', ') : 'Tente novamente.'));
+            }
+        }
+
+        async function desbloquearVaga(id) {
+            if(!confirm("Deseja liberar este horário para novos agendamentos?")) return;
+            
+            const userId = localStorage.getItem('userId');
+            const res = await fetch(`/api/agendamentos/${id}?user_id=${userId}`, { method: 'DELETE' });
+            
+            if(res.ok) {
+                carregarGradeProfissional();
+            } else {
+                const data = await res.json();
+                alert(data.error || "Erro ao liberar vaga.");
+            }
+        }
+
+        async function abrirEncaixeDireto(profId, dia, hora) {
+            document.getElementById('enc-prof-id').value = profId;
+            document.getElementById('enc-dia').value = dia;
+            document.getElementById('enc-hora').value = hora;
+            document.getElementById('enc-info').innerText = `${dia.split('-')[0]} às ${hora}`;
+            
+            const [resPac, resConv] = await Promise.all([
+                fetch('/api/pacientes'),
+                fetch('/api/convenios')
+            ]);
+            
+            const pacientes = await resPac.json();
+            const convenios = await resConv.json();
+            
+            const selPac = document.getElementById('enc-paciente');
+            selPac.innerHTML = '<option value="">Selecione o paciente...</option>';
+            pacientes.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(p => {
+                selPac.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+            });
+            
+            const selConv = document.getElementById('enc-convenio');
+            selConv.innerHTML = '<option value="">Selecione o convênio...</option>';
+            convenios.forEach(c => {
+                selConv.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
+            });
+
+            // Seta data padrão como hoje no formato YYYY-MM-DD
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('enc-data').value = hoje;
+            
+            document.getElementById('modal-encaixe').classList.remove('hidden');
+        }
+
+        async function salvarEncaixeDireto() {
+            const ag = {
+                profissional_id: document.getElementById('enc-prof-id').value,
+                paciente_id: document.getElementById('enc-paciente').value,
+                convenio_id: document.getElementById('enc-convenio').value,
+                dia_semana: document.getElementById('enc-dia').value,
+                horario: document.getElementById('enc-hora').value,
+                encaixe: true,
+                status: 'confirmado'
+            };
+            const dataEncaixe = document.getElementById('enc-data').value;
+
+            if(!ag.paciente_id || !ag.convenio_id || !dataEncaixe) {
+                return alert("Paciente, convênio e data são obrigatórios para realizar o encaixe.");
+            }
+
+            const res = await fetch('/api/agendamentos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    agendamento: ag,
+                    data_encaixe: dataEncaixe
+                })
+            });
+
+            if(res.ok) {
+                fecharModais();
+                carregarGradeProfissional();
+            } else {
+                const data = await res.json();
+                alert("Erro ao realizar encaixe: " + (data.errors ? data.errors.join(', ') : 'Tente novamente.'));
+            }
+        }
+
+        function abrirModalRemocao(agId, pacienteNome, dia, hora, profId) {
+            document.getElementById('remocao-agendamento-id').value = agId;
+            document.getElementById('remocao-prof-id').value = profId;
+            document.getElementById('remocao-info').innerText = `${pacienteNome} - ${dia.split('-')[0]} às ${hora}`;
+            document.getElementById('remocao-motivo').value = '';
+            document.getElementById('modal-solicitar-remocao').classList.remove('hidden');
+        }
+
+        async function enviarSolicitacaoRemocao() {
+            const agId = document.getElementById('remocao-agendamento-id').value;
+            const setor = document.getElementById('remocao-setor').value;
+            const motivo = document.getElementById('remocao-motivo').value.trim();
+
+            if (!motivo) return alert("O motivo da remoção é obrigatório.");
+
+            try {
+                const resAg = await fetch(`/api/agendamentos/${agId}`);
+                if (!resAg.ok) throw new Error("Erro ao buscar dados do agendamento.");
+                const ag = await resAg.json();
+
+                const payload = {
+                    transferencia: {
+                        paciente_id: ag.paciente_id,
+                        de_profissional_id: ag.profissional_id,
+                        tipo: 'remocao',
+                        solicitante: setor,
+                        motivo: motivo,
+                        agendamento_ids: JSON.stringify([parseInt(agId)])
+                    }
+                };
+
+                const res = await fetch('/api/transferencias', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert("Solicitação de remoção enviada para aprovação da gestão!");
+                    fecharModais();
+                } else {
+                    const data = await res.json();
+                    alert("Erro: " + (data.errors ? data.errors.join('\n') : 'Falha ao enviar solicitação.'));
+                }
+            } catch (err) {
+                alert("Erro: " + err.message);
+            }
+        }
+
+        function abrirModalObservacao(agId, pacienteNome, dia, hora, obsAtual) {
+            document.getElementById('obs-agendamento-id').value = agId;
+            document.getElementById('obs-info-header').innerText = `${pacienteNome.trim()} · ${dia.trim().split('-')[0]} às ${hora}`;
+            document.getElementById('obs-texto').value = obsAtual || '';
+            document.getElementById('modal-observacao').classList.remove('hidden');
+            setTimeout(() => document.getElementById('obs-texto').focus(), 100);
+        }
+
+        async function salvarObservacao() {
+            const agId = document.getElementById('obs-agendamento-id').value;
+            const texto = document.getElementById('obs-texto').value.trim();
+
+            const btn = document.querySelector('#modal-observacao button[onclick="salvarObservacao()"]');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const res = await fetch(`/api/agendamentos/${agId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-User-Name': localStorage.getItem('userName') || '',
+                        'X-User-Role': localStorage.getItem('userRole') || ''
+                    },
+                    body: JSON.stringify({ agendamento: { observacoes: texto } })
+                });
+
+                if (res.ok) {
+                    fecharModais();
+                    carregarGradeProfissional(); // Recarrega para atualizar o ícone 📝
+                } else {
+                    const data = await res.json();
+                    alert('Erro ao salvar: ' + (data.errors ? data.errors.join(', ') : 'Tente novamente.'));
+                }
+            } catch (e) {
+                alert('Erro de conexão: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '💾 Salvar Observação';
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

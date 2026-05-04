@@ -1,0 +1,16 @@
+# Fixtures para a tabela pacientes
+# ATENÇÃO: nomes devem ser únicos (validação do modelo)
+
+paciente_ativo:
+  nome: "Maria Silva"
+  status: "ativo"
+  deleted_at: null
+  age: 30
+  weekly_frequency: 2
+
+paciente_inativo:
+  nome: "João Santos"
+  status: "inativo"
+  deleted_at: "2026-01-01 00:00:00"
+  age: 45
+  weekly_frequency: 1

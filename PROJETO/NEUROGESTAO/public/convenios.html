@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Neuro Gestão - Gestão de Convênios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/neurogestao.css">
+    <script src="/js/auth.js"></script>
+    <style>
+        body { font-family: 'Outfit', sans-serif; margin: 0; overflow-x: hidden; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn 0.5s ease-out; }
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.5); }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <aside class="w-20 hover:w-72 bg-gradient-to-b from-slate-900 to-slate-800 border-r border-slate-800 flex flex-col fixed h-screen z-50 transition-all duration-300 overflow-hidden group shadow-2xl">
+        <div class="p-5 mb-4 flex items-center gap-4 border-b border-slate-700/50 pb-6">
+            <div class="min-w-[40px] h-10 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20"><span class="text-xl">🧠</span></div>
+            <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                <h1 class="text-lg font-black tracking-tight leading-none text-white">Neuro Gestão</h1>
+                <p class="text-[8px] font-black uppercase tracking-widest text-blue-400 mt-1">Gestão de Elite</p>
+            </div>
+        </div>
+        <nav class="flex-1 px-3 space-y-2 mt-4">
+            <a href="/dashboard" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">📊 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Painel de Comando</span></a>
+            <a href="/grade" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">📅 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Grade Horária</span></a>
+            <a href="/equipe" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">👥 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Gestão de Equipe</span></a>
+            <a href="/espera" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">⏳ <span class="opacity-0 group-hover:opacity-100 transition-opacity">Lista de Espera</span></a>
+            <a href="/pacientes" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">🧑‍⚕️ <span class="opacity-0 group-hover:opacity-100 transition-opacity">Pacientes</span></a>
+            <a href="/convenios_view" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold bg-gradient-to-r from-blue-600/20 to-transparent text-blue-400 border-l-4 border-blue-500">🏢 <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Convênios</span></a>
+            <a href="/transferencias" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">📋 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Central de Aprovação</span></a>
+        </nav>
+        <div class="p-4 border-t border-slate-700/50">
+            <button onclick="window.location.href='/'" class="w-full flex items-center gap-6 bg-slate-950 text-white p-4 rounded-2xl transition-all hover:bg-red-500 hover:shadow-lg hover:shadow-red-500/20">🚪 <span class="opacity-0 group-hover:opacity-100 transition-opacity font-black text-[10px] uppercase">Sair do Sistema</span></button>
+        </div>
+    </aside>
+
+    <main class="flex-1 ml-20 p-10 animate-fade">
+        <header class="flex justify-between items-end mb-12">
+            <div>
+                <span class="bg-blue-100 text-blue-700 px-3 py-1 text-[10px] font-black uppercase rounded-full mb-3 inline-block">Módulo Administrativo</span>
+                <h1 class="text-4xl font-black text-slate-900 tracking-tight">Gestão de <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Convênios</span></h1>
+                <p class="text-slate-500 mt-2 font-medium">Controle de planos de saúde atendidos pela clínica.</p>
+            </div>
+            <button onclick="abrirModalConvenio()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black transition-all text-xs uppercase shadow-xl shadow-blue-500/20 active:scale-95">+ Novo Convênio</button>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="lista-convenios">
+            <p class="text-center text-slate-400 font-medium col-span-full py-10 tracking-widest uppercase text-xs">Carregando convênios...</p>
+        </div>
+    </main>
+
+    <!-- Modal de Cadastro/Edição -->
+    <div id="modal-convenio" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center p-6 z-50 backdrop-blur-md">
+        <div class="bg-white w-full max-w-2xl rounded-[2.5rem] p-10 shadow-2xl animate-fade max-h-[90vh] overflow-y-auto relative">
+            <button onclick="fecharModal()" class="absolute top-8 right-10 text-slate-400 hover:text-slate-600 font-black text-2xl transition-all hover:scale-110">×</button>
+            <h2 id="modal-titulo" class="text-3xl font-black text-slate-900 mb-8">Novo Convênio</h2>
+            
+            <div class="space-y-6">
+                <input type="hidden" id="c-id">
+                
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-2">Nome do Plano / Convênio</label>
+                    <input type="text" id="c-nome" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 outline-none focus:ring-4 focus:ring-blue-500/10 transition-all uppercase placeholder:text-slate-300" placeholder="Ex: UNIMED, BRADESCO...">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-2">Especialidades Atendidas</label>
+                    <input type="text" id="c-especialidades" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 outline-none focus:ring-4 focus:ring-blue-500/10 transition-all uppercase placeholder:text-slate-300" placeholder="Ex: Fono, Psico, TO (separadas por vírgula)...">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-2">Exigências para Solicitação</label>
+                    <textarea id="c-exigencias" rows="4" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 outline-none focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-300" placeholder="Ex: Necessário Guia de Encaminhamento, Relatório Médico..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-2">Documento de Referência (PDF/Doc)</label>
+                    <div class="flex flex-col gap-2">
+                        <input type="file" id="c-documento" class="hidden" onchange="document.getElementById('file-name-display').innerText = this.files[0] ? this.files[0].name : 'Selecionar arquivo...'">
+                        <button onclick="document.getElementById('c-documento').click()" class="w-full p-4 bg-slate-100 border-2 border-dashed border-slate-200 rounded-2xl font-bold text-slate-500 hover:bg-slate-200 transition-all text-sm flex items-center justify-center gap-2">
+                            <span>📎</span> <span id="file-name-display">Selecionar arquivo...</span>
+                        </button>
+                        <p id="doc-atual-info" class="text-[9px] font-bold text-blue-500 uppercase ml-2 hidden"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 mt-10">
+                <button onclick="salvarConvenio()" id="btn-salvar" class="flex-1 py-5 bg-blue-600 text-white font-black rounded-3xl shadow-xl shadow-blue-500/30 hover:bg-blue-700 transition-all uppercase tracking-widest text-xs">Salvar Convênio</button>
+                <button onclick="fecharModal()" class="flex-1 py-5 text-slate-400 font-bold hover:text-slate-600 transition-all text-xs uppercase">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function carregarConvenios() {
+            try {
+                const res = await fetch('/api/convenios?_=' + new Date().getTime());
+                if (!res.ok) throw new Error("Erro HTTP: " + res.status);
+                
+                const dados = await res.json();
+                const container = document.getElementById('lista-convenios');
+                
+                container.innerHTML = dados.map(c => {
+                    const isAtivo = c.ativo !== false;
+                    const cardClass = isAtivo 
+                        ? 'glass-panel p-8 rounded-[2.5rem] shadow-sm border border-white hover:shadow-xl hover:shadow-blue-500/5' 
+                        : 'bg-slate-50 p-8 rounded-[2.5rem] shadow-none border border-slate-200 grayscale opacity-75';
+                    
+                    const statusBadge = isAtivo
+                        ? `<span class="bg-green-100 text-green-700 px-2 py-1 text-[8px] font-black uppercase rounded-lg ml-2">Ativo</span>`
+                        : `<span class="bg-slate-200 text-slate-500 px-2 py-1 text-[8px] font-black uppercase rounded-lg ml-2">Inativo</span>`;
+
+                    const exigenciasSujas = c.exigencias || "Nenhuma exigência cadastrada.";
+                    const especialidades = (c.especialidades_atendidas || "").split(',').map(e => e.trim()).filter(e => e);
+
+                    return `
+                    <div class="${cardClass} transition-all group relative overflow-hidden flex flex-col h-full">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-bl-full -mr-8 -mt-8 group-hover:bg-blue-500/10 transition-colors"></div>
+                        <div class="flex items-center gap-1 mb-2">
+                            <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest">ID #${String(c.id).padStart(3, '0')}</p>
+                            ${statusBadge}
+                        </div>
+                        <h3 class="text-xl font-black text-slate-800 uppercase line-clamp-1 mb-4">${c.nome}</h3>
+                        
+                        <div class="flex-1 space-y-4">
+                            <div>
+                                <p class="text-[9px] font-black text-slate-400 uppercase mb-2">Especialidades</p>
+                                <div class="flex flex-wrap gap-1">
+                                    ${especialidades.length > 0 ? especialidades.map(e => `<span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[8px] font-black rounded uppercase">${e}</span>`).join('') : '<span class="text-[8px] text-slate-300 font-bold italic">Não informado</span>'}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Exigências</p>
+                                <p class="text-[10px] text-slate-600 font-medium line-clamp-3 italic">"${exigenciasSujas}"</p>
+                            </div>
+
+                            ${c.documento_url ? `
+                                <a href="${c.documento_url}" target="_blank" class="flex items-center gap-2 p-3 bg-slate-50 border border-slate-100 rounded-xl hover:bg-blue-50 hover:border-blue-100 transition-all">
+                                    <span class="text-xl">📄</span>
+                                    <div class="overflow-hidden">
+                                        <p class="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">Documento</p>
+                                        <p class="text-[10px] font-bold text-blue-600 truncate">${c.documento_nome}</p>
+                                    </div>
+                                </a>
+                            ` : ''}
+                        </div>
+
+                        <div class="mt-8 flex gap-4 pt-4 border-t border-slate-100/50">
+                            <button onclick='editarConvenio(${JSON.stringify(c).replace(/'/g, "&apos;")})' class="text-[10px] font-black uppercase text-amber-500 hover:text-amber-600">Editar</button>
+                            <button onclick="excluirConvenio(${c.id})" class="text-[10px] font-black uppercase text-red-400 hover:text-red-500">
+                                ${isAtivo ? 'Inativar' : 'Remover'}
+                            </button>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (error) {
+                console.error("Erro fatal convênios:", error);
+                document.getElementById('lista-convenios').innerHTML = '<p class="text-center text-red-400 font-bold col-span-full py-10 tracking-widest uppercase text-xs">Erro ao conectar com o servidor: ' + error.message + '</p>';
+            }
+        }
+
+        function abrirModalConvenio() {
+            document.getElementById('modal-titulo').innerText = "Novo Convênio";
+            document.getElementById('c-id').value = '';
+            document.getElementById('c-nome').value = '';
+            document.getElementById('c-exigencias').value = '';
+            document.getElementById('c-especialidades').value = '';
+            document.getElementById('c-documento').value = '';
+            document.getElementById('file-name-display').innerText = 'Selecionar arquivo...';
+            document.getElementById('doc-atual-info').classList.add('hidden');
+            document.getElementById('modal-convenio').classList.remove('hidden');
+        }
+
+        function fecharModal() {
+            document.getElementById('modal-convenio').classList.add('hidden');
+        }
+
+        function editarConvenio(c) {
+            document.getElementById('modal-titulo').innerText = "Editar Convênio";
+            document.getElementById('c-id').value = c.id;
+            document.getElementById('c-nome').value = c.nome;
+            document.getElementById('c-exigencias').value = c.exigencias || '';
+            document.getElementById('c-especialidades').value = c.especialidades_atendidas || '';
+            document.getElementById('c-documento').value = '';
+            document.getElementById('file-name-display').innerText = 'Trocar arquivo...';
+            
+            const docInfo = document.getElementById('doc-atual-info');
+            if (c.documento_url) {
+                docInfo.innerText = "📄 Arquivo atual: " + c.documento_nome;
+                docInfo.classList.remove('hidden');
+            } else {
+                docInfo.classList.add('hidden');
+            }
+            
+            document.getElementById('modal-convenio').classList.remove('hidden');
+        }
+
+        async function salvarConvenio() {
+            const id = document.getElementById('c-id').value;
+            const nome = document.getElementById('c-nome').value.trim().toUpperCase();
+            const exigencias = document.getElementById('c-exigencias').value.trim();
+            const especialidades = document.getElementById('c-especialidades').value.trim().toUpperCase();
+            const fileInput = document.getElementById('c-documento');
+            const btn = document.getElementById('btn-salvar');
+
+            if(!nome) return alert('O nome é obrigatório.');
+
+            const formData = new FormData();
+            formData.append('convenio[nome]', nome);
+            formData.append('convenio[exigencias]', exigencias);
+            formData.append('convenio[especialidades_atendidas]', especialidades);
+            if (fileInput.files[0]) {
+                formData.append('convenio[documento]', fileInput.files[0]);
+            }
+
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/convenios/${id}` : '/api/convenios';
+
+            btn.disabled = true;
+            btn.innerText = "Enviando Dados...";
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    body: formData
+                });
+
+                if(res.ok) {
+                    fecharModal();
+                    carregarConvenios();
+                } else {
+                    const err = await res.json();
+                    alert(err.errors ? err.errors.join('\n') : 'Erro ao salvar.');
+                }
+            } catch (error) {
+                alert('Erro de conexão.');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = id ? "Salvar Edição" : "Salvar Convênio";
+            }
+        }
+
+        async function excluirConvenio(id) {
+            if(!confirm('Deseja realmente excluir este convênio? Pacientes vinculados a ele podem ser afetados visualmente.')) return;
+            try {
+                const res = await fetch(`/api/convenios/${id}`, { method: 'DELETE' });
+                if(res.ok) {
+                    carregarConvenios();
+                } else {
+                    const err = await res.json();
+                    alert(err.errors ? err.errors.join('\n') : 'Erro ao excluir convênio.');
+                }
+            } catch (error) {
+                alert('Erro de conexão ao excluir.');
+            }
+        }
+
+        carregarConvenios();
+    </script>
+</body>
+</html>
