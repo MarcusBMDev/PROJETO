@@ -1,4 +1,0 @@
-Horario: 10:00
-Dia: segunda-feira
-Profissional: ANA CAROLINA
-Status: confirmado
