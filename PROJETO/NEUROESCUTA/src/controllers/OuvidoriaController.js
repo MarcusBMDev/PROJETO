@@ -69,7 +69,7 @@ const OuvidoriaController = {
 
             // Se um usuário foi selecionado, envia a notificação no NeuroChat
             if (targetId) {
-                const link = `http://localhost:3010/detalhes/${id}`;
+                const link = `http://192.168.10.133:3010/detalhes/${id}`;
                 const mensagem = `⚠️ *Nova Solicitação Encaminhada*\n\nVocê recebeu uma solicitação do setor *${setor}* (ID #${id}).\n\nClique no link abaixo para visualizar e responder:\n${link}`;
                 const senderId = req.session.user.id; // Quem está encaminhando (Admin) envia a mensagem
                 

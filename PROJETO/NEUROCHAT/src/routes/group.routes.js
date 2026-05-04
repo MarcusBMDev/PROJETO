@@ -12,5 +12,6 @@ router.post('/group/remove-member', groupController.removeMember);
 router.post('/group/promote', groupController.promoteMember);
 router.post('/group/leave', groupController.leaveGroup);
 router.post('/group/delete', groupController.deleteGroup);
+router.post('/group/update-broadcast', groupController.updateBroadcastMode);
 
 module.exports = router;

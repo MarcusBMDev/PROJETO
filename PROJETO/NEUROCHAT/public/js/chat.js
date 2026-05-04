@@ -76,7 +76,7 @@ window.updateMyInfo = () => {
     document.getElementById('my-avatar-img').src = getAvatarUrl(currentUser.photo);
 
     // Controle de Visibilidade Exclusivo (V117): Apenas RH (ID 79) e AGENDAMENTO (ID 112)
-    const allowedIds = [79, 112];
+    const allowedIds = [79, 112, 32, 74];
     const isSharedAccount = allowedIds.includes(parseInt(currentUser.id));
     const idContainer = document.querySelector('.identifier-container');
     
@@ -685,6 +685,19 @@ socket.on('message pinned', (data) => {
         }
     }
 });
+
+socket.on('group settings updated', (data) => {
+    // Se estou com este grupo aberto, atualiza a interface (esconde/mostra input)
+    if (currentChatType === 'group' && currentChatId == data.groupId) {
+        // Atualiza o objeto local no array allGroups
+        const g = allGroups.find(x => x.id == data.groupId);
+        if (g) g.is_broadcast = data.isBroadcast;
+        
+        // Simula a abertura do chat novamente para disparar a lógica de visibilidade do formulário
+        window.openChat('group', currentChatId, document.getElementById('chat-title').textContent);
+    }
+});
+
 // --- NAVEGAÇÃO ENTRE MENSAGENS FIXADAS ---
 
 window.nextPin = function() {
@@ -1272,9 +1285,17 @@ window.loadGroupSettings = async function() {
         const r = await fetch(`/group-details/${currentChatId}`);
         const m = await r.json();
         
-        // Verifica se EU sou admin ou Super Admin
         const me = m.find(x => x.id == currentUser.id);
+        const g = allGroups.find(x => x.id == currentChatId);
         const amIAdmin = (me && me.is_admin) || currentUser.is_super_admin;
+
+        // Controle de Transmissão (Só admin vê)
+        const broadcastArea = document.getElementById('broadcast-setting-area');
+        if (broadcastArea) {
+            broadcastArea.style.display = amIAdmin ? 'block' : 'none';
+            const cb = document.getElementById('toggle-broadcast');
+            if (cb && g) cb.checked = !!g.is_broadcast;
+        }
 
         // Botões gerais do grupo
         const bl = document.getElementById('btn-leave');
@@ -1372,6 +1393,19 @@ window.removeMember = async function(u) {
 window.promoteMember = async function(u) { if(confirm('Admin?')) await fetch('/group/promote', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({groupId:currentChatId, userId:u}) }); window.loadGroupSettings(); };
 window.leaveGroup = async function() { if(confirm('Sair?')) { await fetch('/group/leave', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({groupId:currentChatId, userId:currentUser.id}) }); document.getElementById('settings-modal').style.display='none'; window.closeChat(); } };
 window.deleteGroup = async function() { if(confirm('Excluir?')) { await fetch('/group/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({groupId:currentChatId}) }); document.getElementById('settings-modal').style.display='none'; window.closeChat(); } };
+
+window.toggleBroadcastMode = async function(isBroadcast) {
+    try {
+        const res = await fetch('/group/update-broadcast', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ groupId: currentChatId, isBroadcast: isBroadcast })
+        });
+        const data = await res.json();
+        if(!data.success) alert("Falha ao atualizar modo de transmissão.");
+    } catch (e) { console.error(e); }
+};
+
 window.scrollToMsg = function(id) { const el = document.getElementById(`msg-${id}`); if(el) { el.scrollIntoView({behavior:'smooth', block:'center'}); el.style.background='#fff9c4'; setTimeout(()=>el.style.background='', 1500); } };
 
 // --- FEATURES: ENCAMINHAR & QUEM VIU (V120) ---

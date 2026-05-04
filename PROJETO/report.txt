@@ -1,0 +1,413 @@
+
+
+--- MATCH 1 ---
+14:19');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela ` [ neuroprint_jobs ] `
+--
+
+CREATE TABLE `
+
+
+--- MATCH 2 ---
+`
+--
+
+CREATE TABLE ` [ neuroprint_jobs ] ` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `sector` varchar(100) DEFAULT NULL,
+  `file_name` text NOT NULL,
+  `file_path` text NOT NULL,
+  `file_type` varchar(100) DEFAULT NULL,
+  `page_range` varchar(50) DEFAULT NULL,
+  `copies` int(11) DEFAULT 1,
+  `color_mode` varchar(20) DEFAULT 'PB',
+  `is_duplex` tinyint(1) DEFAULT 0,
+  `two_per_page` tinyint(1) DEFAULT 0,
+  `observacao` text DEFAULT NULL,
+  `deadline` datetime DEFAULT NULL,
+  `is_urgent` tinyint(1) DEFAULT 0,
+  `status` varchar(50) DEFAULT 'pendente',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `total_pages` int(11) DEFAULT 0,
+  `total_printed` int(11) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `
+
+
+--- MATCH 3 ---
+E=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela ` [ neuroprint_jobs ] `
+--
+
+INSERT INTO `
+
+
+--- MATCH 4 ---
+`
+--
+
+INSERT INTO ` [ neuroprint_jobs ] ` (`id`, `user_id`, `sector`, `file_name`, `file_path`, `file_type`, `page_range`, `copies`, `color_mode`, `is_duplex`, `two_per_page`, `observacao`, `deadline`, `is_urgent`, `status`, `created_at`, `total_pages`, `total_printed`) VALUES
+(1, 33, NULL, 'TESTESPA_AULA.pdf', '1768498198675-TESTESPA_AULA.pdf', 'application/pdf', 'TODAS', 5, 'PB', 0, 0, 'Só frente. São para sala de áudio, protocolos do exame do PAC', '2026-01-15 14:29:00', 1, 'impresso', '2026-01-15 17:30:08', 0, 0),
+(2, 30, NULL, 'images (2).pdf', '1768851330998-images__2_.pdf', 'application/pdf', 'Todas', 1, 'PB', 0, 0, '', '2026-01-19 16:40:00', 1, 'impresso', '2026-01-19 19:35:31', 0, 0),
+(3, 31, NULL, 'AnÃ¡lise operacional do comportamento -  ficha de registro .pdf', '1768933430862-An__lise_operacional_do_comportamento____ficha_de_registro_.pdf', 'application/pdf', 'Todas', 2, 'PB', 0, 0, 'Mônica, ABA', '2026-01-20 18:00:00', 0, 'impresso', '2026-01-20 18:23:50', 0, 0),
+(4, 41, NULL, 'JULIA 2.pdf', '1768942060756-JULIA_2.pdf', 'application/pdf', 'todas', 1, 'Colorida', 0, 0, '', '2026-01-21 11:00:00', 0, 'impresso', '2026-01-20 20:47:40', 0, 0),
+(5, 51, NULL, 'Tangram.pdf', '1768994621317-Tangram.pdf', 'application/pdf', '1', 1, 'Colorida', 0, 0, 'Só frente,produção de atividade', NULL, 1, 'impresso', '2026-01-21 11:26:00', 0, 0),
+(6, 51, NULL, 'Tangram.pdf', '1768994721765-Tangram.pdf', 'application/pdf', '1', 1, 'Colorida', 0, 0, 'Só frente,produção de atividade', NULL, 1, 'impresso', '2026-01-21 11:26:00', 0, 0),
+(7, 51, NULL, 'Tangram.pdf', '1768994630265-Tangram.pdf', 'application/pdf', '1', 1, 'Colorida', 0, 0, 'Só frente,produção de atividade', NULL, 1, 'impresso', '2026-01-21 11:26:01', 0, 0),
+(8, 30, NULL, 'Animais - Caderno de Atividades (REV).pdf;combinaÃ§Ãµes.pdf;doce ou salgado.pdf', '1768995361586-Animais___Caderno_de_Atividades__REV_.pdf;1768995363414-combina____es.pdf;1768995366578-doce_ou_salgado.pdf', 'Múltiplos PDFs', 'Todas', 1, 'Colorida', 0, 0, 'O arquivo com o nome \"combinações\" deve ser impresso em posição paisagem ou \"ajustar a página\" em escalas!!', '2026-01-21 10:40:00', 0, 'impresso', '2026-01-21 11:36:06', 0, 0),
+(9, 30, NULL, 'Animais - Caderno de Atividades (REV).pdf;combinaÃ§Ãµes.pdf;doce ou salgado.pdf', '1768995358402-Animais___Caderno_de_Atividades__REV_.pdf;1768995360617-combina____es.pdf;1768995366749-doce_ou_salgado.pdf', 'Múltiplos PDFs', 'Todas', 1, 'Colorida', 0, 0, 'O arquivo com o nome \"combinações\" deve ser impresso em posição paisagem ou \"ajustar a página\" em escalas!!', '2026-01-21 10:40:00', 0, 'impresso', '2026-01-21 11:36:07', 0, 0),
+(10, 30, NULL, 'Animais - Caderno de Atividades (REV).pdf;combinaÃ§Ãµes.pdf;doce ou salgado.pdf', '1768995365212-Animais___Caderno_de_Atividades__REV_.pdf;1768995367715-combina____es.pdf;1768995369907-doce_ou_salgado.pdf', 'Múltiplos PDFs', 'Todas', 1, 'Colorida', 0, 0, 'O arquivo com o nome \"combinações\" deve ser impresso em posição paisagem ou \"ajustar a página\" em escalas!!', '2026-01-21
+
+
+--- MATCH 5 ---
+lorida', 0, 0, '', '2026-02-10 08:36:00', 0, 'impresso', '2026-02-09 14:36:28', 0, 0);
+INSERT INTO ` [ neuroprint_jobs ] ` (`id`, `user_id`, `sector`, `file_name`, `file_path`, `file_type`, `page_range`, `copies`, `color_mode`, `is_duplex`, `two_per_page`, `observacao`, `deadline`, `is_urgent`, `status`, `created_at`, `total_pages`, `total_printed`) VALUES
+(198, 93, NULL, 'atividades cognitivas paciente 01.pdf', '1770647957653-atividades_cognitivas_paciente_01.pdf', 'application/pdf', '1- 7', 1, 'Colorida', 0, 0, '', '2026-02-10 08:38:00', 0, 'impresso', '2026-02-09 14:39:17', 0, 0),
+(199, 12, NULL, '1770648448977-Termo_de_solicita____o.pdf', '1770658100541-1770648448977_Termo_de_solicita____o.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, '', '2026-02-09 17:00:00', 0, 'impresso', '2026-02-09 17:28:21', 0, 0),
+(200, 72, NULL, 'protocolo de entrada e saida de brinquedos.pdf', '1770660708446-protocolo_de_entrada_e_saida_de_brinquedos.pdf', 'application/pdf', 'Todas', 1, 'PB', 0, 0, '10 páginas apenas frente', '2026-02-09 15:11:00', 0, 'impresso', '2026-02-09 18:11:48', 0, 0),
+(201, 92, NULL, 'Apendice V- Sumario de observacoes multiplas do Instrumento de Identificacao da Participacao Ocupacional do Modelo de Ocupacao Humana- MOHOST Br.pdf', '1770664062917-Apendice_V__Sumario_de_observacoes_multiplas_do_Instrumento_de_Identificacao_da_Participacao_Ocupacional_do_Modelo_de_Ocupacao_Humana__MOHOST_Br.pdf', 'application/pdf', 'Todas', 3, 'PB', 0, 0, '', '2026-02-09 16:06:00', 0, 'impresso', '2026-02-09 19:07:42', 0, 0),
+(202, 41, NULL, 'Bobbie goods.pdf', '1770667124210-Bobbie_goods.pdf', 'application/pdf', 'todas', 1, 'PB', 0, 0, '', '2026-02-10 08:40:00', 0, 'impresso', '2026-02-09 19:58:44', 0, 0),
+(203, 55, NULL, 'Laudo Lucas Saraiva Silva  - 8  anos.docx (1).pdf', '1770668296034-Laudo_Lucas_Saraiva_Silva____8__anos.docx__1_.pdf', 'application/pdf', 'última', 1, 'Colorida', 0, 0, '', NULL, 0, 'impresso', '2026-02-09 20:18:16', 0, 0),
+(204, 55, NULL, 'Laudo Lucas Saraiva Silva  - 8  anos.docx (2).pdf', '1770668354856-Laudo_Lucas_Saraiva_Silva____8__anos.docx__2_.pdf', 'application/pdf', 'última', 1, 'Colorida', 0, 0, '', NULL, 0, 'impresso', '2026-02-09 20:19:14', 0, 0),
+(205, 33, NULL, 'ATIVIDADES DE CARNAVAL .pdf', '1770722082083-ATIVIDADES_DE_CARNAVAL_.pdf', 'application/pdf', '4-16', 1, 'Colorida', 0, 0, 'Só frente. Das páginas 15 e 16 (imprimir 6 cópias de cada) obrigada', '2026-02-10 08:11:00', 0, 'impresso', '2026-02-10 11:14:42', 0, 0),
+(206, 38, NULL, 'desenhos&colorir  TRENS.pdf;desenhos&colorir  TRENS.pdf', '1770722881655-desenhos_colorir__TRENS.pdf;1770722882037-desenhos_colorir__TRENS.pdf', 'Múltiplos PDFs', 'Todas', 3, 'PB', 0, 0, 'frente', '2026-02-10 08:27:00', 0, 'impresso', '2026-02-10 11:28:02', 0, 0),
+(207, 40, NULL, 'LAUDO PSICOLÃGICO.pdf', '1770728496728-LAUDO_PSICOL__GICO.pdf', 'application/pdf', 'Todas', 1, 'PB', 0, 0, '', '2026-02-10 10:01:00', 0, 'impresso', '2026-02-10 13:01:36', 0, 0),
+(208, 70, NULL, 'Maria_Esther_devoljan26_assinado_260210_153302.pdf', '1770748429148-Maria_Esther_devoljan26_assinado_260210_153302.pdf', 'applicati
+
+
+--- MATCH 6 ---
+1, 'PB', 0, 0, '', '2026-03-02 09:39:00', 0, 'impresso', '2026-03-02 12:39:38', 4, 4);
+INSERT INTO ` [ neuroprint_jobs ] ` (`id`, `user_id`, `sector`, `file_name`, `file_path`, `file_type`, `page_range`, `copies`, `color_mode`, `is_duplex`, `two_per_page`, `observacao`, `deadline`, `is_urgent`, `status`, `created_at`, `total_pages`, `total_printed`) VALUES
+(404, 70, NULL, 'Alimentacao SINAIS DE RISCO EM RELAÃÃO Ã MODULAÃÃO SENSORIAL.pdf', '1772457468897-Alimentacao_SINAIS_DE_RISCO_EM_RELA____O____MODULA____O_SENSORIAL.pdf', 'application/pdf', 'Todas', 1, 'PB', 0, 0, 'frente e verso', '2026-03-02 11:20:00', 1, 'impresso', '2026-03-02 13:17:48', 9, 9),
+(405, 79, NULL, '1772457945088-Design_sem_nome__38_.pdf', '1772459042002-1772457945088_Design_sem_nome__38_.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, '', '2026-03-02 14:30:00', 0, 'impresso', '2026-03-02 13:44:02', 8, 8),
+(406, 31, NULL, '_2026- RelatÃ³rio de evoluÃ§Ã£o - Ravy Martins dos Santos Batista.docx.pdf', '1772461260483-_2026__Relat__rio_de_evolu____o___Ravy_Martins_dos_Santos_Batista.docx.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, 'Termo de recebimento', '2026-03-02 14:00:00', 0, 'impresso', '2026-03-02 14:21:09', 6, 6),
+(407, 31, NULL, '_2026- RelatÃ³rio de evoluÃ§Ã£o - Ravy Martins dos Santos Batista.docx.pdf', '1772461269122-_2026__Relat__rio_de_evolu____o___Ravy_Martins_dos_Santos_Batista.docx.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, 'Termo de recebimento', '2026-03-02 14:00:00', 0, 'impresso', '2026-03-02 14:21:11', 6, 6),
+(408, 30, NULL, 'R. Jorge Emmanoel.pdf', '1772463097953-R._Jorge_Emmanoel.pdf', 'application/pdf', 'todas', 1, 'Colorida', 0, 0, '', NULL, 0, 'impresso', '2026-03-02 14:51:38', 3, 3),
+(409, 31, NULL, '03. RelatÃ³rio de evoluÃ§Ã£o  -2026 - Maria Valadares.docx.pdf', '1772463364617-03._Relat__rio_de_evolu____o___2026___Maria_Valadares.docx.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, 'Termo de recebimento, apenas 1 copia do documento', '2026-03-02 15:00:00', 0, 'impresso', '2026-03-02 14:56:13', 6, 6),
+(410, 66, NULL, 'EmoÃ§Ãµes de um garoto em ilustraÃ§Ãµes.pdf', '1772469876298-Emo____es_de_um_garoto_em_ilustra____es.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, '', '2026-03-02 13:44:00', 0, 'impresso', '2026-03-02 16:44:36', 1, 1),
+(411, 103, NULL, 'Design sem nome.pdf', '1772470253356-Design_sem_nome.pdf', 'application/pdf', 'Todas', 1, 'PB', 0, 0, '', '2026-03-02 15:00:00', 0, 'impresso', '2026-03-02 16:50:53', 1, 1),
+(412, 96, NULL, 'Papel decorado desenho infantil documento A4.pdf', '1772472560909-Papel_decorado_desenho_infantil_documento_A4.pdf', 'application/pdf', 'todas', 2, 'Colorida', 0, 0, '', '2026-03-02 15:20:00', 0, 'impresso', '2026-03-02 17:29:21', 4, 8),
+(413, 31, NULL, 'Atual Anamnese ABA.pdf', '1772473670702-Atual_Anamnese_ABA.pdf', 'application/pdf', 'Todas', 1, 'PB', 0, 0, 'Frente e verso ', '2026-03-02 16:00:00', 0, 'impresso', '2026-03-02 17:47:50', 4, 4),
+(414, 63, NULL, 'Atividades Agata (1).pdf', '1772473990305-Atividades_Agata__1_.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, '', '2026-03-
+
+
+--- MATCH 7 ---
+lorida', 0, 0, '', '2026-03-13 17:27:00', 0, 'impresso', '2026-03-13 20:27:24', 1, 1);
+INSERT INTO ` [ neuroprint_jobs ] ` (`id`, `user_id`, `sector`, `file_name`, `file_path`, `file_type`, `page_range`, `copies`, `color_mode`, `is_duplex`, `two_per_page`, `observacao`, `deadline`, `is_urgent`, `status`, `created_at`, `total_pages`, `total_printed`) VALUES
+(616, 72, NULL, 'Roteiro de vÃ­deo ABA.pdf', '1773681345801-Roteiro_de_v__deo_ABA.pdf', 'application/pdf', 'Todas', 1, 'PB', 0, 0, '', '2026-03-16 14:15:00', 0, 'impresso', '2026-03-16 17:16:22', 1, 1),
+(617, 72, NULL, 'Roteiro de vÃ­deo ABA.pdf', '1773681387577-Roteiro_de_v__deo_ABA.pdf', 'application/pdf', 'Todas', 1, 'PB', 0, 0, '', '2026-03-16 14:15:00', 0, '', '2026-03-16 17:16:54', 1, 1),
+(618, 38, NULL, 'Encaminhamento - Luiz BrandÃ£o.pdf', '1773683710484-Encaminhamento___Luiz_Brand__o.pdf', 'application/pdf', 'Todas', 1, 'PB', 0, 0, '', NULL, 0, 'impresso', '2026-03-16 17:55:10', 2, 2),
+(619, 30, NULL, 'IMG_0265.pdf', '1773684434332-IMG_0265.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, '', NULL, 0, 'impresso', '2026-03-16 18:07:14', 3, 3),
+(620, 73, NULL, 'Modelo autorizaÃ§Ã£o hora extra.pdf', '1773687990035-Modelo_autoriza____o_hora_extra.pdf', 'application/pdf', 'Todas', 1, 'PB', 0, 0, '', '2026-03-16 16:06:00', 0, 'impresso', '2026-03-16 19:06:30', 1, 1),
+(621, 108, NULL, 'IdentificaÃ§Ã£o de NÃºmeros 0 a 20 .pdf', '1773691055815-Identifica____o_de_N__meros_0_a_20_.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, '', '2026-03-16 16:57:00', 0, 'impresso', '2026-03-16 19:57:48', 1, 1),
+(622, 9, NULL, '1773692324272-Ch___de_Camomila__1_.pdf', '1773692649179-1773692324272_Ch___de_Camomila__1_.pdf', 'application/pdf', '1,2', 1, 'Colorida', 1, 0, 'PAPEL ESPECIAL PARA CONVITE', '2026-03-16 18:00:00', 1, 'impresso', '2026-03-16 20:24:09', 2, 1),
+(623, 92, NULL, 'relatÃ³rio_jorge_16.03.pdf', '1773692912549-relat__rio_jorge_16.03.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, '', '2026-03-16 17:28:00', 0, 'impresso', '2026-03-16 20:28:33', 4, 4),
+(624, 46, NULL, 'CamScanner 20-01-2026 09.16.pdf;AV0016-sudoku-para-ninos-edufichas.pdf', '1773747195027-CamScanner_20_01_2026_09.16.pdf;1773747197689-AV0016_sudoku_para_ninos_edufichas.pdf', 'Múltiplos PDFs', 'Todas', 1, 'Colorida', 0, 0, '', '2026-03-17 08:33:00', 0, 'impresso', '2026-03-17 11:33:18', 28, 28),
+(625, 45, NULL, 'Mosaico, labirinto e caÃ§a .pdf', '1773747444004-Mosaico__labirinto_e_ca__a_.pdf', 'application/pdf', 'Todas', 4, 'Colorida', 0, 0, '', '2026-03-17 08:40:00', 0, 'impresso', '2026-03-17 11:37:24', 13, 52),
+(626, 12, NULL, 'MarÃ§o - RelatÃ³rio de EvoluÃ§Ã£o - JosÃ© Henrique Sampaio Rodrigues.pdf', '1773747486619-Mar__o___Relat__rio_de_Evolu____o___Jos___Henrique_Sampaio_Rodrigues.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, 'RELATÓRIO', '2026-03-17 09:20:00', 0, 'impresso', '2026-03-17 11:38:06', 6, 6),
+(627, 46, NULL, 'SUDOKU.pdf;CamScanner 20-01-2026 09.16.pdf', '1773748623030-SUDOKU.pdf;1773748629903-CamScanner_20_01_2026_09.16.pdf', 'Múltiplos PDFs', 'Todas', 1, 'PB', 0, 0, 'O Sudoku é colorido, o outro arquiv
+
+
+--- MATCH 8 ---
+, 'Encadernação', '2026-04-02 14:43:00', 0, 'cancelado', '2026-04-02 17:44:05', 1, 1);
+INSERT INTO ` [ neuroprint_jobs ] ` (`id`, `user_id`, `sector`, `file_name`, `file_path`, `file_type`, `page_range`, `copies`, `color_mode`, `is_duplex`, `two_per_page`, `observacao`, `deadline`, `is_urgent`, `status`, `created_at`, `total_pages`, `total_printed`) VALUES
+(829, 23, 'Outros', '1775063041709-Design_sem_nome__51_.pdf', '1775151810763-1775063041709_Design_sem_nome__51_.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, 'Encadernação', '2026-04-02 14:43:00', 0, 'cancelado', '2026-04-02 17:44:06', 1, 1),
+(830, 63, 'Equipe ABA', 'CÃ³pia de A4 -fazer cÃ³pia.pdf', '1775153212148-C__pia_de_A4__fazer_c__pia.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, '', '2026-04-02 15:06:00', 0, 'impresso', '2026-04-02 18:06:52', 1, 1),
+(831, 28, 'Equipe ABA', 'Problemas Ã³bvios  (1).pdf', '1775155426668-Problemas___bvios___1_.pdf', 'application/pdf', 'Todas!', 1, 'PB', 0, 0, '', '2026-04-02 16:00:00', 0, 'impresso', '2026-04-02 18:43:46', 2, 2),
+(832, 92, 'Terapia Ocupacional', 'relatÃ³rio_bernardo melo ramos_02.04_final.pdf', '1775158098147-relat__rio_bernardo_melo_ramos_02.04_final.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, '', '2026-04-02 16:28:00', 0, 'impresso', '2026-04-02 19:28:18', 4, 4),
+(833, 92, 'Terapia Ocupacional', 'relatÃ³rio_caetano_02.04.26_alta.pdf', '1775159987186-relat__rio_caetano_02.04.26_alta.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, '', '2026-04-02 16:59:00', 0, 'impresso', '2026-04-02 19:59:47', 4, 4),
+(834, 50, 'Neuropsicopedagogia', 'SiÌlabas Complexas Rerida Maria (2).pdf', '1775476241922-Si__labas_Complexas_Rerida_Maria__2_.pdf', 'application/pdf', '33-41', 1, 'Colorida', 0, 1, 'das pags 33 a 41, dois por folha, colorido.', '2026-04-06 09:10:00', 1, 'impresso', '2026-04-06 11:50:43', 79, 5),
+(835, 45, 'Psicomotricidade', 'Lista Convenio.pdf', '1775482684642-Lista_Convenio.pdf', 'application/pdf', 'Todas', 1, 'PB', 1, 0, '', '2026-04-06 10:40:00', 0, 'impresso', '2026-04-06 13:38:05', 2, 1),
+(836, 65, 'Equipe ABA', 'Termo de esclarecimento JosÃ© Matheus .docx.pdf', '1775482943988-Termo_de_esclarecimento_Jos___Matheus_.docx.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, 'Só frente! ', '2026-04-06 10:41:00', 0, 'cancelado', '2026-04-06 13:42:24', 2, 2),
+(837, 38, 'Fonoterapia', '1775477314082-Ana_Julia_Loubach_Relatorio de acompanhamento  FonoaudiolÃ³gico.pdf', '1775484112887-1775477314082_Ana_Julia_Loubach_Relatorio_de_acompanhamento__Fonoaudiol__gico.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 0, 0, 'É um relatorio preciso entregar', '2026-04-06 11:01:00', 1, 'impresso', '2026-04-06 14:01:56', 2, 2),
+(838, 67, 'Equipe ABA', 'Homem aranha.pdf', '1775485093147-Homem_aranha.pdf', 'application/pdf', 'Todas ', 1, 'PB', 0, 0, '', '2026-04-06 14:00:00', 0, 'cancelado', '2026-04-06 14:18:13', 1, 1),
+(839, 55, 'Psicologia', 'RelatÃ³rio pedagÃ³gico Ana Paula.docx (3).pdf', '1775561502548-Relat__rio_pedag__gico_Ana_Paula.docx__3_.pdf', 'application/pdf', 'Todas', 1, 'Colorida', 1, 0, '', '2026-04-07 08:40:00', 1, 'impre
+
+
+--- MATCH 9 ---
+rint_admins`
+--
+ALTER TABLE `neuroprint_admins`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela ` [ neuroprint_jobs ] `
+--
+ALTER TABLE `
+
+
+--- MATCH 10 ---
+`
+--
+ALTER TABLE ` [ neuroprint_jobs ] `
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_created_at` (`created_at`),
+  ADD KEY `idx_user_id` (`user_id`);
+
+--
+-- Índices de tabela `ouvidoria_reclamacoes`
+--
+ALTER TABLE `ouvidoria_reclamacoes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `usuario_id` (`usuario_id`);
+
+--
+-- Índices de tabela `requisicoes`
+--
+ALTER TABLE `requisicoes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_req_user` (`usuario_id`);
+
+--
+-- Índices de tabela `rh_admins`
+--
+ALTER TABLE `rh_admins`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_user_admin` (`user_id`);
+
+--
+-- Índices de tabela `rh_arquivos`
+--
+ALTER TABLE `rh_arquivos`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `rh_solicitacoes`
+--
+ALTER TABLE `rh_solicitacoes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_usuario_solicitacao` (`usuario_id`);
+
+--
+-- Índices de tabela `rooms`
+--
+ALTER TABLE `rooms`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `schema_migrations`
+--
+ALTER TABLE `schema_migrations`
+  ADD PRIMARY KEY (`version`);
+
+--
+-- Índices de tabela `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `username` (`username`);
+
+--
+-- Índices de tabela `user_restrictions`
+--
+ALTER TABLE `user_restrictions`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `visibility_rules`
+--
+ALTER TABLE `visibility_rules`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- AUTO_INCREMENT para tabelas despejadas
+--
+
+--
+-- AUTO_INCREMENT de tabela `bookings`
+--
+ALTER TABLE `bookings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=271;
+
+--
+-- AUTO_INCREMENT de tabela `cars`
+--
+ALTER TABLE `cars`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de tabela `car_trips`
+--
+ALTER TABLE `car_trips`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=120;
+
+--
+-- AUTO_INCREMENT de tabela `groups`
+--
+ALTER TABLE `groups`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+
+--
+-- AUTO_INCREMENT de tabela `group_members`
+--
+ALTER TABLE `group_members`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2491;
+
+--
+-- AUTO_INCREMENT de tabela `marketing_requests`
+--
+ALTER TABLE `marketing_requests`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=90;
+
+--
+-- AUTO_INCREMENT de tabela `messages`
+--
+ALTER TABLE `messages`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65189;
+
+--
+-- AUTO_INCREMENT de tabela `message_reactions`
+--
+ALTER TABLE `message_reactions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3272;
+
+--
+-- AUTO_INCREMENT de tabela `nc_movimentacao_itens`
+--
+ALTER TABLE `nc_movimentacao_itens`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=94;
+
+--
+-- AUTO_INCREMENT de tabela `nc_movimentacoes`
+--
+ALTER TABLE `nc_movimentacoes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=94;
+
+--
+-- AUTO_INCREMENT de tabela `nc_produtos`
+--
+ALTER TABLE `nc_produtos`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+
+--
+-- AUTO_INCREMENT de tabela `neurop
+
+
+--- MATCH 11 ---
+`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT de tabela ` [ neuroprint_jobs ] `
+--
+ALTER TABLE `
+
+
+--- MATCH 12 ---
+`
+--
+ALTER TABLE ` [ neuroprint_jobs ] `
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=941;
+
+--
+-- AUTO_INCREMENT de tabela `ouvidoria_reclamacoes`
+--
+ALTER TABLE `ouvidoria_reclamacoes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT de tabela `requisicoes`
+--
+ALTER TABLE `requisicoes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+
+--
+-- AUTO_INCREMENT de tabela `rh_admins`
+--
+ALTER TABLE `rh_admins`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT de tabela `rh_arquivos`
+--
+ALTER TABLE `rh_arquivos`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT de tabela `rh_solicitacoes`
+--
+ALTER TABLE `rh_solicitacoes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+
+--
+-- AUTO_INCREMENT de tabela `rooms`
+--
+ALTER TABLE `rooms`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT de tabela `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=120;
+
+--
+-- AUTO_INCREMENT de tabela `user_restrictions`
+--
+ALTER TABLE `user_restrictions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de tabela `visibility_rules`
+--
+ALTER TABLE `visibility_rules`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Restrições para tabelas despejadas
+--
+
+--
+-- Restrições para tabelas `admins_financeiro`
+--
+ALTER TABLE `admins_financeiro`
+  ADD CONSTRAINT `fk_admin_user` FOREIGN KEY (`usuario_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `bookings`
+--
+ALTER TABLE `bookings`
+  ADD CONSTRAINT `bookings_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`),
+  ADD CONSTRAINT `bookings_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `car_trips`
+--
+ALTER TABLE `car_trips`
+  ADD CONSTRAINT `car_trips_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+--
+-- Restrições para tabelas `group_members`
+--
+ALTER TABLE `group_members`
+  ADD CONSTRAINT `group_members_ibfk_1` FOREIGN KEY (`group_id`) REFERENCES `groups` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `group_members_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `messages`
+--
+ALTER TABLE `messages`
+  ADD CONSTRAINT `messages_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `message_reactions`
+--
+ALTER TABLE `message_reactions`
+  ADD CONSTRAINT `message_reactions_ibfk_1` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `nc_movimentacao_itens`
+--
+ALTER TABLE `nc_movimentacao_itens`
+  ADD CONSTRAINT `nc_movimentacao_itens_ibfk_1` FOREIGN KEY (`movimentacao_id`) REFERENCES `nc_movimentacoes` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `nc_movimentacao_itens_ibfk_2` FOREIGN KEY (`produto_id`) REFERENCES `nc_produtos` (`id`) 

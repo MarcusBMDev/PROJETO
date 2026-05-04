@@ -5,6 +5,8 @@ const fs = require('fs').promises;
 const path = require('path');
 const sectorsQuotas = require('../config/quotas');
 
+const GLOBAL_LIMIT = 1000;
+
 function countPagesInRange(rangeStr, totalPages) {
     if (!rangeStr || rangeStr.toLowerCase().trim() === 'todas' || rangeStr.trim() === '') {
         return totalPages;
@@ -21,6 +23,7 @@ function countPagesInRange(rangeStr, totalPages) {
 
         const parts = normalized.split(',').map(p => p.trim()).filter(p => p !== '');
         let count = 0;
+        let hadValidPart = false;
         
         for (const part of parts) {
             if (part.includes('-')) {
@@ -32,6 +35,7 @@ function countPagesInRange(rangeStr, totalPages) {
                     const end = parseInt(endStr);
                     
                     if (!isNaN(start) && !isNaN(end)) {
+                        hadValidPart = true;
                         const s = Math.max(1, start);
                         const e = Math.min(totalPages, end);
                         if (e >= s) {
@@ -41,13 +45,20 @@ function countPagesInRange(rangeStr, totalPages) {
                 }
             } else {
                 const pageNum = parseInt(part);
-                if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
-                    count += 1;
+                if (!isNaN(pageNum)) {
+                    hadValidPart = true;
+                    if (pageNum >= 1 && pageNum <= totalPages) {
+                        count += 1;
+                    }
                 }
             }
         }
         
-        return count > 0 ? count : totalPages;
+        // Se o usuário digitou algo mas não conseguimos extrair nada válido (ex: "abc"), 
+        // ou se todas as páginas estão fora do range do arquivo,
+        // retornamos 0 para evitar carregar o arquivo inteiro na cota indevidamente.
+        // Se nada for detectado como range (hadValidPart false), aí sim voltamos pro total.
+        return hadValidPart ? count : totalPages;
     } catch (e) {
         console.error("Erro ao processar range de páginas:", e);
         return totalPages;
@@ -70,7 +81,25 @@ async function calculateSectorConsumption(sector, connection) {
     `;
 
     const [rows] = await connection.execute(sql, [sector, year, month]);
-    return rows[0].used || 0;
+    return parseInt(rows[0].used) || 0;
+}
+
+// Helper para calcular o consumo TOTAL da clínica no mês
+async function calculateGlobalConsumption(connection) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+
+    const sql = `
+        SELECT SUM(total_printed) as used 
+        FROM neuroprint_jobs 
+        WHERE status NOT IN ('cancelado')
+        AND YEAR(created_at) = ? 
+        AND MONTH(created_at) = ?
+    `;
+
+    const [rows] = await connection.execute(sql, [year, month]);
+    return parseInt(rows[0].used) || 0;
 }
 
 module.exports = {
@@ -85,10 +114,22 @@ module.exports = {
                 return res.status(400).json({ error: 'Erro: Nenhum PDF enviado.' });
             }
 
-            // --- CONTAGEM DE PÁGINAS ---
-            let totalPages = 0;
-            let totalPrinted = 0;
+            let totalPagesRaw = 0;
+            let totalPagesAfterRange = 0;
+            let totalImpressosFinal = 0;
             const uploadFolder = path.resolve(__dirname, '..', '..', 'storage', 'uploads');
+
+            console.log(`[NeuroPrint] Iniciando cálculo de cota para usuário ${user_id} e setor ${sector}`);
+            console.log(`[NeuroPrint] Body recebido:`, { copies, is_duplex, two_per_page, page_range });
+
+            // Lógica de contagem de folhas:
+            // Verificação robusta de booleanos vindos do FormData (que manda 'on' ou nada)
+            const isDuplexTrue = is_duplex === 'on' || is_duplex === 'true' || is_duplex === true || is_duplex === 1 || is_duplex === '1';
+            const twoPerPageTrue = two_per_page === 'on' || two_per_page === 'true' || two_per_page === true || two_per_page === 1 || two_per_page === '1';
+            const isUrgentTrue = is_urgent === 'on' || is_urgent === 'true' || is_urgent === true || is_urgent === 1 || is_urgent === '1';
+            const numCopies = parseInt(copies) || 1;
+
+            console.log(`[NeuroPrint] Bools identificados: Duplex=${isDuplexTrue}, 2Pág=${twoPerPageTrue}, Urgente=${isUrgentTrue}`);
 
             for (const file of files) {
                 try {
@@ -97,57 +138,62 @@ module.exports = {
                     const pdfDoc = await PDFDocument.load(pdfBuffer, { ignoreEncryption: true });
                     const filePageCount = pdfDoc.getPageCount();
                     
-                    totalPages += filePageCount;
+                    totalPagesRaw += filePageCount;
+                    const inRange = countPagesInRange(page_range, filePageCount);
+                    totalPagesAfterRange += inRange;
+
+                    let currentFilePages = inRange;
+                    // 1. Se 2 páginas por folha, reduz a contagem de páginas para metade (lado impresso)
+                    if (twoPerPageTrue) {
+                        currentFilePages = Math.ceil(currentFilePages / 2);
+                    }
+                    // 2. Se frente e verso, reduz o número de folhas físicas para metade
+                    if (isDuplexTrue) {
+                        currentFilePages = Math.ceil(currentFilePages / 2);
+                    }
                     
-                    // Se houver multi-arquivos, aplicamos o range em cada um (padrão comum de impressão)
-                    // Ou se preferir que o range seja global, a lógica mudaria. 
-                    // Geralmente, "1-2" de 2 arquivos PDF significa páginas 1-2 de cada.
-                    totalPrinted += countPagesInRange(page_range, filePageCount);
+                    totalImpressosFinal += currentFilePages;
+
+                    console.log(`[NeuroPrint] Arquivo: ${file.originalname} | Total: ${filePageCount} | No Range: ${inRange} | Impressos/Arquivo: ${currentFilePages}`);
                 } catch (pdfError) {
                     console.error(`Erro ao contar páginas do arquivo ${file.originalname}:`, pdfError);
                 }
             }
-
-            let totalImpressosFinal = totalPrinted;
             
-            // Lógica de contagem de folhas:
-            const isDuplexTrue = is_duplex === 'on' || is_duplex === 'true' || is_duplex === true || is_duplex === 1;
-            const twoPerPageTrue = two_per_page === 'on' || two_per_page === 'true' || two_per_page === true || two_per_page === 1;
-            const isUrgentTrue = is_urgent === 'on' || is_urgent === 'true' || is_urgent === true || is_urgent === 1;
-
-            // 1. Se 2 páginas por folha, divide por 2
-            if (twoPerPageTrue) {
-                totalImpressosFinal = Math.ceil(totalImpressosFinal / 2);
-            }
-
-            // 2. Se frente e verso, divide por 2
-            if (isDuplexTrue) {
-                totalImpressosFinal = Math.ceil(totalImpressosFinal / 2);
-            }
-
             // 3. Multiplica pelas cópias
-            totalImpressosFinal = totalImpressosFinal * (parseInt(copies) || 1);
+            totalImpressosFinal = totalImpressosFinal * numCopies;
+
+            console.log(`[NeuroPrint] Resultado Final: Raw=${totalPagesRaw}, ApósRange=${totalPagesAfterRange}, Final=${totalImpressosFinal} (x${numCopies} cópias)`);
             // ---------------------------
 
             // --- VALIDAÇÃO DE COTA ---
             if (sector) {
+                // 1. Busca se o usuário é administrador
+                const [userRows] = await connection.execute('SELECT is_super_admin FROM users WHERE id = ?', [user_id]);
+                const [adminRows] = await connection.execute('SELECT id FROM neuroprint_admins WHERE user_id = ?', [user_id]);
+                const isAdmin = (userRows.length > 0 && userRows[0].is_super_admin === 1) || adminRows.length > 0;
+
+                // 2. Validação Global (1000 páginas)
+                const globalUsed = await calculateGlobalConsumption(connection);
+                if (!isAdmin && (globalUsed + totalImpressosFinal) > GLOBAL_LIMIT) {
+                    return res.status(403).json({ 
+                        error: `🚫 Limite global de impressões atingido (${GLOBAL_LIMIT} páginas).`,
+                        detail: `A clínica já utilizou ${globalUsed} de ${GLOBAL_LIMIT} páginas este mês. Este pedido de ${totalImpressosFinal} páginas ultrapassaria o limite. Por favor, informe a Aurélia.`
+                    });
+                }
+
+                // 3. Validação por Setor (opcional, mantida para controle interno)
                 const used = await calculateSectorConsumption(sector, connection);
                 const limit = sectorsQuotas[sector];
 
-                // Regra: Bloqueia apenas se tiver limite definido E não for administrador
-                if (limit) {
-                    // Busca se o usuário é administrador
-                    const [userRows] = await connection.execute('SELECT is_super_admin FROM users WHERE id = ?', [user_id]);
-                    const [adminRows] = await connection.execute('SELECT id FROM neuroprint_admins WHERE user_id = ?', [user_id]);
-                    const isAdmin = (userRows.length > 0 && userRows[0].is_super_admin === 1) || adminRows.length > 0;
-
-                    if (!isAdmin && (used + totalImpressosFinal) > limit) {
-                        return res.status(403).json({ 
-                            error: `🚫 Cota excedida para o setor "${sector}".`,
-                            detail: `O setor já utilizou ${used} de ${limit} páginas. Este pedido de ${totalImpressosFinal} páginas ultrapassaria o limite mensal.`
-                        });
-                    }
+                if (limit && !isAdmin && (used + totalImpressosFinal) > limit) {
+                    return res.status(403).json({ 
+                        error: `🚫 Cota excedida para o setor "${sector}".`,
+                        detail: `O setor já utilizou ${used} de ${limit} páginas. Este pedido de ${totalImpressosFinal} páginas ultrapassaria o limite mensal.`
+                    });
                 }
+            } else {
+                return res.status(400).json({ error: '📍 Por favor, selecione um setor antes de imprimir.' });
             }
             // ---------------------------
 
@@ -166,14 +212,14 @@ module.exports = {
 
             await connection.execute(sql, [
                 user_id, sector, fileNames, filePaths, tipoArquivo, page_range || 'Todas',
-                copies || 1, color_mode || 'PB', 
+                numCopies, color_mode || 'PB', 
                 (isDuplexTrue ? 1 : 0),
                 (twoPerPageTrue ? 1 : 0),
                 dataPrazo, (isUrgentTrue ? 1 : 0), observacao || '',
-                totalPages, totalImpressosFinal
+                totalPagesRaw, totalImpressosFinal
             ]);
 
-            return res.status(201).json({ message: 'Solicitação enviada com sucesso!', total_pages: totalPages, total_printed: totalImpressosFinal });
+            return res.status(201).json({ message: 'Solicitação enviada com sucesso!', total_pages: totalPagesRaw, total_printed: totalImpressosFinal });
 
         } catch (error) {
             console.error('Erro ao salvar pedido:', error);
@@ -342,13 +388,13 @@ module.exports = {
                 FROM neuroprint_jobs j JOIN users u ON j.user_id = u.id ${filterSql} GROUP BY u.username ORDER BY total DESC LIMIT 5
             `, params);
 
-            // COTA MENSAL (Soma tudo que foi impresso ou está em andamento)
+            // COTA MENSAL (Soma tudo que foi impresso, está em andamento ou pendente)
             // Nota: Para a cota, talvez faça sentido não filtrar por data para manter o acumulado do mês, 
             // mas aqui vamos permitir filtrar se o usuário quiser ver o consumo do período selecionado.
             const [cota] = await connection.execute(`
                 SELECT SUM(total_printed) as total_geral 
                 FROM neuroprint_jobs j
-                ${filterSql} ${filterSql.includes('status') ? '' : " AND j.status IN ('impresso', 'em_andamento')"}
+                ${filterSql} ${filterSql.includes('status') ? '' : " AND j.status NOT IN ('cancelado')"}
             `, params);
 
             return res.json({ 
@@ -450,5 +496,21 @@ module.exports = {
         } finally {
             connection.release();
         }
-    }
+    },
+
+    // 8. CONSULTAR STATUS GLOBAL (PÚBLICO)
+    async getGlobalQuota(req, res) {
+        const connection = await pool.getConnection();
+        try {
+            const used = await calculateGlobalConsumption(connection);
+            return res.json({ used, limit: GLOBAL_LIMIT });
+        } catch (error) {
+            console.error('Erro em getGlobalQuota:', error);
+            return res.status(500).json({ error: 'Erro ao consultar cota global.' });
+        } finally {
+            connection.release();
+        }
+    },
+    // Export para testes
+    countPagesInRange
 };

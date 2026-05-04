@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel NeuroABA - Premium</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Variáveis de Cores Premium */
+        :root {
+            --cor-primaria: #2563eb;
+            --cor-secundaria: #f8fafc;
+            --cor-texto: #1e293b;
+            --cor-borda: #e2e8f0;
+            --cor-sucesso: #10b981;
+            --cor-perigo: #ef4444;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: var(--cor-texto); }
+        
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        
+        .cabecalho { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cor-borda); padding-bottom: 15px; margin-bottom: 30px; }
+        .cabecalho h2 { margin: 0; color: var(--cor-primaria); font-size: 24px; }
+        
+        .btn-sair { background-color: var(--cor-perigo); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+        .btn-sair:hover { background-color: #dc2626; }
+
+        .form-row { display: flex; gap: 20px; margin-bottom: 20px; }
+        .form-group { flex: 1; }
+        label { font-weight: 600; display: block; margin-bottom: 8px; font-size: 14px; }
+        
+        select, input[type="date"], input[type="text"], textarea { 
+            width: 100%; padding: 10px; border: 1px solid var(--cor-borda); border-radius: 6px; 
+            font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: 0.2s;
+        }
+        select:focus, input:focus, textarea:focus { border-color: var(--cor-primaria); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+
+        /* Estilização da Tabela de Avaliações */
+        .sessao-atividade { margin-bottom: 40px; }
+        .titulo-atividade { background-color: var(--cor-primaria); color: white; padding: 10px 15px; border-radius: 6px 6px 0 0; margin: 0; font-size: 16px; }
+        
+        .tabela-wrapper { overflow-x: auto; border: 1px solid var(--cor-borda); border-top: none; border-radius: 0 0 6px 6px; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th, td { border: 1px solid var(--cor-borda); padding: 10px; text-align: center; font-size: 13px; }
+        th { background-color: var(--cor-secundaria); font-weight: 600; color: #475569; }
+        td input, td select { width: 95%; padding: 6px; font-size: 12px; }
+
+        .btn-salvar { width: 100%; padding: 16px; background-color: var(--cor-sucesso); color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: 600; margin-top: 20px; transition: 0.2s; }
+        .btn-salvar:hover { background-color: #059669; }
+    </style>
+</head>
+<body>
+
+    <nav style="background-color: #1e293b; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <div style="color: white; font-weight: 700; font-size: 20px; display: flex; align-items: center; gap: 10px;">
+                ✨ NeuroABA
+            </div>
+            <div style="display: flex; gap: 20px; align-items: center;">
+                <a href="index.html" style="color: #cbd5e1; text-decoration: none; font-weight: 500; transition: 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#cbd5e1'">Nova Avaliação</a>
+                
+                <a href="dashboard.html" style="color: #cbd5e1; text-decoration: none; font-weight: 500; transition: 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#cbd5e1'">Curva ABA</a>
+                
+                <a href="historico.html" style="color: #cbd5e1; text-decoration: none; font-weight: 500; transition: 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#cbd5e1'">Histórico</a>
+                
+                <button onclick="sair()" style="background-color: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: 15px;">Sair</button>
+            </div>
+        </nav>
+
+        <form id="formSessao">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="paciente">Paciente em Atendimento:</label>
+                    <select id="paciente" required>
+                        <option value="">Carregando pacientes...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="dataSessao">Data da Sessão:</label>
+                    <input type="date" id="dataSessao" required>
+                </div>
+            </div>
+
+            <div id="areaTabelasDinamicas"></div>
+
+            <div class="form-group" style="margin-top: 30px;">
+                <label for="relatorio">Relatório Diário da Sessão:</label>
+                <textarea id="relatorio" rows="5" placeholder="Descreva de forma detalhada como foi a sessão de hoje..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn-salvar">Salvar Avaliação Completa no Banco de Dados</button>
+        </form>
+    </div>
+
+    <script src="js/painel.js"></script>
+</body>
+</html>

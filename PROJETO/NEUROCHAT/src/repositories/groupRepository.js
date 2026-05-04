@@ -89,6 +89,13 @@ class GroupRepository {
         await pool.execute("DELETE FROM groups WHERE id = ?", [groupId]);
     }
 
+    async updateGroupSettings(groupId, isBroadcast) {
+        await pool.execute(
+            "UPDATE groups SET is_broadcast = ? WHERE id = ?",
+            [isBroadcast ? 1 : 0, groupId]
+        );
+    }
+
     async getMessageReaders(messageId) {
         // 1. Busca timestamp da mensagem
         const [msgData] = await pool.execute("SELECT timestamp, target_id FROM messages WHERE id = ?", [messageId]);

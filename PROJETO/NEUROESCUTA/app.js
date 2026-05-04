@@ -30,5 +30,5 @@ app.use('/', routes);
 // 6. Iniciar Servidor
 const PORT = 3010; // Porta diferente do RH (3008) e NeuroChat (3000)
 app.listen(PORT, () => {
-    console.log(`📢 CANAL DE ATENDIMENTO rodando em: http://localhost:${PORT}`);
+    console.log(`📢 CANAL DE ATENDIMENTO rodando em: http://192.168.10.133:${PORT}`);
 });

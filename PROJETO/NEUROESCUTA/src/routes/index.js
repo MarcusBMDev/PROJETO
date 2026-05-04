@@ -12,7 +12,7 @@ function checkLogin(req, res, next) {
 }
 
 // LISTA DE ADMINS (IDs dos usuários que podem ver o painel)
-const ADMIN_IDS = [1]; // Adicione aqui os IDs dos responsáveis (ex: [1, 5, 10])
+const ADMIN_IDS = [1, 114]; // Adicione aqui os IDs dos responsáveis (ex: [1, 5, 10])
 
 // Middleware de Verificação de Permissão (Admin ou Responsável)
 function checkPermission(req, res, next) {
@@ -30,6 +30,10 @@ function checkPermission(req, res, next) {
     if (complainId) {
         const db = require('../config/db'); 
         db.query('SELECT responsavel_id FROM ouvidoria_reclamacoes WHERE id = ?', [complainId], (err, results) => {
+            if (err) {
+                console.error('Erro ao verificar permissão:', err);
+                return res.redirect('/nova?msg=Erro de sistema');
+            }
             if (results && results.length > 0) {
                 if (results[0].responsavel_id === req.session.user.id) {
                     req.session.isAdmin = false; 
@@ -61,15 +65,24 @@ router.get('/login', (req, res) => res.render('login', { msg: null }));
 router.post('/login', (req, res) => {
     const { username, password } = req.body;
     db.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password], (err, results) => {
+        if (err) {
+            console.error('❌ Erro no Login (Banco de Dados):', err);
+            return res.render('login', { msg: 'Sistema temporariamente indisponível. Tente novamente mais tarde.' });
+        }
+
         if (results && results.length > 0) {
             req.session.user = results[0];
             // Verifica se é admin no login também para redirecionar corretamente
             if (ADMIN_IDS.includes(results[0].id)) {
                 req.session.isAdmin = true;
-                res.redirect('/');
+                req.session.save(() => {
+                    res.redirect('/');
+                });
             } else {
                 req.session.isAdmin = false;
-                res.redirect('/nova');
+                req.session.save(() => {
+                    res.redirect('/nova');
+                });
             }
         } else {
             res.render('login', { msg: 'Usuário ou senha inválidos' });

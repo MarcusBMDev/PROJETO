@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curva de Aprendizagem - NeuroABA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .cabecalho { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .controles { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        select { width: 100%; max-width: 400px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; }
+        
+        .card-grafico { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.05); margin-top: 20px; }
+        .btn-voltar { text-decoration: none; color: #2563eb; font-weight: 600; }
+        
+        /* Força o gráfico a ter uma altura boa para caber a legenda lateral */
+        .grafico-container { position: relative; height: 500px; width: 100%; } 
+    </style>
+</head>
+<body>
+
+    <nav style="background-color: #1e293b; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <div style="color: white; font-weight: 700; font-size: 20px; display: flex; align-items: center; gap: 10px;">
+                ✨ NeuroABA
+            </div>
+            <div style="display: flex; gap: 20px; align-items: center;">
+                <a href="index.html" style="color: #cbd5e1; text-decoration: none; font-weight: 500; transition: 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#cbd5e1'">Nova Avaliação</a>
+                
+                <a href="dashboard.html" style="color: #cbd5e1; text-decoration: none; font-weight: 500; transition: 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#cbd5e1'">Curva ABA</a>
+                
+                <a href="historico.html" style="color: #cbd5e1; text-decoration: none; font-weight: 500; transition: 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#cbd5e1'">Histórico</a>
+                
+                <button onclick="sair()" style="background-color: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: 15px;">Sair</button>
+            </div>
+        </nav>
+
+        <div class="controles">
+            <label for="pacienteSelect"><strong>Selecione o Paciente:</strong></label><br><br>
+            <select id="pacienteSelect">
+                <option value="">Carregando pacientes...</option>
+            </select>
+        </div>
+
+        <div id="mensagemStatus" style="color: #64748b; margin-top: 10px;">Selecione um paciente acima para visualizar os dados.</div>
+
+        <div class="card-grafico" id="areaGrafico" style="display: none;">
+            <h3 style="margin-top: 0; margin-bottom: 20px; color: #0f172a;">Evolução por Atividades e Estímulos</h3>
+            <div class="grafico-container">
+                <canvas id="graficoCurva"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

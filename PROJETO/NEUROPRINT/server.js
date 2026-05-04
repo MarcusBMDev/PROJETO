@@ -17,10 +17,7 @@ app.use(express.urlencoded({ extended: true })); // Permite receber dados de for
 // Isso permite acessar http://localhost:3006/index.html
 app.use(express.static('public'));
 
-// --- 2. Área de Downloads (A CORREÇÃO PRINCIPAL) ---
-// O frontend pede: /files/arquivo.pdf
-// O servidor entrega o que está em: C:/.../NeuroPrint/storage/uploads/arquivo.pdf
-// NOTA: Baseado no seu print do banco, os arquivos estão em 'storage/uploads'
+// --- 2. Área de Downloads (Arquivos para Visualização/Download) ---
 app.use('/files', express.static(path.join(__dirname, 'storage', 'uploads')));
 
 // --- 3. Rotas da API ---

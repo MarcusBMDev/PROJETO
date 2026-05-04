@@ -251,7 +251,14 @@ const SolicitacaoController = {
 
     // 4. DESLIGAMENTO AT (Original)
     salvarDesligamentoAT: (req, res) => {
-        const detalhes = `Desligamento AT: ${req.body.nome_at}\nPaciente: ${req.body.nome_paciente}\nData: ${req.body.data_solicitacao}`;
+        let motivosStr = Array.isArray(req.body.motivos) ? req.body.motivos.join(', ') : (req.body.motivos || 'N/A');
+        const detalhes = `Desligamento AT: ${req.body.nome_at}\n` +
+                         `Paciente: ${req.body.nome_paciente}\n` +
+                         `Solicitante: ${req.body.nome_solicitante} (${req.body.setor_cargo})\n` +
+                         `Data da Solicitação: ${req.body.data_solicitacao}\n` +
+                         `Motivos: ${motivosStr}\n` +
+                         `Desligamento Imediato: ${req.body.desligamento_imediato}\n` +
+                         `Apontamentos: ${req.body.apontamentos}`;
         const dados = { usuario_id: req.session.user.id, tipo: 'desligamento_at', data_evento: req.body.data_solicitacao, descricao: detalhes };
         RhModel.criarSolicitacao(dados, (err) => {
             SolicitacaoController.enviarNotificacoesRh(req.session.user.id, "ABA: DESLIGAMENTO", req.body.nome_at);
@@ -261,7 +268,23 @@ const SolicitacaoController = {
 
     // 5. CONTRATAÇÃO AT (Original)
     salvarContratacaoAT: (req, res) => {
-        const detalhes = `Contratação AT: ${req.body.nome_at}\nPaciente: ${req.body.nome_paciente}\nData: ${req.body.data_solicitacao}`;
+        let tipoAtendimento = Array.isArray(req.body.tipo_atendimento) ? req.body.tipo_atendimento.join(', ') : (req.body.tipo_atendimento || '');
+        let competencias = Array.isArray(req.body.competencias) ? req.body.competencias.join(', ') : (req.body.competencias || '');
+        
+        const detalhes = `Contratação AT\n` +
+                         `Paciente: ${req.body.nome_paciente}\n` +
+                         `Solicitante: ${req.body.nome_solicitante} (${req.body.setor_cargo}) - ${req.body.email}\n` +
+                         `Localização: ${req.body.localizacao_paciente}\n` +
+                         `Data Anamnese: ${req.body.data_anamnese}\n` +
+                         `Atendimento: ${tipoAtendimento} | Horário: ${req.body.horario_atendimento}\n` +
+                         `Supervisão: ${req.body.horario_supervisao}\n` +
+                         `Motivo: ${req.body.motivo_solicitacao} | Seleção: ${req.body.tipo_selecao}\n` +
+                         `Perfil Desejado: Sexo ${req.body.sexo_desejado}, Idade ${req.body.idade_desejada}\n` +
+                         `Formação: ${req.body.formacao_desejada}\n` +
+                         `Competências: ${competencias}\n` +
+                         `Perfil DISC: ${req.body.disc}\n` +
+                         `Apontamentos: ${req.body.apontamentos}`;
+
         const dados = { usuario_id: req.session.user.id, tipo: 'contratacao_at', data_evento: req.body.data_solicitacao, descricao: detalhes };
         RhModel.criarSolicitacao(dados, (err) => {
             SolicitacaoController.enviarNotificacoesRh(req.session.user.id, "ABA: CONTRATAÇÃO", req.body.nome_paciente);
@@ -272,7 +295,7 @@ const SolicitacaoController = {
     // 6. ATESTADO MÉDICO (Original)
     salvarAtestado: (req, res) => {
         if (!req.file) return res.redirect('/?erro=Anexe o arquivo do atestado.');
-        const detalhes = `Atestado Médico - Início: ${req.body.data_inicio}`;
+        const detalhes = `Atestado Médico\nInício: ${req.body.data_inicio}\nQuantidade de Dias: ${req.body.dias}`;
         const dados = { 
             usuario_id: req.session.user.id, 
             tipo: 'atestado',

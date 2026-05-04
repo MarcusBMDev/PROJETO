@@ -125,6 +125,17 @@ class GroupService {
         const io = socketStore.getIO();
         if(io) io.to('group_' + groupId).emit('group deleted');
     }
+
+    async updateGroupSettings(groupId, isBroadcast) {
+        await groupRepository.updateGroupSettings(groupId, isBroadcast);
+        const io = socketStore.getIO();
+        if(io) {
+            // Notifica todos na sala que as regras mudaram (esconder/mostrar input)
+            io.to('group_' + groupId).emit('group settings updated', { groupId, isBroadcast });
+            // Força recarregar os dados para a sidebar (mudar # para 📢)
+            io.emit('refresh data');
+        }
+    }
 }
 
 module.exports = new GroupService();

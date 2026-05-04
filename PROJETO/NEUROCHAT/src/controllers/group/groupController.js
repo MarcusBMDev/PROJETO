@@ -82,6 +82,15 @@ class GroupController {
             res.json({ success: true });
         } catch (e) { res.json({ success: false }); }
     }
+
+    async updateBroadcastMode(req, res) {
+        try {
+            const groupId = cleanId(req.body.groupId);
+            const isBroadcast = !!req.body.isBroadcast;
+            await groupService.updateGroupSettings(groupId, isBroadcast);
+            res.json({ success: true });
+        } catch (e) { res.json({ success: false }); }
+    }
 }
 
 module.exports = new GroupController();

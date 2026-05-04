@@ -22,6 +22,22 @@
             </div>
             
             <div id="welcomeMsg" class="subtitle"></div>
+            
+            <!-- BARRA DE CONSUMO GLOBAL -->
+            <div id="globalQuotaContainer" style="background: #fdf2f2; border: 1px solid #f5c6cb; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <span style="font-weight: bold; color: #721c24; font-size: 0.85rem;">📊 Consumo Global da Clínica (Mensal)</span>
+                    <span id="globalQuotaPercent" style="font-weight: bold; color: #721c24; font-size: 0.85rem;">0%</span>
+                </div>
+                <div style="background: #e9ecef; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 5px;">
+                    <div id="globalQuotaBar" style="background: #dc3545; height: 100%; width: 0%; transition: width 0.5s;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #721c24;">
+                    <span id="globalQuotaText">0 / 1000 páginas</span>
+                    <span>Limite: 1000</span>
+                </div>
+            </div>
+
             <button id="btnAdmin" class="secondary hidden" onclick="window.location.href='admin.html'">⚙️ Acessar Painel Admin</button>
             <br><br>
 
@@ -40,7 +56,6 @@
                         <option value="Musicoterapia">Musicoterapia (Cota: 50)</option>
                         <option value="Psicomotricidade">Psicomotricidade (Cota: 50)</option>
                         <option value="Coordenação">Coordenação (Cota: 50)</option>
-                        <option value="Outros">Outros (Sem Cota)</option>
                     </select>
 
                     <div id="quotaInfo" style="margin-top: 10px; padding: 10px; border-radius: 5px; display: none; font-size: 0.9rem;">
@@ -234,8 +249,10 @@
                     alert('✅ Solicitação enviada!');
                     e.target.reset();
                     loadMyRequests(); // Atualiza a lista imediatamente
+                    loadGlobalQuota(); // Atualiza a barra global
                 } else {
-                    alert('❌ Erro: ' + (result.error || 'Falha desconhecida'));
+                    const message = result.detail ? `${result.error}\n\n${result.detail}` : (result.error || 'Falha desconhecida');
+                    alert('❌ Erro: ' + message);
                 }
             } catch (error) { 
                 alert('Erro de conexão com o servidor.'); 
@@ -256,7 +273,7 @@
             const sector = e.target.value;
             const infoDiv = document.getElementById('quotaInfo');
             
-            if (!sector || sector === 'Outros') {
+            if (!sector) {
                 infoDiv.style.display = 'none';
                 return;
             }
@@ -284,7 +301,7 @@
                         <div style="background:#eee; height:8px; border-radius:4px; overflow:hidden;">
                             <div style="background:${color}; height:100%; width:${percent}%;"></div>
                         </div>
-                        ${percent >= 100 && !userData.isAdmin ? `<p style="color:#d9534f; margin-top:5px; font-weight:bold;">⚠️ Limite atingido! Apenas administradores poderão imprimir.</p>` : ''}
+                        ${percent >= 100 && !userData.isAdmin ? `<p style="color:#d9534f; margin-top:5px; font-weight:bold;">⚠️ Limite do SETOR atingido! Por favor, informe a Aurélia.</p>` : ''}
                     `;
                 } else {
                     infoDiv.style.backgroundColor = '#e2e3e5';
@@ -357,6 +374,44 @@ function addFileInput() {
     newRow.appendChild(removeBtn);
     container.appendChild(newRow);
 }
+
+// --- LÓGICA DE CONSUMO GLOBAL ---
+async function loadGlobalQuota() {
+    try {
+        const res = await fetch('/api/print/quota-global');
+        const data = await res.json();
+        
+        const percent = Math.min(100, (data.used / data.limit) * 100);
+        const bar = document.getElementById('globalQuotaBar');
+        const text = document.getElementById('globalQuotaText');
+        const percentText = document.getElementById('globalQuotaPercent');
+        const container = document.getElementById('globalQuotaContainer');
+
+        bar.style.width = `${percent}%`;
+        text.innerText = `${data.used} / ${data.limit} páginas`;
+        percentText.innerText = `${percent.toFixed(1)}%`;
+
+        if (percent >= 100) {
+            container.style.backgroundColor = '#f8d7da';
+            container.style.borderColor = '#dc3545';
+            if (!userData.isAdmin) {
+                text.innerHTML = `<strong>⚠️ LIMITE GLOBAL ATINGIDO!</strong> Informe a Aurélia.`;
+            }
+        } else if (percent > 80) {
+            container.style.backgroundColor = '#fff3cd';
+            container.style.borderColor = '#ffc107';
+        } else {
+            container.style.backgroundColor = '#e7f3ff';
+            container.style.borderColor = '#b3d7ff';
+        }
+    } catch (err) {
+        console.error("Erro ao carregar cota global:", err);
+    }
+}
+
+// Inicializa e agenda atualização da cota global
+loadGlobalQuota();
+setInterval(loadGlobalQuota, 30000); // Atualiza a cada 30 segundos
 
     </script>
 </body>

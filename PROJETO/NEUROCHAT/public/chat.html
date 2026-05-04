@@ -405,7 +405,16 @@
             </div>
         </div>
     </div>
-    <div id="settings-modal" class="modal-overlay"><div class="modal"><h3>Grupo</h3><div id="settings-members-list" class="user-select-list"></div><div id="add-member-area" style="display:none; margin-top:10px;"><select id="add-member-select" style="width:100%; padding:8px;"></select><button class="btn-create" style="width:100%; margin-top:5px;" onclick="addNewMember()">Adicionar</button></div><div class="modal-actions" style="margin-top:10px;"><button id="btn-leave" class="btn-leave-group" onclick="leaveGroup()" style="display:none">Sair</button><button id="btn-delete" class="btn-delete-group" onclick="deleteGroup()" style="display:none">Excluir</button><button class="btn-cancel" onclick="document.getElementById('settings-modal').style.display='none'">Fechar</button></div></div></div>
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal">
+            <h3>Grupo</h3>
+            <div id="broadcast-setting-area" style="display:none; padding:10px; background:#f5f5f5; border-radius:5px; margin-bottom:10px;">
+                <label style="cursor:pointer; display:flex; align-items:center; gap: 8px;">
+                    <input type="checkbox" id="toggle-broadcast" onchange="toggleBroadcastMode(this.checked)"> <b>📢 Modo Transmissão</b>
+                </label>
+                <small style="color:#666; font-size:0.75rem;">(Somente admins podem enviar mensagens)</small>
+            </div>
+            <div id="settings-members-list" class="user-select-list"></div><div id="add-member-area" style="display:none; margin-top:10px;"><select id="add-member-select" style="width:100%; padding:8px;"></select><button class="btn-create" style="width:100%; margin-top:5px;" onclick="addNewMember()">Adicionar</button></div><div class="modal-actions" style="margin-top:10px;"><button id="btn-leave" class="btn-leave-group" onclick="leaveGroup()" style="display:none">Sair</button><button id="btn-delete" class="btn-delete-group" onclick="deleteGroup()" style="display:none">Excluir</button><button class="btn-cancel" onclick="document.getElementById('settings-modal').style.display='none'">Fechar</button></div></div></div>
 
     <!-- Modais de Features (Encaminhar / Quem Viu) -->
     <link rel="stylesheet" href="css/chat_features.css">

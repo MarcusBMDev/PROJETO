@@ -40,5 +40,6 @@ router.get('/report', authAdmin, PrintController.downloadReport);
 
 // Cotas
 router.get('/quota/:sector', PrintController.getQuotaStatus);
+router.get('/quota-global', PrintController.getGlobalQuota);
 
 module.exports = router;

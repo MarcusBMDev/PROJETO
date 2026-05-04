@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - NeuroABA</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-container { background-color: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button:hover { background-color: #004494; }
+        .erro { color: red; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>Entrar no NeuroABA</h2>
+        <form id="formLogin">
+            <input type="text" id="username" placeholder="Seu usuário do Neurochat" required>
+            <input type="password" id="password" placeholder="Sua senha" required>
+            <button type="submit">Acessar Sistema</button>
+        </form>
+        <div id="mensagemErro" class="erro">Usuário ou senha incorretos!</div>
+    </div>
+
+    <script src="js/login.js"></script>
+</body>
+</html>
