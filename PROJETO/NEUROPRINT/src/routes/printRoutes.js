@@ -35,6 +35,7 @@ router.get('/my-requests', PrintController.myRequests);
 // Admin
 router.get('/jobs', authAdmin, PrintController.index);
 router.put('/jobs/:id', authAdmin, PrintController.updateStatus); 
+router.post('/manual-copy', authAdmin, PrintController.storeManualCopy);
 router.get('/stats', authAdmin, PrintController.stats);
 router.get('/report', authAdmin, PrintController.downloadReport);
 

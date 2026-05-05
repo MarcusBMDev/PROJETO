@@ -511,6 +511,54 @@ module.exports = {
             connection.release();
         }
     },
+
+    // 9. CÓPIA MANUAL (ADMIN)
+    async storeManualCopy(req, res) {
+        const connection = await pool.getConnection();
+        try {
+            const user_id = req.headers['user-id'];
+            const { sector, total_printed, observacao } = req.body;
+
+            if (!sector || !total_printed || isNaN(total_printed) || total_printed <= 0) {
+                return res.status(400).json({ error: 'Dados inválidos. Setor e quantidade são obrigatórios.' });
+            }
+
+            const totalImpressosFinal = parseInt(total_printed);
+
+            // Validação de cota
+            const globalUsed = await calculateGlobalConsumption(connection);
+            if ((globalUsed + totalImpressosFinal) > GLOBAL_LIMIT) {
+                return res.status(403).json({ error: `Limite global de impressões atingido (${GLOBAL_LIMIT}).` });
+            }
+
+            const used = await calculateSectorConsumption(sector, connection);
+            const limit = sectorsQuotas[sector];
+            if (limit && (used + totalImpressosFinal) > limit) {
+                return res.status(403).json({ error: `Cota excedida para o setor "${sector}".` });
+            }
+
+            const sql = `
+                INSERT INTO neuroprint_jobs 
+                (user_id, sector, file_name, file_path, file_type, page_range, copies, color_mode, is_duplex, two_per_page, deadline, is_urgent, observacao, status, total_pages, total_printed)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'impresso', ?, ?)
+            `;
+
+            await connection.execute(sql, [
+                user_id, sector, 'Cópia Manual', '', 'manual', 'Todas',
+                1, 'PB', 0, 0, null, 0, observacao || 'Registro manual',
+                totalImpressosFinal, totalImpressosFinal
+            ]);
+
+            return res.status(201).json({ message: 'Cópia manual registrada com sucesso!' });
+
+        } catch (error) {
+            console.error('Erro ao registrar cópia manual:', error);
+            return res.status(500).json({ error: 'Erro ao registrar cópia manual.' });
+        } finally {
+            connection.release();
+        }
+    },
+
     // Export para testes
     countPagesInRange
 };

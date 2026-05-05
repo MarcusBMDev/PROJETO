@@ -291,3 +291,98 @@ async function baixarExcel() {
         link.click();
     }
 }
+
+// --- CÓPIA MANUAL ---
+function openManualCopyModal() {
+    let modal = document.getElementById('manualCopyModal_V2');
+    if (!modal) {
+        // Injeta o HTML dinamicamente para evitar problemas de cache no HTML e conflitos de CSS
+        const modalHtml = `
+            <div id="manualCopyModal_V2" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 2147483647; justify-content: center; align-items: center; margin: 0; padding: 0;">
+                <div style="background: white; width: 400px; max-width: 90%; padding: 25px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); box-sizing: border-box; text-align: left; color: #333;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px;">
+                        <h3 style="margin: 0; font-size: 1.2rem; color: #111;"><i class="fa-solid fa-copy"></i> Registrar Cópia Manual</h3>
+                        <button onclick="closeManualCopyModal()" style="background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #aaa; line-height: 1;">&times;</button>
+                    </div>
+                    <form id="manualCopyForm_V2" style="margin: 0;">
+                        <div style="margin-bottom: 15px;">
+                            <label style="font-weight: bold; font-size: 0.95rem; margin-bottom: 5px; display: block; color: #444;">📍 Setor:</label>
+                            <select id="manualCopySector_V2" required style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.95rem; background: #fafafa; color: #000;">
+                                <option value="" disabled selected>Selecione o setor...</option>
+                                <option value="Neuropsicopedagogia">Neuropsicopedagogia</option>
+                                <option value="Equipe ABA">Equipe ABA</option>
+                                <option value="Psicologia">Psicologia</option>
+                                <option value="Fonoterapia">Fonoterapia</option>
+                                <option value="Terapia Ocupacional">Terapia Ocupacional</option>
+                                <option value="Musicoterapia">Musicoterapia</option>
+                                <option value="Psicomotricidade">Psicomotricidade</option>
+                                <option value="Coordenação">Coordenação</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="font-weight: bold; font-size: 0.95rem; margin-bottom: 5px; display: block; color: #444;">📄 Quantidade de Páginas:</label>
+                            <input type="number" id="manualCopyAmount_V2" required min="1" style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.95rem; background: #fafafa; color: #000;">
+                        </div>
+                        <div style="margin-bottom: 25px;">
+                            <label style="font-weight: bold; font-size: 0.95rem; margin-bottom: 5px; display: block; color: #444;">📝 Observação (Opcional):</label>
+                            <textarea id="manualCopyObs_V2" rows="2" placeholder="Ex: Cópias para recepção..." style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.95rem; background: #fafafa; color: #000; resize: vertical;"></textarea>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" style="flex: 1; padding: 12px; background: #e9ecef; border: none; border-radius: 6px; cursor: pointer; color: #333; font-weight: bold; font-size: 0.95rem;" onclick="closeManualCopyModal()">Cancelar</button>
+                            <button type="submit" style="flex: 1; padding: 12px; background: #198754; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95rem;">Salvar Registro</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        document.getElementById('manualCopyForm_V2').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = 'Salvando...';
+
+            const sector = document.getElementById('manualCopySector_V2').value;
+            const amount = parseInt(document.getElementById('manualCopyAmount_V2').value);
+            const obs = document.getElementById('manualCopyObs_V2').value.trim();
+
+            try {
+                const res = await fetch('/api/print/manual-copy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'user-id': userData.id },
+                    body: JSON.stringify({ sector: sector, total_printed: amount, observacao: obs })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    alert('✅ Registro de cópia manual salvo com sucesso!');
+                    closeManualCopyModal();
+                    carregarTudo();
+                } else {
+                    alert('❌ Erro: ' + (data.error || 'Falha ao salvar.'));
+                }
+            } catch (err) {
+                alert('Erro de conexão ao salvar cópia manual.');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        });
+    }
+
+    // Se já existia um modal da tentativa anterior (cache do HTML), vamos forçar esconder
+    const oldModal = document.getElementById('manualCopyModal');
+    if (oldModal) oldModal.style.display = 'none';
+
+    modal = document.getElementById('manualCopyModal_V2');
+    modal.style.display = 'flex';
+    document.getElementById('manualCopyForm_V2').reset();
+}
+
+function closeManualCopyModal() {
+    const modal = document.getElementById('manualCopyModal_V2');
+    if (modal) modal.style.display = 'none';
+}

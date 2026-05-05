@@ -27,6 +27,9 @@
             <a href="index.html" style="text-decoration: none; color: var(--success); font-weight: 600; font-size: 0.9rem;">
                 <i class="fa-solid fa-plus-circle"></i> Novo Pedido
             </a>
+            <a href="#" onclick="openManualCopyModal()" style="text-decoration: none; color: #ff9800; font-weight: 600; font-size: 0.9rem; padding-left: 15px; border-left: 1px solid #ddd;">
+                <i class="fa-solid fa-copy"></i> Cópia Manual
+            </a>
             <a href="#" onclick="logout()" style="text-decoration: none; color: var(--danger); font-weight: 600; font-size: 0.9rem; padding-left: 15px; border-left: 1px solid #ddd;">
                 <i class="fa-solid fa-right-from-bracket"></i> Sair
             </a>
@@ -109,6 +112,48 @@
         </div>
     </div>
 
-    <script src="js/admin.js"></script>
+    <!-- Modal para Cópia Manual -->
+    <div id="manualCopyModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; width: 400px; max-width: 90%; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 10000; box-sizing: border-box;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #333;"><i class="fa-solid fa-copy"></i> Registrar Cópia Manual</h3>
+                <button onclick="closeManualCopyModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">&times;</button>
+            </div>
+            
+            <form id="manualCopyForm">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; display: block;">📍 Setor:</label>
+                    <select id="manualCopySector" required style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                        <option value="" disabled selected>Selecione o setor...</option>
+                        <option value="Neuropsicopedagogia">Neuropsicopedagogia</option>
+                        <option value="Equipe ABA">Equipe ABA</option>
+                        <option value="Psicologia">Psicologia</option>
+                        <option value="Fonoterapia">Fonoterapia</option>
+                        <option value="Terapia Ocupacional">Terapia Ocupacional</option>
+                        <option value="Musicoterapia">Musicoterapia</option>
+                        <option value="Psicomotricidade">Psicomotricidade</option>
+                        <option value="Coordenação">Coordenação</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; display: block;">📄 Quantidade de Páginas:</label>
+                    <input type="number" id="manualCopyAmount" required min="1" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; display: block;">📝 Observação (Opcional):</label>
+                    <textarea id="manualCopyObs" rows="2" placeholder="Ex: Cópias para recepção..." style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-family: inherit;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn-cancel" style="flex: 1; padding: 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 5px; cursor: pointer;" onclick="closeManualCopyModal()">Cancelar</button>
+                    <button type="submit" style="flex: 1; padding: 10px; background: var(--success); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Salvar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/admin.js?v=2"></script>
 </body>
 </html>
