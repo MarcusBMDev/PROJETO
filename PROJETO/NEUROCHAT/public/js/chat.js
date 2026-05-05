@@ -803,7 +803,79 @@ socket.on('refresh group members', () => {
     });
 
 // OUTROS
-window.uploadFile=async function(f=null){if(isUploading)return;let file=f instanceof File?f:document.getElementById('file-input').files[0];if(!file||!currentChatId)return;const caption=document.getElementById('input').value.trim();const idInput=document.getElementById('identifier-input');const senderName=idInput?idInput.value.trim():'';if(senderName)localStorage.setItem('neurochat_identifier',senderName);isUploading=true;document.body.style.cursor='wait';try{const fd=new FormData();fd.append('file',file);const r=await fetch('/upload',{method:'POST',body:fd});const d=await r.json();if(d.success){socket.emit('chat message',{userId:currentUser.id,msg:caption.length>0?caption:d.originalName,senderName:senderName||null,targetId:currentChatId,targetType:currentChatType,msgType:'file',fileName:d.filename,replyToId:replyingTo?replyingTo.id:null});document.getElementById('input').value='';window.cancelReply()}}catch(e){alert("Erro upload")}finally{document.body.style.cursor='default';document.getElementById('file-input').value='';isUploading=false}};
+// --- GALERIA DE MÍDIA & PREVIEW DE IMAGEM ---
+let pendingFile = null;
+
+window.showImagePreview = function(file) {
+    if(!file) return;
+    pendingFile = file;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('preview-modal-img').src = e.target.result;
+        document.getElementById('preview-modal-caption').value = ''; // Limpa texto anterior
+        document.getElementById('image-preview-modal').style.display = 'flex';
+        setTimeout(() => document.getElementById('preview-modal-caption').focus(), 100);
+    };
+    reader.readAsDataURL(file);
+};
+
+window.cancelImagePreview = function() {
+    pendingFile = null;
+    document.getElementById('image-preview-modal').style.display = 'none';
+    document.getElementById('file-input').value = '';
+};
+
+window.confirmImageUpload = function() {
+    if(!pendingFile) return;
+    const caption = document.getElementById('preview-modal-caption').value.trim();
+    document.getElementById('image-preview-modal').style.display = 'none';
+    window.uploadFile(pendingFile, caption !== '' ? caption : null);
+    pendingFile = null;
+};
+
+window.uploadFile = async function(f=null, customCaption=null) {
+    if(isUploading) return;
+    let file = f instanceof File ? f : document.getElementById('file-input').files[0];
+    if(!file || !currentChatId) return;
+    
+    // Se não passou caption customizado pelo modal, pega do input de texto base
+    const caption = customCaption !== null ? customCaption : document.getElementById('input').value.trim();
+    
+    const idInput = document.getElementById('identifier-input');
+    const senderName = idInput ? idInput.value.trim() : '';
+    if(senderName) localStorage.setItem('neurochat_identifier', senderName);
+    
+    isUploading = true;
+    document.body.style.cursor = 'wait';
+    
+    try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const r = await fetch('/upload', {method:'POST', body:fd});
+        const d = await r.json();
+        if(d.success) {
+            socket.emit('chat message', {
+                userId: currentUser.id,
+                msg: caption.length > 0 ? caption : d.originalName,
+                senderName: senderName || null,
+                targetId: currentChatId,
+                targetType: currentChatType,
+                msgType: 'file',
+                fileName: d.filename,
+                replyToId: replyingTo ? replyingTo.id : null
+            });
+            // Só limpa o input base se tivermos usado a legenda dele
+            if(customCaption === null) document.getElementById('input').value = '';
+            window.cancelReply();
+        }
+    } catch(e) {
+        alert("Erro upload");
+    } finally {
+        document.body.style.cursor = 'default';
+        document.getElementById('file-input').value = '';
+        isUploading = false;
+    }
+};
 window.openAdminControl=async function(tid){
     const m=document.getElementById('admin-control-modal');
     if(!m)return;
@@ -1392,7 +1464,7 @@ window.removeMember = async function(u) {
 };
 window.promoteMember = async function(u) { if(confirm('Admin?')) await fetch('/group/promote', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({groupId:currentChatId, userId:u}) }); window.loadGroupSettings(); };
 window.leaveGroup = async function() { if(confirm('Sair?')) { await fetch('/group/leave', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({groupId:currentChatId, userId:currentUser.id}) }); document.getElementById('settings-modal').style.display='none'; window.closeChat(); } };
-window.deleteGroup = async function() { if(confirm('Excluir?')) { await fetch('/group/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({groupId:currentChatId}) }); document.getElementById('settings-modal').style.display='none'; window.closeChat(); } };
+window.deleteGroup = async function() { if(confirm('⚠️ ATENÇÃO: Tem certeza que deseja INATIVAR este grupo?\n\nO grupo desaparecerá da lista de todos, mas o histórico de mensagens e membros será preservado no banco para auditorias futuras.')) { await fetch('/group/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({groupId:currentChatId}) }); document.getElementById('settings-modal').style.display='none'; window.closeChat(); } };
 
 window.toggleBroadcastMode = async function(isBroadcast) {
     try {
@@ -1623,8 +1695,29 @@ document.addEventListener('DOMContentLoaded',()=>{
     
     if ("Notification" in window && Notification.permission !== "granted") Notification.requestPermission();
     
-    const f=document.getElementById('file-input');if(f)f.onchange=()=>window.uploadFile();
-    const i=document.getElementById('input');if(i)i.addEventListener('paste',e=>{const it=(e.clipboardData||e.originalEvent.clipboardData).items;for(let x in it)if(it[x].kind==='file')window.uploadFile(it[x].getAsFile())});
+    const f=document.getElementById('file-input');
+    if(f) {
+        f.onchange = () => {
+            const file = f.files[0];
+            if(file) {
+                if(file.type.startsWith('image/')) window.showImagePreview(file);
+                else window.uploadFile(file);
+            }
+        };
+    }
+    const i=document.getElementById('input');
+    if(i) {
+        i.addEventListener('paste', e => {
+            const it = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for(let x in it) {
+                if(it[x].kind === 'file') {
+                    const file = it[x].getAsFile();
+                    if(file.type.startsWith('image/')) window.showImagePreview(file);
+                    else window.uploadFile(file);
+                }
+            }
+        });
+    }
     
     // --- FUNÇÃO ESC PARA FECHAR TUDO (Modais e Chat) ---
     document.addEventListener('keydown', (e) => {

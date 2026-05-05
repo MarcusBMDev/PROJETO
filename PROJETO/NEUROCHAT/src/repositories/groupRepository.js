@@ -13,7 +13,7 @@ class GroupRepository {
              AND m.user_id != ?) as unread
             FROM groups g 
             JOIN group_members gm ON g.id = gm.group_id
-            WHERE gm.user_id = ?
+            WHERE gm.user_id = ? AND g.is_active = 1
             GROUP BY g.id
         `, [userId, userId]);
         return rows;
@@ -84,9 +84,8 @@ class GroupRepository {
     }
 
     async deleteGroup(groupId) {
-        await pool.execute("DELETE FROM messages WHERE target_id = ? AND target_type = 'group'", [groupId]);
-        await pool.execute("DELETE FROM group_members WHERE group_id = ?", [groupId]);
-        await pool.execute("DELETE FROM groups WHERE id = ?", [groupId]);
+        // Soft delete: Apenas inativa o grupo para não aparecer mais, mas preserva mensagens e membros no BD.
+        await pool.execute("UPDATE groups SET is_active = 0 WHERE id = ?", [groupId]);
     }
 
     async updateGroupSettings(groupId, isBroadcast) {

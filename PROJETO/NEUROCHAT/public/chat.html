@@ -416,6 +416,23 @@
             </div>
             <div id="settings-members-list" class="user-select-list"></div><div id="add-member-area" style="display:none; margin-top:10px;"><select id="add-member-select" style="width:100%; padding:8px;"></select><button class="btn-create" style="width:100%; margin-top:5px;" onclick="addNewMember()">Adicionar</button></div><div class="modal-actions" style="margin-top:10px;"><button id="btn-leave" class="btn-leave-group" onclick="leaveGroup()" style="display:none">Sair</button><button id="btn-delete" class="btn-delete-group" onclick="deleteGroup()" style="display:none">Excluir</button><button class="btn-cancel" onclick="document.getElementById('settings-modal').style.display='none'">Fechar</button></div></div></div>
 
+    <!-- Modal de Preview de Imagem (WhatsApp Style) -->
+    <div id="image-preview-modal" class="modal-overlay" style="z-index: 2000;">
+        <div class="modal" style="width: 500px; max-width: 95%; padding: 15px;">
+            <div class="modal-header" style="border-bottom:none; margin-bottom: 10px;">
+                <span class="modal-title" style="color: #666;">Enviar Imagem</span>
+                <button class="modal-close" onclick="cancelImagePreview()">×</button>
+            </div>
+            <div style="background: #e0e0e0; border-radius: 8px; display: flex; justify-content: center; align-items: center; min-height: 200px; max-height: 400px; overflow: hidden; margin-bottom: 15px;">
+                <img id="preview-modal-img" src="" style="max-width: 100%; max-height: 400px; object-fit: contain;">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="preview-modal-caption" placeholder="Adicionar uma legenda..." style="flex: 1; padding: 12px; border-radius: 20px; border: 1px solid #ccc; outline: none; font-size: 0.95rem;" onkeydown="if(event.key === 'Enter') confirmImageUpload()">
+                <button onclick="confirmImageUpload()" style="background: #25d366; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 1.2rem; flex-shrink: 0;" title="Enviar">➤</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modais de Features (Encaminhar / Quem Viu) -->
     <link rel="stylesheet" href="css/chat_features.css">
 
