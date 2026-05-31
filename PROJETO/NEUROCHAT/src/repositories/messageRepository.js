@@ -231,10 +231,33 @@ class MessageRepository {
         const [rows] = await pool.execute(sql, params);
         return rows;
     }
+
+    // --- BUSCA GLOBAL DE MENSAGENS ---
+    async search(userId, targetId, type, term) {
+        let sql = `
+            SELECT m.*, u.username, u.department, u.photo, 
+            r.text as reply_text, r.sender_name as reply_sender_name, r.msg_type as reply_type, ru.username as reply_user 
+            FROM messages m 
+            JOIN users u ON m.user_id = u.id 
+            LEFT JOIN messages r ON m.reply_to_id = r.id 
+            LEFT JOIN users ru ON r.user_id = ru.id 
+            WHERE m.text LIKE ? AND m.text != '🚫 Mensagem apagada'`;
+        
+        let params = [`%${term}%`];
+
+        if (type === 'private') {
+            sql += ` AND ((m.user_id=? AND m.target_id=? AND m.target_type='private') OR (m.user_id=? AND m.target_id=? AND m.target_type='private'))`;
+            params.push(userId, targetId, targetId, userId);
+        } else {
+            sql += ` AND m.target_id=? AND m.target_type='group'`;
+            params.push(targetId);
+        }
+
+        sql += ` ORDER BY m.id DESC LIMIT 100`;
+        
+        const [rows] = await pool.execute(sql, params);
+        return rows.map(row => this._mapMessage(row));
+    }
 }
-
-
-
-
 
 module.exports = new MessageRepository();

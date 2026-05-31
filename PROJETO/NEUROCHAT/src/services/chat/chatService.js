@@ -282,6 +282,10 @@ class ChatService {
     async getChatMedia(userId, targetId, type) {
         return await messageRepository.getChatMedia(userId, targetId, type);
     }
+
+    async searchMessages(userId, targetId, type, term) {
+        return await messageRepository.search(userId, targetId, type, term);
+    }
 }
 
 module.exports = new ChatService();

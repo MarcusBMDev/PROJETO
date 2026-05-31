@@ -32,7 +32,7 @@
             <a href="/dashboard" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">📊 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Painel de Comando</span></a>
             <a href="/grade" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold bg-gradient-to-r from-blue-600/20 to-transparent text-blue-400 border-l-4 border-blue-500">📅 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Grade Horária</span></a>
             <a href="/equipe" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">👥 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Gestão de Equipe</span></a>
-            <a href="/espera" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">⏳ <span class="opacity-0 group-hover:opacity-100 transition-opacity">Lista de Espera</span></a>
+
             <a href="/pacientes" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
                 <span class="text-xl min-w-[24px] text-center">🧑‍⚕️</span>
                 <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Pacientes</span>
@@ -156,7 +156,14 @@
                     </select>
                 </div>
 
-                <div>
+                <div class="flex items-center gap-4 p-4 bg-purple-50 rounded-2xl border border-purple-100">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="enc-terapia-grupo" class="w-5 h-5 rounded accent-purple-600" onchange="toggleTipoEncaixe()">
+                        <span class="text-[10px] font-black text-purple-700 uppercase">👥 Terapia em Grupo (permanente)</span>
+                    </label>
+                </div>
+
+                <div id="enc-data-container">
                     <label class="text-[10px] font-black text-slate-400 uppercase">Data do Encaixe</label>
                     <input type="date" id="enc-data" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold">
                     <p class="text-[9px] text-slate-400 mt-1 italic">* O encaixe aparecerá na grade apenas nesta data.</p>
@@ -184,12 +191,16 @@
                 </div>
 
                 <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase">Setor Solicitante</label>
+                    <label class="text-[10px] font-black text-slate-400 uppercase">Solicitado por</label>
                     <select id="remocao-setor" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold">
-                        <option value="RECEPÇÃO">RECEPÇÃO</option>
-                        <option value="AGENDAMENTO">AGENDAMENTO</option>
-                        <option value="FATURAMENTO">FATURAMENTO</option>
-                        <option value="DIRETORIA">DIRETORIA</option>
+                        <option value="Vitória">VITÓRIA</option>
+                        <option value="Aurélia">AURÉLIA</option>
+                        <option value="Nathalí">NATHALÍ</option>
+                        <option value="Responsável/Paciente">RESPONSÁVEL/PACIENTE</option>
+                        <option value="Marismar">MARISMAR</option>
+                        <option value="Larissa">LARISSA</option>
+                        <option value="Ester">ESTER</option>
+                        <option value="Sâmya">SÂMYA</option>
                     </select>
                 </div>
                 <div>
@@ -271,6 +282,14 @@
                 
                 // Oculta botões de gestão na grade
                 document.querySelector('button[onclick="abrirModalTransferir()"]')?.classList.add('hidden');
+            } else {
+                // Se for gestor, tenta carregar o profissional a partir do parâmetro da URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const profIdParam = urlParams.get('profissionalId') || urlParams.get('profId');
+                if (profIdParam && profissionaisGlobais.some(p => p.id == profIdParam)) {
+                    select.value = profIdParam;
+                    carregarGradeProfissional();
+                }
             }
         }
 
@@ -388,7 +407,12 @@
 
                     if (agsNoSlot.length === 0) {
                         // Slot livre — clicar bloqueia ou abre encaixe direto
-                        container.innerHTML += `<div class="slot-free p-4 rounded-2xl text-center flex flex-col justify-center min-h-[90px] mb-2" onclick="abrirModalBloqueio(${id}, '${diaObj.db}', '${hStr}')"><p class="text-[10px] font-black uppercase mb-1">${hStr}</p><p class="text-[9px] font-bold">VAGO</p></div>`;
+                        container.innerHTML += `
+                            <div class="slot-free p-4 rounded-2xl text-center flex flex-col justify-center min-h-[100px] mb-3 border-2 border-dashed border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 transition-all cursor-pointer" 
+                                 onclick="abrirModalBloqueio(${id}, '${diaObj.db}', '${hStr}')">
+                                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">${hStr}</p>
+                                <p class="text-[9px] font-black text-slate-300 tracking-widest">DISPONÍVEL</p>
+                            </div>`;
                         return;
                     }
 
@@ -406,26 +430,54 @@
                             skipRef.val = fim;
                         }
                     }
-                    const alturaDouble = isDuplo ? 'min-h-[160px]' : 'mb-2';
+                    const alturaPadrao = isDuplo ? 'min-h-[210px]' : 'min-h-[100px]';
+                    const margemPadrao = 'mb-3';
                     const tagHora = isDuplo ? primeiroAg.horario : hStr;
 
                     // BLOQUEADO — só mostra se for o único no slot
                     if (agsNoSlot.length === 1 && agsNoSlot[0].status === 'bloqueado') {
                         const ag = agsNoSlot[0];
                         container.innerHTML += `
-                            <div class="slot-blocked p-4 rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform ${alturaDouble}" onclick="desbloquearVaga(${ag.id})">
+                            <div class="slot-blocked p-4 rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform ${alturaPadrao} ${margemPadrao} flex flex-col justify-center" onclick="desbloquearVaga(${ag.id})">
                                 <p class="text-[10px] font-black text-amber-600 uppercase mb-1">${tagHora} - BLOQUEADO</p>
                                 <p class="font-bold text-slate-800 text-xs truncate" title="${ag.motivo_bloqueio}">${ag.motivo_bloqueio || 'Sem motivo'}</p>
                                 <p class="text-[10px] font-black text-amber-700 uppercase mt-2 pt-2 border-t border-amber-100">
-                                    🔒 Bloqueado por: ${ag.bloqueado_por || '???'}
+                                    🔒 Por: ${ag.bloqueado_por || '???'}
                                 </p>
                             </div>`;
                         return;
                     }
 
-                    // CARD DIVIDIDO — múltiplos pacientes no mesmo slot (encaixe)
-                    const pacsNormais   = agsNoSlot.filter(a => !a.encaixe && a.status !== 'bloqueado');
-                    const pacsEncaixe   = agsNoSlot.filter(a =>  a.encaixe);
+                    // CARD DIVIDIDO — múltiplos pacientes no mesmo slot
+                    const pacsGrupo     = agsNoSlot.filter(a => a.terapia_grupo && a.status !== 'bloqueado');
+                    const pacsNormais   = agsNoSlot.filter(a => !a.encaixe && !a.terapia_grupo && a.status !== 'bloqueado');
+                    const pacsEncaixe   = agsNoSlot.filter(a =>  a.encaixe && !a.terapia_grupo);
+
+                    // TERAPIA EM GRUPO — card roxo com nomes empilhados
+                    if (pacsGrupo.length > 0) {
+                        const profAtual = profissionaisGlobais.find(p => p.id == id);
+                        const listaPacientes = pacsGrupo.map(ag => {
+                            const nome = ag.paciente ? ag.paciente.nome : 'Sem Nome';
+                            return `
+                                <div class="flex items-center justify-between py-1 border-b border-purple-200 last:border-b-0 group/gpitem">
+                                    <span class="text-[10px] font-bold text-slate-700 truncate" title="${nome}">${nome}</span>
+                                    <button onclick="event.stopPropagation(); abrirModalRemocao(${ag.id}, '${nome.replace(/'/g, "\\'")}', '${diaObj.db}', '${tagHora}', ${id})"
+                                            class="w-4 h-4 bg-red-100 text-red-600 rounded flex items-center justify-center text-[9px] hover:bg-red-600 hover:text-white opacity-0 group-hover/gpitem:opacity-100 transition-all" title="Remover">×</button>
+                                </div>`;
+                        }).join('');
+                        container.innerHTML += `
+                            <div class="p-3 rounded-2xl ${alturaPadrao} ${margemPadrao} border-2 border-purple-500 bg-purple-50 shadow-md relative overflow-hidden flex flex-col">
+                                <div class="flex justify-between items-center mb-2">
+                                    <p class="text-[10px] font-black text-purple-700 uppercase">${tagHora} 👥 GRUPO</p>
+                                    <span class="text-[9px] font-black bg-purple-600 text-white px-2 py-0.5 rounded-full">${pacsGrupo.length}</span>
+                                </div>
+                                <div class="space-y-0 flex-1">${listaPacientes}</div>
+                                ${profAtual?.especialidade ? `<div class="mt-2 pt-1 border-t border-purple-200"><span class="text-[9px] font-black uppercase tracking-wide px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">${profAtual.especialidade}</span></div>` : ''}
+                            </div>`;
+                        // Se há pacientes normais ou encaixe no mesmo slot (misturado), continua renderizando abaixo
+                        if (pacsNormais.length === 0 && pacsEncaixe.length === 0) return;
+                    }
+
                     const temDivisao    = pacsNormais.length > 0 && pacsEncaixe.length > 0;
 
                     if (temDivisao) {
@@ -433,7 +485,7 @@
                             const nome = ag.paciente ? ag.paciente.nome : 'Sem Nome';
                             const enc  = !!ag.encaixe;
                             return `
-                                <div class="flex-1 p-2 border-r last:border-r-0 border-slate-200 group/subslot">
+                                <div class="flex-1 p-2 border-r last:border-r-0 border-slate-200 group/subslot flex flex-col justify-center">
                                     <p class="text-[9px] font-black ${enc ? 'text-purple-600' : 'text-blue-600'} uppercase mb-1">${enc ? '⚡ ENCAIXE' : 'REGULAR'}</p>
                                     <p class="font-bold text-slate-800 text-[10px] leading-tight" title="${nome}">${nome}</p>
                                     <div class="flex gap-1 mt-1 opacity-0 group-hover/subslot:opacity-100 transition-all">
@@ -442,15 +494,15 @@
                                 </div>`;
                         }).join('');
                         container.innerHTML += `
-                            <div class="slot-occupied rounded-2xl ${alturaDouble} border-2 border-purple-400 bg-purple-50/20 shadow-md overflow-hidden mb-2">
+                            <div class="slot-occupied rounded-2xl ${alturaPadrao} ${margemPadrao} border-2 border-purple-400 bg-purple-50/20 shadow-md overflow-hidden flex flex-col">
                                 <p class="text-[9px] font-black text-purple-600 uppercase px-3 pt-2">${tagHora} ⚡ ENCAIXE ATIVO</p>
-                                <div class="flex divide-x divide-slate-200">${partes}</div>
+                                <div class="flex divide-x divide-slate-200 flex-1">${partes}</div>
                             </div>`;
                         return;
                     }
 
                     // CARD SIMPLES (1 paciente ou todos da mesma categoria)
-                    agsNoSlot.filter(a => a.status !== 'bloqueado').forEach(ag => {
+                    agsNoSlot.filter(a => a.status !== 'bloqueado' && !a.terapia_grupo).forEach(ag => {
                         const nomePaciente = ag.paciente ? ag.paciente.nome : 'Sem Nome';
                         const isEncaixe = !!ag.encaixe;
 
@@ -463,7 +515,7 @@
                         const obsTitle = temObs ? ag.observacoes.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
 
                         container.innerHTML += `
-                            <div class="slot-occupied p-4 rounded-2xl ${alturaDouble} group/slot relative border-2 ${isEncaixe ? 'border-purple-500 bg-purple-50/20' : 'border-blue-500 bg-white'} shadow-md cursor-pointer"
+                            <div class="slot-occupied p-4 rounded-2xl ${alturaPadrao} ${margemPadrao} group/slot relative border-2 ${isEncaixe ? 'border-purple-500 bg-purple-50/20' : 'border-blue-500 bg-white'} shadow-md cursor-pointer flex flex-col justify-center"
                                  onclick="abrirModalObservacao(${ag.id}, '${nomePaciente.replace(/'/g, "\\'")}',' ${diaObj.db}', '${tagHora}', '${obsTitle}')">
                                 <div class="flex justify-between items-start mb-1">
                                     <p class="text-[10px] font-black ${isEncaixe ? 'text-purple-600' : 'text-blue-600'} uppercase">
@@ -484,7 +536,7 @@
                                 <p class="font-bold text-slate-800 text-xs whitespace-normal leading-tight" title="${nomePaciente}">${nomePaciente}</p>
                                 <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
                                     ${especialidadeLabel ? `<span class="text-[9px] font-black uppercase tracking-wide px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full truncate max-w-[80%]">${especialidadeLabel}</span>` : '<span></span>'}
-                                    ${temObs ? `<span class="text-[10px]" title="${obsTitle}">📝</span>` : '<span class="text-[10px] text-slate-300">📝</span>'}
+                                    ${temObs ? `<span class="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-black rounded-full border border-amber-200 animate-pulse" title="${obsTitle}">📝 NOTA</span>` : '<span class="text-[10px] text-slate-300">📝</span>'}
                                 </div>
                             </div>`;
                     });
@@ -572,9 +624,7 @@
 
             selectHora.innerHTML = '<option value="">Consultando vagas...</option>';
             try {
-                // Notificar que encaixe permite ver tudo
                 const isEncaixe = document.getElementById('trans-check-encaixe').checked;
-                
                 const res = await fetch(`/api/agendamentos/vagas`);
                 const profs = await res.json();
                 
@@ -586,7 +636,6 @@
 
                 selectHora.innerHTML = '<option value="">Selecione o novo horário...</option>';
                 
-                // Slots ocupados (Apenas se for encaixe)
                 if (isEncaixe) {
                    const resOcupado = await fetch(`/api/agendamentos/por_profissional/${destId}`);
                    const ocupados = await resOcupado.json();
@@ -623,9 +672,6 @@
 
             if(!deProfId || !paraProfId || !pacienteId || !motivo.trim() || !agOrigemId || !novoHorarioRaw) {
                 return alert("Preencha todos os campos, incluindo os horários e a justificativa.");
-            }
-            if(deProfId === paraProfId) {
-                return alert("Profissional de origem e destino não podem ser os mesmos.");
             }
 
             const [novoDia, novoHora] = novoHorarioRaw.split('|');
@@ -799,20 +845,40 @@
             document.getElementById('modal-encaixe').classList.remove('hidden');
         }
 
+        function toggleTipoEncaixe() {
+            const isGrupo = document.getElementById('enc-terapia-grupo').checked;
+            const dataContainer = document.getElementById('enc-data-container');
+            if (isGrupo) {
+                dataContainer.classList.add('hidden');
+            } else {
+                dataContainer.classList.remove('hidden');
+            }
+        }
+
         async function salvarEncaixeDireto() {
+            const isGrupo = document.getElementById('enc-terapia-grupo').checked;
             const ag = {
                 profissional_id: document.getElementById('enc-prof-id').value,
                 paciente_id: document.getElementById('enc-paciente').value,
                 convenio_id: document.getElementById('enc-convenio').value,
                 dia_semana: document.getElementById('enc-dia').value,
                 horario: document.getElementById('enc-hora').value,
-                encaixe: true,
+                encaixe: !isGrupo,
+                terapia_grupo: isGrupo,
                 status: 'confirmado'
             };
             const dataEncaixe = document.getElementById('enc-data').value;
 
-            if(!ag.paciente_id || !ag.convenio_id || !dataEncaixe) {
-                return alert("Paciente, convênio e data são obrigatórios para realizar o encaixe.");
+            if (isGrupo) {
+                // Terapia em grupo: não precisa de data (é permanente)
+                if(!ag.paciente_id || !ag.convenio_id) {
+                    return alert("Paciente e convênio são obrigatórios.");
+                }
+            } else {
+                // Encaixe normal: precisa de data
+                if(!ag.paciente_id || !ag.convenio_id || !dataEncaixe) {
+                    return alert("Paciente, convênio e data são obrigatórios para realizar o encaixe.");
+                }
             }
 
             const res = await fetch('/api/agendamentos', {
@@ -820,7 +886,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     agendamento: ag,
-                    data_encaixe: dataEncaixe
+                    data_encaixe: isGrupo ? null : dataEncaixe,
+                    user_id: localStorage.getItem('userId')
                 })
             });
 
@@ -829,7 +896,7 @@
                 carregarGradeProfissional();
             } else {
                 const data = await res.json();
-                alert("Erro ao realizar encaixe: " + (data.errors ? data.errors.join(', ') : 'Tente novamente.'));
+                alert("Erro: " + (data.errors ? data.errors.join(', ') : 'Tente novamente.'));
             }
         }
 
@@ -867,7 +934,7 @@
                 const res = await fetch('/api/transferencias', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ ...payload, user_id: localStorage.getItem('userId') })
                 });
 
                 if (res.ok) {

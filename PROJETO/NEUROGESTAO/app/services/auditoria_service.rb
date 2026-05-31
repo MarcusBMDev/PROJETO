@@ -11,17 +11,26 @@ class AuditoriaService
     tipo = entidade.is_a?(String) ? entidade : entidade.class.name
     id   = entidade.is_a?(String) ? nil : (entidade.respond_to?(:id) ? entidade.id : nil)
 
-    # Cria o registro de auditoria
-    Auditoria.create!(
+    # Cria o registro de auditoria de forma resiliente
+    attrs = {
       user_id: user_id,
-      user_name: user_name,
       setor: setor,
       acao: acao.to_s.upcase,
       entidade_tipo: tipo,
       entidade_id: id,
       detalhes: detalhes.is_a?(Hash) ? detalhes.to_json : detalhes.to_s,
       ip_address: ip
-    )
+    }
+
+    # Só adiciona user_name se a coluna existir no banco
+    if Auditoria.column_names.include?('user_name')
+      attrs[:user_name] = user_name
+    else
+      # Se não existir, concatena no detalhes para não perder a informação
+      attrs[:detalhes] = "[Usuário: #{user_name}] #{attrs[:detalhes]}"
+    end
+
+    Auditoria.create!(attrs)
   rescue => e
     Rails.logger.error "[AuditoriaService Error]: #{e.message}"
     # Não travamos a execução principal por erro no log

@@ -1,5 +1,6 @@
 # app/models/auditoria.rb
 class Auditoria < ApplicationRecord
+  self.table_name = "auditorias"
   # Opcional: validações
   validates :user_name, presence: true
   validates :acao, presence: true

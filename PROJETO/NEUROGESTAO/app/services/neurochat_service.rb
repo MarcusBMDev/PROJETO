@@ -4,61 +4,142 @@ class NeurochatService
   RECEPTION_GROUP_ID = 6
   SCHEDULING_GROUP_ID = 7
   RETIRADAS_GROUP_ID  = 14 # Grupo de Retiradas
-  SYSTEM_USER_ID = 1
+  TRANSFERENCIAS_GROUP_ID = 17 # Grupo de Trocas/Transferências
+  AGENDAMENTO_USER_ID = 112  # Conta compartilhada "AGENDAMENTO" no NeuroChat
+  SYSTEM_USER_ID = 112
 
   # ── Pacientes ──────────────────────────────────────────────────────────
 
-  def self.notificar_novo_paciente(paciente, setor)
+  def self.notificar_novo_paciente(paciente, setor, user_id = nil)
     convenio_nome = paciente.convenio&.nome || 'Sem convênio'
     mensagem = "🆕 **NOVO PACIENTE CADASTRADO**\n" \
                "Nome: **#{paciente.nome}**\n" \
                "Convênio: **#{convenio_nome}**\n" \
                "Ação realizada por: **#{setor}**"
-    enviar_para_grupos_operacionais(mensagem)
+    enviar_para_grupos_operacionais(mensagem, user_id)
   end
 
-  def self.notificar_remocao_paciente(paciente, motivo, setor)
+  def self.notificar_remocao_paciente(paciente, motivo, setor, user_id = nil)
     profissionais = paciente.agendamentos.map { |a| a.profissional.nome }.uniq.join(', ')
     mensagem = "⚠️ **PACIENTE REMOVIDO**\n" \
                "O paciente **#{paciente.nome}**, que realizava terapias com: **#{profissionais.presence || 'Nenhum'}**,\n" \
                "foi removido da lista de agendamentos.\n" \
                "**Motivo:** #{motivo}\n" \
                "**Ação realizada por:** **#{setor}**"
-    enviar_para_grupos_operacionais(mensagem)
+    enviar_mensagem_grupo(mensagem, RETIRADAS_GROUP_ID, user_id)
+    enviar_para_grupos_operacionais(mensagem, user_id)
   end
 
   # Notifica o Grupo 14 (Retiradas) com todos os detalhes da remoção
-  def self.notificar_retirada_paciente(paciente, profissional, dia_semana, horario, motivo, setor)
+  def self.notificar_retirada_paciente(paciente, profissional, dia_semana, horario, motivo, setor, user_id = nil, operador_nome = nil)
     prof_nome = profissional&.nome || 'Não identificado'
+    operador_str = operador_nome.present? ? "#{clean_str(operador_nome)} (#{clean_str(setor)})" : clean_str(setor)
     mensagem = "🔴 **PACIENTE RETIRADO DA GRADE**\n" \
                "👤 Paciente: **#{clean_str(paciente.nome)}**\n" \
                "👨‍⚕️ Profissional: **#{clean_str(prof_nome)}**\n" \
                "📅 Horário removido: **#{clean_str(dia_semana)} às #{clean_str(horario)}**\n" \
                "📝 Motivo: #{clean_str(motivo)}\n" \
-               "🏢 Solicitado por: **#{clean_str(setor)}**"
+               "🏢 Confirmado por: **#{operador_str}**"
     enviar_mensagem_grupo(mensagem, RETIRADAS_GROUP_ID)
+    enviar_para_grupos_operacionais(mensagem)
   rescue => e
     Rails.logger.error "Erro ao notificar retirada no Grupo 14: #{e.message}"
   end
 
-  def self.notificar_transferencia_paciente(paciente, de_profissional, para_profissional, motivo, setor, dia = nil, hora = nil)
-    novo_horario = dia && hora ? "\n**Novo Horário:** **#{dia} às #{hora}**" : ""
-    mensagem = "🔄 **PACIENTE TRANSFERIDO**\n" \
-               "O paciente **#{paciente.nome}** foi transferido.\n" \
-               "**De:** **#{de_profissional.nome}**\n" \
-               "**Para:** **#{para_profissional.nome}**#{novo_horario}\n" \
-               "**Motivo:** #{motivo}\n" \
-               "**Ação realizada por:** **#{setor}**"
+  # Notifica o Grupo 14 (Retiradas) com os detalhes da REDUÇÃO de grade
+  def self.notificar_reducao_grade(paciente, agendamentos, motivo, setor, operador_nome = nil)
+    operador_str = operador_nome.present? ? "#{clean_str(operador_nome)} (#{clean_str(setor)})" : clean_str(setor)
+    
+    horarios_str = agendamentos.map do |ag|
+      especialidade_str = ag.profissional&.especialidade.present? ? " (#{ag.profissional.especialidade})" : ""
+      "- **#{clean_str(ag.dia_semana)} às #{clean_str(ag.horario)}** - Prof: #{clean_str(ag.profissional&.nome || 'Não identificado')}#{especialidade_str}"
+    end.join("\n")
+
+    mensagem = "📉 **SOLICITAÇÃO DE REDUÇÃO DE GRADE**\n" \
+               "👤 Paciente: **#{clean_str(paciente.nome)}**\n\n" \
+               "📋 **Horários Removidos:**\n" \
+               "#{horarios_str}\n\n" \
+               "📝 Justificativa/Observação: **#{clean_str(motivo)}**\n" \
+               "🏢 Confirmado por: **#{operador_str}**"
+               
+    enviar_mensagem_grupo(mensagem, RETIRADAS_GROUP_ID)
     enviar_para_grupos_operacionais(mensagem)
+  rescue => e
+    Rails.logger.error "Erro ao notificar redução no Grupo 14: #{e.message}"
   end
 
-  def self.notificar_encaixe(agendamento, setor)
+  # Notifica o Grupo 14 (Retiradas) com os detalhes da REMOÇÃO de grade (Alta / Finalização)
+  def self.notificar_remocao_grade(paciente, agendamentos, motivo, setor, operador_nome = nil)
+    operador_str = operador_nome.present? ? "#{clean_str(operador_nome)} (#{clean_str(setor)})" : clean_str(setor)
+    
+    horarios_str = agendamentos.map do |ag|
+      especialidade_str = ag.profissional&.especialidade.present? ? " (#{ag.profissional.especialidade})" : ""
+      "- **#{clean_str(ag.dia_semana)} às #{clean_str(ag.horario)}** - Prof: #{clean_str(ag.profissional&.nome || 'Não identificado')}#{especialidade_str}"
+    end.join("\n")
+
+    mensagem = "❌ **SOLICITAÇÃO DE REMOÇÃO DE GRADE (ALTA/FINALIZAÇÃO)**\n" \
+               "👤 Paciente: **#{clean_str(paciente.nome)}**\n\n" \
+               "📋 **Horários Removidos:**\n" \
+               "#{horarios_str}\n\n" \
+               "📝 Justificativa/Observação: **#{clean_str(motivo)}**\n" \
+               "🏢 Confirmado por: **#{operador_str}**"
+               
+    enviar_mensagem_grupo(mensagem, RETIRADAS_GROUP_ID)
+    enviar_para_grupos_operacionais(mensagem)
+  rescue => e
+    Rails.logger.error "Erro ao notificar remoção no Grupo 14: #{e.message}"
+  end
+
+  def self.notificar_transferencia_paciente(paciente, de_profissional, para_profissional, motivo, setor, dia = nil, hora = nil, user_id = nil)
+    novo_horario_str = dia && hora ? "\n📅 **Novo Horário:** **#{dia} às #{hora}**" : ""
+    
+    # Mensagem customizada para troca de horário (mesmo profissional)
+    if de_profissional.id == para_profissional.id
+      mensagem = "🕒 **HORÁRIO ALTERADO**\n" \
+                 "👤 O paciente **#{paciente.nome}** teve seu horário alterado.\n" \
+                 "👨‍⚕️ **Profissional:** **#{de_profissional.nome}**#{novo_horario_str}\n" \
+                 "📝 **Motivo:** #{motivo}\n" \
+                 "🛠️ **Ação realizada por:** **#{setor}**"
+    else
+      mensagem = "🔄 **PACIENTE TRANSFERIDO**\n" \
+                 "👤 O paciente **#{paciente.nome}** foi transferido.\n" \
+                 "👨‍⚕️ **De:** **#{de_profissional.nome}**\n" \
+                 "👨‍⚕️ **Para:** **#{para_profissional.nome}**#{novo_horario_str}\n" \
+                 "📝 **Motivo:** #{motivo}\n" \
+                 "🛠️ **Ação realizada por:** **#{setor}**"
+    end
+
+    # Envia para o grupo de transferências (17) E para os grupos operacionais padrão (6 e 7)
+    enviar_mensagem_grupo(mensagem, TRANSFERENCIAS_GROUP_ID, user_id)
+    enviar_para_grupos_operacionais(mensagem, user_id)
+  end
+
+  def self.notificar_alteracao_agendamento(paciente, prof_antigo, prof_novo, dia_antigo, hora_antiga, dia_novo, hora_novo, setor, user_id = nil)
+    mensagem = "🔄 **AGENDAMENTO ALTERADO**\n" \
+               "👤 Paciente: **#{paciente.nome}**\n"
+               
+    if prof_antigo.id != prof_novo.id
+      mensagem += "👨‍⚕️ Profissional: de **#{prof_antigo.nome}** para **#{prof_novo.nome}**\n"
+    else
+      mensagem += "👨‍⚕️ Profissional: **#{prof_novo.nome}**\n"
+    end
+    
+    if dia_antigo != dia_novo || hora_antiga != hora_novo
+      mensagem += "📅 Horário: de **#{dia_antigo} às #{hora_antiga}** para **#{dia_novo} às #{hora_novo}**\n"
+    end
+    
+    mensagem += "🛠️ Ação realizada por: **#{setor}**"
+    
+    enviar_mensagem_grupo(mensagem, TRANSFERENCIAS_GROUP_ID, user_id)
+  end
+
+  def self.notificar_encaixe(agendamento, setor, user_id = nil)
     mensagem = "⚡ **NOVO ENCAIXE REALIZADO**\n" \
                "👤 Paciente: **#{agendamento.paciente&.nome}**\n" \
                "📅 Horário: #{agendamento.dia_semana} às #{agendamento.horario}\n" \
                "👨‍⚕️ Profissional: #{agendamento.profissional.nome}\n" \
                "🛠️ Realizado pela: #{setor}"
-    enviar_para_grupos_operacionais(mensagem)
+    enviar_para_grupos_operacionais(mensagem, user_id)
   end
 
   def self.notificar_aprovacao_agendamento(agendamento, setor)
@@ -126,19 +207,26 @@ class NeurochatService
   
   private
 
-  def self.enviar_para_grupos_operacionais(texto)
+  def self.enviar_para_grupos_operacionais(texto, user_id = nil)
     # Envia para Recepção (6) e Agendamento (7)
-    enviar_mensagem_grupo(texto, RECEPTION_GROUP_ID)
-    enviar_mensagem_grupo(texto, SCHEDULING_GROUP_ID)
+    enviar_mensagem_grupo(texto, RECEPTION_GROUP_ID, user_id)
+    enviar_mensagem_grupo(texto, SCHEDULING_GROUP_ID, user_id)
   end
 
-  def self.enviar_mensagem_grupo(texto, grupo_id = GROUP_ID)
+  def self.enviar_mensagem_grupo(texto, grupo_id = GROUP_ID, _user_id = nil)
+    sender_id = AGENDAMENTO_USER_ID
     sql = "INSERT INTO messages (user_id, text, target_id, target_type, is_read, msg_type, timestamp) " \
           "VALUES (?, ?, ?, 'group', 0, 'text', ?)"
 
-    NeurochatRecord.connection.execute(
-      ActiveRecord::Base.send(:sanitize_sql_array, [sql, SYSTEM_USER_ID, texto, grupo_id, Time.current])
-    )
+    # Força o Rails a usar a role de escrita especificamente para o banco do NeuroChat
+    NeurochatRecord.connected_to(role: :writing) do
+      conn = NeurochatRecord.connection
+      # Garante modo escrita na sessão do MySQL (redundância de segurança)
+      conn.execute("SET SESSION TRANSACTION READ WRITE") rescue nil
+      
+      sanitized_sql = ActiveRecord::Base.send(:sanitize_sql_array, [sql, sender_id, texto, grupo_id, Time.current])
+      conn.execute(sanitized_sql)
+    end
   rescue => e
     Rails.logger.error "Erro ao enviar notificação para o NeuroChat: #{e.message}"
   end
@@ -147,12 +235,16 @@ class NeurochatService
     sql = "INSERT INTO messages (user_id, target_id, target_type, text, msg_type, timestamp, is_read, is_pinned, is_edited, is_deleted) " \
           "VALUES (?, ?, 'private', ?, 'text', ?, 0, 0, 0, 0)"
 
-    NeurochatRecord.connection.execute(
-      ActiveRecord::Base.send(:sanitize_sql_array, [sql, SYSTEM_USER_ID, target_id, texto, Time.current])
-    )
-    
-    # Retorna o ID do último insert para o webhook
-    NeurochatRecord.connection.select_value("SELECT LAST_INSERT_ID()")
+    NeurochatRecord.connected_to(role: :writing) do
+      conn = NeurochatRecord.connection
+      conn.execute("SET SESSION TRANSACTION READ WRITE") rescue nil
+      
+      sanitized_sql = ActiveRecord::Base.send(:sanitize_sql_array, [sql, SYSTEM_USER_ID, target_id, texto, Time.current])
+      conn.execute(sanitized_sql)
+      
+      # Retorna o ID do último insert para o webhook
+      conn.select_value("SELECT LAST_INSERT_ID()")
+    end
   rescue => e
     Rails.logger.error "Erro ao enviar mensagem privada para o NeuroChat: #{e.message}"
     nil

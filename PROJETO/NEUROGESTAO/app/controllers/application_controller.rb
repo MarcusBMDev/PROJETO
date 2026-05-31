@@ -62,14 +62,30 @@ class ApplicationController < ActionController::API
     'agendamento', 
     'diretoria', 
     'coordenação', 
+    'coordenacao',
+    'recepção',
+    'recepcao',
     'recepção 1', 
     'recepção 2', 
     'recepção 3', 
+    'recepcao 1', 
+    'recepcao 2', 
+    'recepcao 3', 
+    'agendamento/recepção',
+    'agendamento/recepcao',
+    'diretoria geral',
     'ti'
   ].freeze
 
   def user_is_gestao?
-    role = request.headers['X-User-Role']&.downcase || 'desconhecido'
+    role = request.headers['X-User-Role']&.to_s || 'desconhecido'
+    role_utf8 = role.dup.force_encoding('UTF-8')
+    unless role_utf8.valid_encoding?
+      role_utf8 = role_utf8.encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
+    end
+    # Normaliza removendo acentos para comparação segura
+    role_normalized = ActiveSupport::Inflector.transliterate(role_utf8).downcase.strip
+    
     user_id = request.headers['X-User-Id'] # Idealmente enviado pelo front
     
     # Se for um super_admin no Neurochat, tem acesso total
@@ -80,7 +96,9 @@ class ApplicationController < ActionController::API
       return true if is_super == 1
     end
 
-    return true if role == 'ti' || SETORES_GESTAO.include?(role)
+    setores_normalizados = SETORES_GESTAO.map { |s| ActiveSupport::Inflector.transliterate(s.dup.force_encoding('UTF-8')).downcase }
+    
+    return true if role_normalized == 'ti' || setores_normalizados.any? { |s| role_normalized.include?(s) || s.include?(role_normalized) }
     false
   end
 

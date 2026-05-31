@@ -8,11 +8,11 @@ class Agendamento < ApplicationRecord
   validates :profissional_id, :dia_semana, :horario, presence: true
   validates :paciente_id, :convenio_id, presence: true, unless: -> { status == 'bloqueado' }
 
-  # Regra 1: O PROFISSIONAL não pode ter dois pacientes no mesmo horário/dia (exceto se for ENCAIXE)
+  # Regra 1: O PROFISSIONAL não pode ter dois pacientes no mesmo horário/dia (exceto se for ENCAIXE ou TERAPIA EM GRUPO)
   validates :horario, uniqueness: {
     scope: [:profissional_id, :dia_semana],
     message: "já possui um agendamento para este profissional neste dia",
-    unless: -> { encaixe }
+    unless: -> { encaixe || terapia_grupo }
   }
 
   # REGRA 2 REMOVIDA INTENCIONALMENTE:

@@ -1,24 +1,93 @@
 module SugestaoAgendamento
   extend ActiveSupport::Concern
 
+  # Retorna a lista bruta de profissionais e suas vagas por especialidade
+  def extrair_vagas_brutas(especialidades, age)
+    return {} if especialidades.blank?
+    todos_slots_por_dia = ClinicSlots::ALL
+    vagas_por_esp = {}
+
+    especialidades.each do |esp|
+      esp_normalizada = esp.to_s.strip.upcase
+      profissionais = Profissional.ativos.where("especialidade LIKE ?", "%#{esp_normalizada}%").to_a
+      profissionais.select! { |p| p.especialidade.to_s.split(',').map { |e| e.strip.upcase }.include?(esp_normalizada) }
+
+      if esp_normalizada.present? && profissionais.empty?
+        profissionais = Profissional.ativos.where("UPPER(especialidade) LIKE ?", "%#{esp_normalizada}%").to_a
+      end
+
+      if age.present? && age > 0
+        profissionais.select! { |p| (p.min_age.nil? || p.min_age <= age) && (p.max_age.nil? || p.max_age >= age) }
+      end
+
+      vagas_por_esp[esp] = profissionais.map do |prof|
+        ocupados = prof.agendamentos.where(status: ['confirmado', 'pendente', 'bloqueado']).pluck(:horario, :dia_semana)
+        
+        horarios = todos_slots_por_dia.each_with_object({}) do |(dia_config, slots), memo|
+          ocupados_do_dia = ocupados.select { |h, d| d.to_s.upcase.split('-').first == dia_config.to_s.upcase.split('-').first }
+          memo[dia_config] = slots.reject do |slot_hora|
+            slot_m = horario_para_minutos(slot_hora)
+            ocupados_do_dia.any? do |ocup_hora, _d|
+              if ocup_hora.include?('-')
+                start_h, end_h = ocup_hora.split('-')
+                slot_m >= horario_para_minutos(start_h) && slot_m < horario_para_minutos(end_h)
+              else
+                slot_m == horario_para_minutos(ocup_hora)
+              end
+            end
+          end
+        end
+        { id: prof.id, nome: prof.nome, especialidade: esp, horarios: horarios }
+      end
+    end
+    vagas_por_esp
+  end
+
   def buscar_sugestoes_consecutivos(especialidades, age, frequencias = {}, agendamentos_existentes = [])
     return [] if especialidades.blank?
 
     todos_slots_por_dia = ClinicSlots::ALL
 
+    # 1. Mapeia profissionais já vinculados a especialidades para este paciente
+    # Se ele já faz Fono com o Prof A, novas sessões de Fono devem ser com o Prof A.
+    prof_por_esp_existente = {}
+    agendamentos_existentes.each do |ag|
+      next unless ag.profissional
+      ag.profissional.especialidade.to_s.upcase.split(',').map(&:strip).each do |esp_prof|
+        if especialidades.include?(esp_prof)
+          prof_por_esp_existente[esp_prof] = ag.profissional_id
+        end
+      end
+    end
+
     vagas_por_especialidade = {}
     especialidades.each do |esp|
-      # Busca apenas profissionais ATIVOS que possuam a especialidade
-      profissionais = Profissional.ativos.where("especialidade LIKE ?", "%#{esp.upcase}%").to_a
-      profissionais.select! { |p| p.especialidade.to_s.upcase.split(',').map(&:strip).include?(esp.upcase) }
+      # Busca profissionais ATIVOS que possuam a especialidade de forma robusta
+      esp_normalizada = esp.to_s.strip.upcase
+      profissionais = Profissional.ativos.where("especialidade LIKE ?", "%#{esp_normalizada}%").to_a
+      profissionais.select! do |p| 
+        p.especialidade.to_s.split(',').map { |e| e.strip.upcase }.include?(esp_normalizada)
+      end
 
-      if age.present?
+      # Se nenhum profissional foi encontrado com o filtro exato, tenta com LIKE puro (fallback)
+      if esp_normalizada.present? && profissionais.empty?
+        profissionais = Profissional.ativos.where("UPPER(especialidade) LIKE ?", "%#{esp_normalizada}%").to_a
+      end
+
+      # Filtro de idade: Só aplica se o paciente tiver uma idade definida e maior que zero
+      # Isso evita que pacientes com idade "vazia" (que pode vir como 0) sejam filtrados injustamente.
+      if age.present? && age > 0
         profissionais.select! { |p| (p.min_age.nil? || p.min_age <= age) && (p.max_age.nil? || p.max_age >= age) }
       end
 
+      # Mapeamento de vínculo mantido para lógica de priorização futura (não bloqueia mais)
+      tem_vinculo = prof_por_esp_existente[esp.upcase]
+
       vagas_por_especialidade[esp] = profissionais.map do |prof|
-        # Consideramos tanto agendamentos confirmados quanto pendentes como "ocupados"
-        ocupados = prof.agendamentos.where(status: ['confirmado', 'pendente']).pluck(:horario, :dia_semana)
+        # Flag para priorizar profissionais que o paciente já frequenta
+        vinculo_ativo = (tem_vinculo == prof.id)
+        # Consideramos agendamentos confirmados, pendentes E bloqueados como "ocupados"
+        ocupados = prof.agendamentos.where(status: ['confirmado', 'pendente', 'bloqueado']).pluck(:horario, :dia_semana)
         
         horarios = todos_slots_por_dia.each_with_object({}) do |(dia_config, slots), memo|
           # Filtra ocupados que batem com o dia, ignorando case e hífens extras (ex: SEGUNDA vs SEGUNDA-FEIRA)
@@ -40,134 +109,96 @@ module SugestaoAgendamento
             end
           end
         end
-        { id: prof.id, nome: prof.nome, especialidade: esp, horarios: horarios }
+        { id: prof.id, nome: prof.nome, vinculo: vinculo_ativo, especialidade: esp, horarios: horarios }
       end
     end
 
     sugestoes = []
-    esp_keys = especialidades.uniq
+    ordem_dias = { "SEGUNDA-FEIRA" => 1, "TERÇA-FEIRA" => 2, "QUARTA-FEIRA" => 3, "QUINTA-FEIRA" => 4, "SEXTA-FEIRA" => 5 }
 
-    # Lógica de Encaixe com Agendamentos Existentes
-    if agendamentos_existentes.any?
-      esp_keys.each do |esp|
-        vagas = vagas_por_especialidade[esp] || []
-        vagas.each do |v|
-          v[:horarios].each do |dia, slots|
-            ag_do_dia = agendamentos_existentes.select do |ag| 
-              ag.dia_semana.to_s.upcase.split('-').first == dia.to_s.upcase.split('-').first 
-            end
-            
-            slots.each do |slot_livre|
-              min_livre = horario_para_minutos(slot_livre)
-              
-              ag_do_dia.each do |ag|
-                min_existente = horario_para_minutos(ag.horario.split('-').first)
-                diff = (min_livre - min_existente)
-                
-                if diff.abs == 40
-                  esp_ex = ag.profissional.especialidade.split(',').first
-                  if diff > 0 # slot livre vem DEPOIS do agendamento existente
-                    at1 = { especialidade: esp_ex, profissional: "#{ag.profissional.nome} (Já Agendado)", profissional_id: ag.profissional_id, horario: ag.horario.split('-').first, ja_agendado: true }
-                    at2 = { especialidade: esp, profissional: v[:nome], profissional_id: v[:id], horario: slot_livre, ja_agendado: false }
-                  else # slot livre vem ANTES
-                    at1 = { especialidade: esp, profissional: v[:nome], profissional_id: v[:id], horario: slot_livre, ja_agendado: false }
-                    at2 = { especialidade: esp_ex, profissional: "#{ag.profissional.nome} (Já Agendado)", profissional_id: ag.profissional_id, horario: ag.horario.split('-').first, ja_agendado: true }
-                  end
-
-                  sugestoes << {
-                    prioridade: "consecutivo",
-                    dia: dia,
-                    atendimento_1: at1,
-                    atendimento_2: at2
-                  }
-                end
-              end
-            end
-          end
-        end
-      end
-    end
-
-    # Usamos repeated_permutation para permitir combos da mesma especialidade (ex: Fono + Fono)
-    esp_keys.repeated_permutation(2).each do |esp_a, esp_b|
-      # Se for a mesma especialidade, só sugere combo se a frequência pedida for >= 2
-      if esp_a == esp_b && (frequencias[esp_a].to_i < 2)
-        next
-      end
-
-      profs_a = vagas_por_especialidade[esp_a] || []
-      profs_b = vagas_por_especialidade[esp_b] || []
-
-      profs_a.each do |pa|
-        profs_b.each do |pb|
-          # Se for a mesma especialidade, aceitamos o mesmo profissional (sessão dupla)
-          # Se forem especialidades diferentes, preferimos profissionais diferentes ou permitimos o mesmo (flexível)
-          # Por enquanto, vamos permitir o mesmo profissional para encorajar combos
-          todos_slots_por_dia.keys.each do |dia|
-            slots_a = pa[:horarios][dia] || []
-            slots_b = pb[:horarios][dia] || []
-
-            slots_a.each do |slot_a|
-              min_a = horario_para_minutos(slot_a)
-              
-              slots_b.each do |slot_b|
-                min_b = horario_para_minutos(slot_b)
-                diff = min_b - min_a
-
-                # Consecutivo: exatamente 40 minutos de diferença (uma sessão após a outra)
-                if diff == 40
-                  sugestoes << {
-                    prioridade: "consecutivo",
-                    dia: dia,
-                    atendimento_1: { especialidade: esp_a, profissional: pa[:nome], profissional_id: pa[:id], horario: slot_a },
-                    atendimento_2: { especialidade: esp_b, profissional: pb[:nome], profissional_id: pb[:id], horario: slot_b }
-                  }
-                # Próximo: 80 minutos de diferença (um slot vago de 40min entre eles)
-                elsif diff == 80
-                  sugestoes << {
-                    prioridade: "proximo",
-                    dia: dia,
-                    atendimento_1: { especialidade: esp_a, profissional: pa[:nome], profissional_id: pa[:id], horario: slot_a },
-                    atendimento_2: { especialidade: esp_b, profissional: pb[:nome], profissional_id: pb[:id], horario: slot_b }
-                  }
-                end
-              end
-            end
-          end
-        end
-      end
-    end
-
-    # Sempre incluímos vagas individuais também, para dar opção ao usuário
-    esp_keys.each do |esp|
-      vagas = vagas_por_especialidade[esp] || []
-      vagas.each do |v|
+    # 1. Montamos todas as vagas individuais disponíveis por dia
+    vagas_flat = []
+    especialidades.uniq.each do |esp|
+      (vagas_por_especialidade[esp] || []).each do |v|
         v[:horarios].each do |dia, slots|
           slots.each do |slot|
-            sugestoes << {
-              prioridade: "individual",
-              dia: dia,
-              atendimento_1: { especialidade: esp, profissional: v[:nome], profissional_id: v[:id], horario: slot },
-              atendimento_2: nil
+            vagas_flat << { 
+              esp: esp, 
+              prof_id: v[:id], 
+              prof_nome: v[:nome], 
+              vinculo: v[:vinculo], 
+              dia: dia, 
+              hora: slot, 
+              min: horario_para_minutos(slot) 
             }
-            break if sugestoes.length >= 20
           end
-          break if sugestoes.length >= 20
         end
-        break if sugestoes.length >= 20
       end
     end
 
-    ordem_dias = { "SEGUNDA-FEIRA" => 1, "TERÇA-FEIRA" => 2, "QUARTA-FEIRA" => 3, "QUINTA-FEIRA" => 4, "SEXTA-FEIRA" => 5 }
-    sugestoes.sort_by! do |s| 
-      pri_score = case s[:prioridade]
-                  when "consecutivo" then 0
-                  when "proximo"     then 1
-                  else 2
-                  end
-      [pri_score, ordem_dias[s[:dia]] || 9, horario_para_minutos(s[:atendimento_1][:horario])]
+    # 2. Busca de CADEIAS (Combos de 2 ou mais)
+    # Tentamos montar a maior sequência possível a partir de cada vaga livre
+    vagas_flat.group_by { |v| v[:dia] }.each do |dia, vagas_do_dia|
+      vagas_do_dia.sort_by! { |v| v[:min] }
+      
+      vagas_do_dia.each do |v_start|
+        cadeia = [v_start]
+        esps_na_cadeia = [v_start[:esp]]
+        
+        # Tenta estender a cadeia consecutivamente (+40 min)
+        while true
+          ultimo = cadeia.last
+          proximo_min = ultimo[:min] + 40
+          
+          # Busca uma vaga de uma especialidade que ainda não está nesta cadeia
+          v_next = vagas_do_dia.find do |v| 
+            v[:min] == proximo_min && !esps_na_cadeia.include?(v[:esp])
+          end
+          
+          if v_next
+            cadeia << v_next
+            esps_na_cadeia << v_next[:esp]
+          else
+            break
+          end
+        end
+
+        if cadeia.length >= 2
+          sugestoes << {
+            prioridade: "combo",
+            dia: dia,
+            atendimentos: cadeia.map { |c| { especialidade: c[:esp], profissional: c[:prof_nome], profissional_id: c[:prof_id], vinculo: c[:vinculo], horario: c[:hora] } }
+          }
+        end
+      end
     end
-    sugestoes.uniq { |s| [s[:dia], s[:atendimento_1], s[:atendimento_2]] }.first(20)
+
+    # 3. Incluímos as vagas individuais (para quando não há combo disponível)
+    vagas_flat.each do |v|
+      sugestoes << {
+        prioridade: "individual",
+        dia: v[:dia],
+        atendimentos: [{ especialidade: v[:esp], profissional: v[:prof_nome], profissional_id: v[:prof_id], vinculo: v[:vinculo], horario: v[:hora] }]
+      }
+    end
+
+    # 4. Ordenação Final
+    sugestoes.sort_by! do |s|
+      # Prioridade 1: Tamanho do combo (mais atendimentos primeiro)
+      tamanho = -s[:atendimentos].length 
+      # Prioridade 2: Vínculo (se algum atendimento na cadeia for com profissional que o paciente já conhece)
+      tem_vinculo = s[:atendimentos].any? { |a| a[:vinculo] } ? 0 : 1
+      # Prioridade 3: Ordem cronológica na semana
+      dia_num = ordem_dias[s[:dia]] || 9
+      hora_num = horario_para_minutos(s[:atendimentos].first[:horario])
+
+      [tamanho, tem_vinculo, dia_num, hora_num]
+    end
+
+    # 5. Removemos duplicatas parciais (ex: se tem um combo de 3, não precisa mostrar o combo de 2 que faz parte dele no mesmo horário)
+    # Isso limpa a interface.
+    sugestoes.uniq! { |s| [s[:dia], s[:atendimentos].map { |a| [a[:horario], a[:profissional_id]] }] }
+    sugestoes
   end
 
   def horario_para_minutos(h)

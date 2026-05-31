@@ -12,12 +12,11 @@ development:
     <<: *default
     database: agendamentos_clinica_dev
 
-  # BANCO 2: O banco do NeuroChatService (Somente Leitura)
+  # BANCO 2: O banco do NeuroChatService (Leitura e Escrita)
   neurochat:
     <<: *default
     database: neurochat_db
     database_tasks: false
-    replica: true
 
 test:
   # BANCO 1: Banco de testes principal
@@ -30,14 +29,22 @@ test:
     <<: *default
     database: neurochat_test
     database_tasks: false
-    replica: true
 
 production:
   primary:
     <<: *default
-    database: agendamentos_clinica_prod
+    database: agendamentos_clinica_dev
   neurochat:
     <<: *default
     database: neurochat_db
     database_tasks: false
-    replica: true
+  # Usando o banco de desenvolvimento que está sendo usado em produção
+  cable:
+    <<: *default
+    database: agendamentos_clinica_dev
+  queue:
+    <<: *default
+    database: agendamentos_clinica_dev
+  cache:
+    <<: *default
+    database: agendamentos_clinica_dev

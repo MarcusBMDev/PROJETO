@@ -28,6 +28,7 @@ router.get('/message/reactions/:messageId', chatController.getReactions);
 
 // Rota de Encaminhamento (Lote)
 router.post('/forward', chatController.forwardMessage);
+router.post('/chat/search', chatController.search);
 
 // Rota de Integração (Webhook)
 router.post('/api/integrate/notify', chatController.notifyExternalMessage);

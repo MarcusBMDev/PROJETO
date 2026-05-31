@@ -21,7 +21,7 @@ Rails.application.routes.draw do
     end
 
     resources :convenios
-    resources :lista_esperas, only: [:index, :create, :destroy]
+    resources :lista_esperas, only: [:index, :create, :update, :destroy]
     
     post 'importar_agenda', to: 'importacoes#upload_planilha'
     

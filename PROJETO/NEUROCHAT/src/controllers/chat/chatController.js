@@ -253,6 +253,23 @@ class ChatController {
             res.json({ success: false, media: [] });
         }
     }
+
+    async search(req, res) {
+        try {
+            const myId = cleanId(req.body.myId);
+            const targetId = cleanId(req.body.targetId);
+            const type = cleanString(req.body.type);
+            const term = cleanString(req.body.term);
+            
+            if (!term || term.length < 2) return res.json({ success: true, messages: [] });
+
+            const messages = await chatService.searchMessages(myId, targetId, type, term);
+            res.json({ success: true, messages });
+        } catch (error) {
+            console.error("Erro na busca global:", error);
+            res.json({ success: false, messages: [] });
+        }
+    }
 }
 
 module.exports = new ChatController();

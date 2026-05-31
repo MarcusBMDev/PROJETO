@@ -9,7 +9,7 @@ module Api
 
       # Calcular a ocupação rigorosamente pelo tempo
       slots_ocupados_globais = 0
-      Agendamento.where(status: ['confirmado', 'pendente']).each do |ag|
+      Agendamento.where(status: ['confirmado', 'pendente', 'bloqueado']).each do |ag|
         if ag.horario.to_s.include?('-')
           p1, p2 = ag.horario.split('-')
           h1, m1 = p1.to_s.downcase.gsub('h',':').split(':')

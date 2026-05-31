@@ -43,16 +43,28 @@ class Api::AgendamentosController < ApplicationController
     slots_pad = ClinicSlots::STANDARD
 
     profissionais = if especialidade.present?
-                      Profissional.where("especialidade LIKE ?", "%#{especialidade.upcase}%").to_a.select do |p|
-                        p.especialidade.split(',').map(&:strip).include?(especialidade.upcase)
+                      # Normaliza o parâmetro de busca (remove espaços extras e converte para maiúsculo)
+                      esp_normalizada = especialidade.to_s.strip.upcase
+                      Profissional.where(ativo: true)
+                                  .where("especialidade LIKE ?", "%#{esp_normalizada}%").to_a
+                                  .select do |p|
+                        # Normaliza cada especialidade cadastrada antes de comparar
+                        p.especialidade.to_s.split(',').map { |e| e.strip.upcase }.include?(esp_normalizada)
                       end
                     else
-                      Profissional.all.to_a
+                      Profissional.where(ativo: true).to_a
                     end
+
+    # Se nenhum profissional foi encontrado com o filtro exato, tenta com LIKE puro (fallback)
+    if especialidade.present? && profissionais.empty?
+      esp_normalizada = especialidade.to_s.strip.upcase
+      profissionais = Profissional.where(ativo: true)
+                                  .where("UPPER(especialidade) LIKE ?", "%#{esp_normalizada}%").to_a
+    end
 
     if paciente_id.present?
       paciente = Paciente.find_by(id: paciente_id)
-      if paciente&.age.present?
+      if paciente&.age.present? && paciente.age > 0
         age = paciente.age
         profissionais.select! { |p| (p.min_age.nil? || p.min_age <= age) && (p.max_age.nil? || p.max_age >= age) }
       end
@@ -76,7 +88,8 @@ class Api::AgendamentosController < ApplicationController
         especialidade: prof.especialidade, 
         min_age: prof.min_age, 
         max_age: prof.max_age, 
-        horarios_disponiveis: vagas_livres 
+        horarios_disponiveis: vagas_livres,
+        vagas_ocupadas: ag_data.select { |o| o[2] == 'confirmado' || o[2] == 'pendente' }.size
       }
     end
 
@@ -98,7 +111,7 @@ class Api::AgendamentosController < ApplicationController
       esps = prof.especialidade.to_s.upcase.split(',').map(&:strip).reject(&:blank?)
       
       ocupados = 0
-      prof.agendamentos.where(status: ['confirmado', 'pendente']).each do |ag|
+      prof.agendamentos.where(status: ['confirmado', 'pendente', 'bloqueado']).each do |ag|
         if ag.horario.to_s.include?('-')
           p1, p2 = ag.horario.split('-')
           h1, m1 = p1.to_s.downcase.gsub('h',':').split(':')
@@ -147,11 +160,15 @@ class Api::AgendamentosController < ApplicationController
     agendamentos_existentes = paciente.agendamentos.includes(:profissional).to_a
     sugestoes = buscar_sugestoes_consecutivos(especialidades, paciente.age, frequencias, agendamentos_existentes)
 
+    # Além das sugestões, enviamos as vagas brutas para o "Modo Manual"
+    vagas_brutas = extrair_vagas_brutas(especialidades, paciente.age)
+    
     render json: {
       paciente: { id: paciente.id, nome: paciente.nome, age: paciente.age },
       especialidades_planejadas: especialidades,
       total_sugestoes: sugestoes.length,
-      sugestoes: sugestoes
+      sugestoes: sugestoes,
+      vagas_por_profissional: vagas_brutas
     }
   end
 
@@ -228,7 +245,24 @@ class Api::AgendamentosController < ApplicationController
   # PATCH/PUT /agendamentos/:id
   def update
     agendamento = Agendamento.find(params[:id])
+    
+    old_dia = agendamento.dia_semana
+    old_horario = agendamento.horario
+    old_prof = agendamento.profissional
+    
     if agendamento.update(agendamento_params)
+      # Verifica se trocou horário ou profissional
+      mudou_horario = (old_dia != agendamento.dia_semana || old_horario != agendamento.horario)
+      mudou_prof = (old_prof.id != agendamento.profissional_id)
+      
+      if mudou_horario || mudou_prof
+        setor = request.headers['X-User-Role'] || 'Gestão'
+        NeurochatService.notificar_alteracao_agendamento(
+          agendamento.paciente, old_prof, agendamento.profissional,
+          old_dia, old_horario, agendamento.dia_semana, agendamento.horario, setor
+        )
+      end
+      
       AuditoriaService.log(request, 'EDITAR_AGENDAMENTO', agendamento, "Novos dados: #{agendamento_params.to_h}")
       render json: agendamento
     else
@@ -264,9 +298,21 @@ class Api::AgendamentosController < ApplicationController
     AuditoriaService.log(request, 'EXCLUIR_AGENDAMENTO', agendamento, "Paciente: #{paciente&.nome}, Horário: #{dia} #{hora}")
     agendamento.destroy
 
-    # Notifica o Grupo 14 (Retiradas) com todas as informações detalhadas
+    # Notifica o Grupo 14 (Retiradas) ou o grupo de Agendamento sobre a remoção
+    user_id = params[:user_id].presence
+    operador_nome = request.headers['X-User-Name'].presence
+
     if paciente
-      NeurochatService.notificar_retirada_paciente(paciente, profissional, dia, hora, motivo, setor)
+      NeurochatService.notificar_retirada_paciente(paciente, profissional, dia, hora, motivo, setor, user_id, operador_nome)
+    else
+      # Se era um bloqueio, envia uma mensagem de "Desbloqueio de Horário"
+      msg_bloqueio = "🔓 **HORÁRIO DESBLOQUEADO / REMOVIDO**\n" \
+                     "👨‍⚕️ Profissional: **#{profissional&.nome}**\n" \
+                     "📅 Horário: **#{dia} às #{hora}**\n" \
+                     "📝 Motivo original: #{motivo}\n" \
+                     "🛠️ Ação por: **#{operador_nome || setor}**"
+      # Envia para o grupo de Agendamento (ID 7)
+      NeurochatService.send(:enviar_mensagem_grupo, msg_bloqueio, 7)
     end
 
     render json: { mensagem: "Removido com sucesso!" }
@@ -352,7 +398,8 @@ class Api::AgendamentosController < ApplicationController
         paciente_nome: a.paciente&.nome || "Sem Nome",
         convenio_nome: a.convenio&.nome || "Sem Convênio",
         paciente: a.paciente,
-        convenio: a.convenio
+        convenio: a.convenio,
+        terapia_grupo: a.terapia_grupo
       )
     }
   end
@@ -360,7 +407,7 @@ class Api::AgendamentosController < ApplicationController
   private
 
   def agendamento_params
-    params.require(:agendamento).permit(:profissional_id, :paciente_id, :convenio_id, :dia_semana, :horario, :observacoes, :status, :lista_espera_id, :motivo_bloqueio, :bloqueado_por, :bloqueado_por_id, :encaixe, :data_encaixe)
+    params.require(:agendamento).permit(:profissional_id, :paciente_id, :convenio_id, :dia_semana, :horario, :observacoes, :status, :lista_espera_id, :motivo_bloqueio, :bloqueado_por, :bloqueado_por_id, :encaixe, :data_encaixe, :terapia_grupo)
   end
 
   # Interpreta o campo planned_specialties que pode ser JSON ou texto separado por vírgulas

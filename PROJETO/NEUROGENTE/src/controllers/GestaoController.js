@@ -76,7 +76,7 @@ const GestaoController = {
         });
     },
 
-    // 3. Upload de Novo Documento ou Postagem de Texto
+    // 3. Upload de Novo Documento ou Postagem de Texto com Notificação nos Grupos do Neurochat
     uploadDocumento: (req, res) => {
         if (!req.file && !req.body.texto_comunicado) {
             return res.send("<script>alert('ATENÇÃO: É necessário preencher o Texto OU selecionar um Arquivo.'); window.history.back();</script>");
@@ -90,6 +90,28 @@ const GestaoController = {
         };
 
         RhModel.salvarArquivo(dados, (err) => {
+            if (!err) {
+                const fromId = req.session.user ? req.session.user.id : 1;
+                // Busca apenas os grupos que estão ativos (is_active = 1)
+                const sqlGroups = "SELECT id FROM `groups` WHERE is_active = 1";
+                
+                RhModel.query(sqlGroups, [], (errGroups, groups) => {
+                    if (!errGroups && groups && groups.length > 0) {
+                        const host = req.headers.host || '192.168.10.133:3008';
+                        
+                        const msgTexto = `🧠 *NOVA PUBLICAÇÃO NO MURAL DO NEUROGENTE*\n\n` +
+                                       `📢 Tem uma nova publicação disponível no mural!\n\n` +
+                                       `📌 *Título:* **${dados.titulo}**\n\n` +
+                                       `🔗 Clique no link para acessar o portal e ler na íntegra:\n` +
+                                       `http://${host}/`;
+
+                        // Envia a notificação para cada grupo ativo no Neurochat
+                        groups.forEach(g => {
+                            NotificacaoUtils.enviarMensagemGrupo(fromId, g.id, msgTexto);
+                        });
+                    }
+                });
+            }
             res.redirect('/gestao/painel?tab=uploads');
         });
     },

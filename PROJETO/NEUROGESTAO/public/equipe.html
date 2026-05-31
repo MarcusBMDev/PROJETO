@@ -26,7 +26,7 @@
             <a href="/dashboard" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">📊 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Painel de Comando</span></a>
             <a href="/grade" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">📅 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Grade Horária</span></a>
             <a href="/equipe" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold bg-gradient-to-r from-blue-600/20 to-transparent text-blue-400 border-l-4 border-blue-500">👥 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Gestão de Equipe</span></a>
-            <a href="/espera" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">⏳ <span class="opacity-0 group-hover:opacity-100 transition-opacity">Lista de Espera</span></a>
+
             <a href="/pacientes" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">🧑‍⚕️ <span class="opacity-0 group-hover:opacity-100 transition-opacity">Pacientes</span></a>
             <a href="/convenios_view" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">🏢 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Convênios</span></a>
             <a href="/transferencias" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">📋 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Central de Aprovação</span></a>
@@ -114,6 +114,25 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal de Visualização de PDF -->
+    <div id="modal-pdf" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center p-4 md:p-10 z-[60] backdrop-blur-md" onclick="if(event.target === this) fecharModalPdf()">
+        <div class="bg-white w-full max-w-5xl h-[85vh] rounded-[2.5rem] p-6 md:p-8 shadow-2xl animate-fade relative border border-white/20 flex flex-col">
+            <button onclick="fecharModalPdf()" class="absolute top-6 right-8 text-slate-400 hover:text-slate-600 font-black text-2xl transition-all hover:scale-110">×</button>
+            
+            <div class="mb-4 flex items-center gap-4 flex-shrink-0">
+                <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl font-bold shadow-md shadow-blue-500/5 animate-pulse">📄</div>
+                <div>
+                    <h2 id="pdf-titulo" class="text-lg md:text-xl font-black text-slate-900 uppercase leading-none tracking-tight">Currículo</h2>
+                    <p class="text-[9px] font-black uppercase text-blue-500 mt-1 tracking-widest">Leitor Integrado</p>
+                </div>
+            </div>
+            
+            <div class="flex-1 w-full rounded-3xl overflow-hidden border border-slate-100 bg-slate-50 shadow-inner">
+                <iframe id="pdf-frame" class="w-full h-full border-none" src=""></iframe>
+            </div>
+        </div>
+    </div>
     <script>
         let especGlobais = [];
         let equipeGlobal = [];
@@ -171,7 +190,7 @@
 
                 const btnCurriculo = p.curriculo_url 
                     ? `<div class="flex items-center gap-2">
-                        <a href="${p.curriculo_url}" target="_blank" title="Visualizar" class="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all text-xs shadow-md shadow-blue-500/20 active:scale-95">📄</a>
+                        <button onclick="visualizarCurriculo('${p.curriculo_url}', '${nomeUpper}')" title="Visualizar" class="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all text-xs shadow-md shadow-blue-500/20 active:scale-95">📄</button>
                         <button onclick="copiarLinkCurriculo('${p.curriculo_url}')" title="Copiar Link" class="p-2.5 bg-slate-800 text-white rounded-xl hover:bg-slate-900 transition-all text-xs shadow-md shadow-slate-500/20 active:scale-95">🔗</button>
                         <button onclick="encaminharNeurochat(${p.id})" title="Encaminhar Neurochat" class="p-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all text-sm shadow-md shadow-green-500/20 active:scale-95">💬</button>
                        </div>`
@@ -310,6 +329,17 @@
 
         function fecharModal() {
             document.getElementById('modal-editar').classList.add('hidden');
+        }
+
+        function visualizarCurriculo(url, nome) {
+            document.getElementById('pdf-titulo').innerText = "Currículo - " + nome;
+            document.getElementById('pdf-frame').src = url;
+            document.getElementById('modal-pdf').classList.remove('hidden');
+        }
+
+        function fecharModalPdf() {
+            document.getElementById('modal-pdf').classList.add('hidden');
+            document.getElementById('pdf-frame').src = '';
         }
 
         async function salvarEdicao() {

@@ -42,10 +42,7 @@
                 <span class="text-xl min-w-[24px] text-center">👥</span>
                 <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Gestão de Equipe</span>
             </a>
-            <a href="/espera" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
-                <span class="text-xl min-w-[24px] text-center">⏳</span>
-                <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Lista de Espera</span>
-            </a>
+
             <a href="/pacientes" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
                 <span class="text-xl min-w-[24px] text-center">🧑‍⚕️</span>
                 <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Pacientes</span>
@@ -79,7 +76,7 @@
             </div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
             <div onclick="window.location.href='/grade'" class="card-blue p-8 rounded-[2.5rem] text-white shadow-xl shadow-blue-500/20 group transition-all hover:-translate-y-2 relative overflow-hidden cursor-pointer">
                 <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl">📅</div>
                 <div class="relative z-10 flex flex-col h-full">
@@ -93,14 +90,6 @@
                 <div class="relative z-10 flex flex-col h-full">
                     <p class="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Vagas Disponíveis</p>
                     <div id="vagas-livres" class="text-6xl font-black mt-auto tabular-nums">---</div>
-                </div>
-            </div>
-            
-            <div onclick="window.location.href='/espera'" class="card-purple p-8 rounded-[2.5rem] text-white shadow-xl shadow-purple-500/20 group transition-all hover:-translate-y-2 relative overflow-hidden cursor-pointer">
-                <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl">⏳</div>
-                <div class="relative z-10 flex flex-col h-full">
-                    <p class="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Aguardando na Lista</p>
-                    <div id="total-espera" class="text-6xl font-black mt-auto tabular-nums">---</div>
                 </div>
             </div>
  
@@ -119,7 +108,7 @@
             <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                 <div>
                     <h3 id="modal-vagas-titulo" class="text-2xl font-black text-slate-900 tracking-tight">Vagas Disponíveis</h3>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Breakdown por Especialidade</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Breakdown por Profissional</p>
                 </div>
                 <button onclick="document.getElementById('modal-vagas').classList.add('hidden')" class="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 hover:bg-red-50 transition-all shadow-sm">✕</button>
             </div>
@@ -147,7 +136,6 @@
                 
                 document.getElementById('total-pacientes').innerText = stats.total_agendamentos || 0;
                 document.getElementById('vagas-livres').innerText = stats.vagas_disponiveis || 0;
-                document.getElementById('total-espera').innerText = stats.total_espera || 0;
                 document.getElementById('total-db-pacientes').innerText = stats.total_pacientes || 0;
             } catch (err) { console.error("Erro ao puxar métricas", err); }
         }
@@ -164,115 +152,67 @@
             lista.innerHTML = '<div class="col-span-full text-center py-20"><div class="animate-spin inline-block w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div><p class="text-slate-400 font-black uppercase text-[10px] tracking-widest">Sincronizando Agenda...</p></div>';
 
             try {
-                const res = await fetch('/api/agendamentos/vagas_por_especialidade');
+                const res = await fetch('/api/agendamentos/vagas');
                 const dados = await res.json();
                 
                 lista.innerHTML = '';
-                dados.forEach(item => {
+                
+                // Processa cada profissional calculando a quantidade total de vagas livres
+                const profissionaisComVagas = dados.map(item => {
+                    let totalVagas = 0;
+                    if (item.horarios_disponiveis) {
+                        Object.values(item.horarios_disponiveis).forEach(slots => {
+                            totalVagas += (slots || []).length;
+                        });
+                    }
+                    return {
+                        id: item.id,
+                        nome: item.profissional,
+                        especialidade: item.especialidade,
+                        vagas: totalVagas,
+                        ocupadas: item.vagas_ocupadas || 0
+                    };
+                });
+
+                // Ordena por nome do profissional
+                profissionaisComVagas.sort((a, b) => a.nome.localeCompare(b.nome));
+
+                profissionaisComVagas.forEach(item => {
                     const card = document.createElement('div');
                     card.className = "p-8 rounded-[2rem] border border-slate-100 hover:border-blue-200 hover:bg-blue-50/40 transition-all cursor-pointer group bg-white shadow-sm hover:shadow-md";
-                    card.onclick = () => verDetalhesEspecialidade(item.especialidade);
+                    card.onclick = () => window.location.href = `/grade?profissionalId=${item.id}`;
                     
                     const corVagas = item.vagas > 0 ? 'text-emerald-500' : 'text-slate-300';
                     
                     card.innerHTML = `
                         <div class="flex justify-between items-center">
                             <div>
-                                <h4 class="font-black text-slate-800 uppercase text-xs tracking-tight group-hover:text-blue-600 transition-colors">${item.especialidade}</h4>
-                                <p class="text-[10px] font-bold text-slate-400 mt-1">Clique para ver horários</p>
+                                <h4 class="font-black text-slate-800 uppercase text-xs tracking-tight group-hover:text-blue-600 transition-colors">${item.nome}</h4>
+                                <p class="text-[10px] font-bold text-slate-400 mt-1">${item.especialidade || 'Sem especialidade'}</p>
+                                <p class="text-[9px] font-bold text-blue-500 mt-1 group-hover:underline">Clique para abrir a grade</p>
                             </div>
-                            <div class="text-right">
-                                <span class="text-3xl font-black ${corVagas} tabular-nums">${item.vagas}</span>
-                                <p class="text-[8px] font-black uppercase tracking-widest text-slate-400">Vagas</p>
+                            <div class="flex gap-6 items-center">
+                                <div class="text-center">
+                                    <span class="text-3xl font-black ${corVagas} tabular-nums">${item.vagas}</span>
+                                    <p class="text-[8px] font-black uppercase tracking-widest text-slate-400">Livres</p>
+                                </div>
+                                <div class="w-[1px] h-8 bg-slate-100"></div>
+                                <div class="text-center">
+                                    <span class="text-3xl font-black text-blue-600 tabular-nums">${item.ocupadas}</span>
+                                    <p class="text-[8px] font-black uppercase tracking-widest text-slate-400">Ocupadas</p>
+                                </div>
                             </div>
                         </div>
                     `;
                     lista.appendChild(card);
                 });
 
-                if (dados.length === 0) {
-                    lista.innerHTML = '<p class="col-span-full text-center py-20 text-slate-400 font-bold uppercase text-[10px]">Nenhuma especialidade cadastrada na equipe.</p>';
+                if (profissionaisComVagas.length === 0) {
+                    lista.innerHTML = '<p class="col-span-full text-center py-20 text-slate-400 font-bold uppercase text-[10px]">Nenhum profissional ativo cadastrado.</p>';
                 }
             } catch (err) {
+                console.error("Erro ao carregar vagas por profissional", err);
                 lista.innerHTML = '<p class="col-span-full text-center text-red-500 font-bold py-20">Erro ao carregar dados do servidor.</p>';
-            }
-        }
-
-        async function verDetalhesEspecialidade(esp) {
-            const lista = document.getElementById('lista-vagas-especialidade');
-            const titulo = document.getElementById('modal-vagas-titulo');
-            titulo.innerText = esp;
-            
-            lista.innerHTML = '<div class="col-span-full text-center py-20"><div class="animate-spin inline-block w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div><p class="text-slate-400 font-black uppercase text-[10px] tracking-widest">Mapeando Horários...</p></div>';
-
-            try {
-                const res = await fetch(`/api/agendamentos/vagas?especialidade=${encodeURIComponent(esp)}`);
-                const profissionais = await res.json();
-                
-                lista.innerHTML = '';
-                // Botão Voltar
-                const btnVoltar = document.createElement('button');
-                btnVoltar.className = "col-span-full mb-6 py-4 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-blue-600 font-black uppercase text-[10px] tracking-widest flex items-center gap-4 hover:bg-white hover:shadow-sm transition-all w-fit";
-                btnVoltar.innerHTML = "<span>←</span> Voltar para Visão Geral";
-                btnVoltar.onclick = () => abrirModalVagas();
-                lista.appendChild(btnVoltar);
-
-                profissionais.forEach(p => {
-                    const profCard = document.createElement('div');
-                    profCard.className = "col-span-full bg-slate-50/50 rounded-[2.5rem] p-10 mb-6 border border-slate-100";
-                    
-                    let htmlHorarios = '<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mt-8">';
-                    
-                    Object.entries(p.horarios_disponiveis).forEach(([dia, slots]) => {
-                        if (slots.length > 0) {
-                            htmlHorarios += `
-                                <div class="bg-white p-4 rounded-2xl shadow-sm border border-emerald-100 hover:border-emerald-300 transition-colors">
-                                    <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-4 border-b border-emerald-50 pb-2 flex justify-between">
-                                        <span>${dia.split('-')[0]}</span>
-                                        <span class="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">${slots.length} livres</span>
-                                    </p>
-                                    <div class="flex flex-wrap gap-2">
-                                        ${slots.map(s => `<span class="px-2.5 py-1.5 bg-emerald-50 rounded-lg text-[10px] font-black text-emerald-700" title="Horário Livre">${s}</span>`).join('')}
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            htmlHorarios += `
-                                <div class="bg-slate-50 opacity-60 p-4 rounded-2xl shadow-inner border border-slate-200">
-                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2">${dia.split('-')[0]}</p>
-                                    <div class="flex flex-col items-center justify-center p-2 opacity-70">
-                                        <span class="text-sm">🚫</span>
-                                        <p class="text-center text-[9px] font-black text-red-500 mt-1 tracking-widest uppercase">LOTADO</p>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    });
-                    htmlHorarios += '</div>';
-
-                    profCard.innerHTML = `
-                        <div class="flex items-center gap-5">
-                            <div class="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-white text-xl font-black shadow-lg shadow-blue-500/20">
-                                ${p.profissional.charAt(0)}
-                            </div>
-                            <div>
-                                <h5 class="font-black text-slate-900 text-lg tracking-tight uppercase">${p.profissional} (#${p.id})</h5>
-                                <div class="flex gap-2 mt-1">
-                                    <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">${p.especialidade}</span>
-                                    ${p.min_age || p.max_age ? `<span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Faixa: ${p.min_age || 0}-${p.max_age || '∞'} anos</span>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                        ${htmlHorarios}
-                    `;
-                    lista.appendChild(profCard);
-                });
-
-                if (profissionais.length === 0) {
-                    lista.innerHTML += '<div class="col-span-full text-center py-20 bg-slate-50 rounded-[2rem] border border-dashed border-slate-200 mt-4"><p class="text-slate-400 font-black uppercase text-[10px] tracking-widest">Nenhum profissional com vaga nesta especialidade no momento.</p></div>';
-                }
-            } catch (err) {
-                lista.innerHTML = '<p class="col-span-full text-center text-red-500 font-bold py-20">Erro ao sincronizar detalhes da especialidade.</p>';
             }
         }
     </script>

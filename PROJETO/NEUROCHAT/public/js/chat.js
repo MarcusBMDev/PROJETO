@@ -1208,12 +1208,153 @@ window.viewAdminHistory = async (targetUserId) => {
         alert("Erro ao carregar histórico: " + data.message);
     }
 };
-window.toggleChatSearch = function() { const box = document.getElementById('search-box-chat'); if(box.style.display === 'none') { box.style.display = 'flex'; document.getElementById('chat-search-input').focus(); } else { box.style.display = 'none'; window.searchInChat(''); } };
-window.searchInChat = function(t) { document.querySelectorAll('.msg-container').forEach(e => e.querySelector('.message-bubble').style.background = ''); if (!t || !t.trim()) { searchResults = []; searchIndex = -1; document.getElementById('search-count-display').textContent = ''; return; } searchResults = []; const term = t.toLowerCase(); document.querySelectorAll('.msg-container').forEach(m => { if (m.querySelector('.message-bubble').textContent.toLowerCase().includes(term)) searchResults.push(m); }); if (searchResults.length > 0) { searchIndex = searchResults.length - 1; updateSearchUI(); scrollToSearchResult(); } else { searchIndex = -1; document.getElementById('search-count-display').textContent = '0/0'; } };
-window.updateSearchUI = function() { document.getElementById('search-count-display').textContent = `${searchIndex + 1}/${searchResults.length}`; };
-window.scrollToSearchResult = function() { const el = searchResults[searchIndex]; if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.querySelector('.message-bubble').style.background = '#fff59d'; } };
-window.nextSearch = function() { if (searchResults.length === 0) return; searchIndex++; if (searchIndex >= searchResults.length) searchIndex = 0; updateSearchUI(); scrollToSearchResult(); };
-window.prevSearch = function() { if (searchResults.length === 0) return; searchIndex--; if (searchIndex < 0) searchIndex = searchResults.length - 1; updateSearchUI(); scrollToSearchResult(); };
+window.toggleChatSearch = function() { 
+    const box = document.getElementById('search-box-chat'); 
+    if(box.style.display === 'none') { 
+        box.style.display = 'flex'; 
+        document.getElementById('chat-search-input').focus(); 
+    } else { 
+        box.style.display = 'none'; 
+        window.searchInChat(''); 
+    } 
+};
+
+window.searchInChat = function(t) { 
+    // 1. Limpar tudo
+    document.querySelectorAll('.msg-text').forEach(el => {
+        // Remove tags <mark> preservando o texto interno
+        el.innerHTML = el.innerHTML.replace(/<mark[^>]*>/g, '').replace(/<\/mark>/g, '');
+    });
+    document.querySelectorAll('.message-bubble').forEach(e => {
+        e.style.background = '';
+        e.classList.remove('current-search');
+    });
+
+    if (!t || !t.trim()) { 
+        searchResults = []; 
+        searchIndex = -1; 
+        document.getElementById('search-count-display').textContent = ''; 
+        return; 
+    } 
+
+    searchResults = []; 
+    const term = t.toLowerCase(); 
+    const escapedTerm = t.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    // Regex que evita casar dentro de tags HTML (ex: não destaca o 'a' de <a href...>)
+    const highlightRegex = new RegExp(`(${escapedTerm})(?![^<]*>)`, "gi");
+
+    document.querySelectorAll('.msg-container').forEach(m => { 
+        const textEl = m.querySelector('.msg-text');
+        if (!textEl) return;
+        
+        if (textEl.textContent.toLowerCase().includes(term)) {
+            searchResults.push(m); 
+            // Aplica o marca-texto visual
+            textEl.innerHTML = textEl.innerHTML.replace(highlightRegex, '<mark class="search-highlight">$1</mark>');
+        }
+    }); 
+
+    if (searchResults.length > 0) { 
+        searchIndex = searchResults.length - 1; 
+        updateSearchUI(); 
+        scrollToSearchResult(); 
+    } else { 
+        searchIndex = -1; 
+        document.getElementById('search-count-display').textContent = '0/0'; 
+    } 
+};
+
+window.updateSearchUI = function() { 
+    document.getElementById('search-count-display').textContent = `${searchIndex + 1}/${searchResults.length}`; 
+};
+
+window.scrollToSearchResult = function() { 
+    // Limpa o destaque da "mensagem atual" anterior
+    document.querySelectorAll('.search-highlight.current').forEach(m => m.classList.remove('current'));
+    document.querySelectorAll('.message-bubble.current-search').forEach(b => {
+        b.style.background = '';
+        b.classList.remove('current-search');
+    });
+
+    const el = searchResults[searchIndex]; 
+    if (el) { 
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+        const bubble = el.querySelector('.message-bubble');
+        bubble.style.background = '#fff9c4'; 
+        bubble.classList.add('current-search');
+        
+        // Destaca especificamente os marks desta mensagem
+        el.querySelectorAll('.search-highlight').forEach(m => m.classList.add('current'));
+    } 
+};
+
+window.nextSearch = function() { 
+    if (searchResults.length === 0) return; 
+    searchIndex++; 
+    if (searchIndex >= searchResults.length) searchIndex = 0; 
+    updateSearchUI(); 
+    scrollToSearchResult(); 
+};
+
+window.prevSearch = function() { 
+    if (searchResults.length === 0) return; 
+    searchIndex--; 
+    if (searchIndex < 0) searchIndex = searchResults.length - 1; 
+    updateSearchUI(); 
+    scrollToSearchResult(); 
+};
+window.searchInHistory = async function() {
+    const term = document.getElementById('chat-search-input').value.trim();
+    if (!term || term.length < 2) return alert("Digite pelo menos 2 letras para buscar no histórico.");
+
+    const overlay = document.getElementById('search-results-overlay');
+    const list = document.getElementById('search-results-list');
+    
+    overlay.style.display = 'flex';
+    list.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">🔍 Buscando em todo o histórico...</div>';
+
+    try {
+        const res = await fetch('/chat/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                myId: currentUser.id,
+                targetId: currentChatId,
+                type: currentChatType,
+                term: term
+            })
+        });
+        const data = await res.json();
+
+        if (data.success && data.messages.length > 0) {
+            list.innerHTML = '';
+            data.messages.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'search-result-item';
+                item.onclick = () => {
+                    // Por enquanto, apenas avisa. No futuro podemos implementar o "pular para msg"
+                    alert(`Mensagem de ${m.user} em ${m.time}:\n\n${m.text}`);
+                    overlay.style.display = 'none';
+                };
+                
+                item.innerHTML = `
+                    <div class="search-result-meta">
+                        <span class="search-result-user">${m.user}</span>
+                        <span>${m.time}</span>
+                    </div>
+                    <div class="search-result-text">${m.text}</div>
+                `;
+                list.appendChild(item);
+            });
+        } else {
+            list.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">Nenhum resultado encontrado no histórico.</div>';
+        }
+    } catch (e) {
+        console.error(e);
+        list.innerHTML = '<div style="padding:20px; text-align:center; color:red;">Erro ao conectar com o servidor.</div>';
+    }
+};
+
 window.loadDepartmentsForProfile = async function() {
     try {
         const res = await fetch('/api/departments');

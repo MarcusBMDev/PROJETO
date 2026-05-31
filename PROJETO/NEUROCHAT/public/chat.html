@@ -355,6 +355,7 @@
                         <span id="search-count-display"></span>
                         <button onclick="window.prevSearch()">▲</button>
                         <button onclick="window.nextSearch()">▼</button>
+                        <button onclick="window.searchInHistory()" title="Pesquisar em todo o histórico" style="background:#e3f2fd; color:#0d47a1; border-radius:5px; margin-left:5px; font-size:0.8rem; padding:2px 5px;">🌐 Histórico</button>
                     </div>
                     <button class="icon-btn" onclick="window.toggleChatSearch()" title="Buscar na conversa">🔍</button>
                     
@@ -365,6 +366,17 @@
                 </div>
             </div>
             
+            <div id="search-results-overlay" class="search-results-overlay" style="display:none">
+                <div class="search-results-header">
+                    <span>Resultados no Histórico</span>
+                    <button class="icon-btn" onclick="document.getElementById('search-results-overlay').style.display='none'">✕</button>
+                </div>
+                <div id="search-results-list" class="search-results-list"></div>
+                <div style="padding:10px; font-size:0.75rem; color:#888; text-align:center; border-top:1px solid #eee;">
+                    Mostrando até 100 resultados mais recentes.
+                </div>
+            </div>
+
             <div id="pinned-bar" class="pinned-bar" style="display:none"></div>
             <ul id="messages"></ul>
 

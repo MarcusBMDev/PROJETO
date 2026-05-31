@@ -14,6 +14,24 @@ namespace :agendamentos do
     puts "✅ Importação da Grade Finalizada!"
   end
 
+  # TASK 1.5: Atualizar Agenda (Mantendo Profissionais e Convenios)
+  desc "Limpa apenas os agendamentos antigos e reimporta a planilha AGENDAMENTO.xlsx"
+  task atualizar: :environment do
+    arquivo = Rails.root.join('storage', 'planilhas', 'AGENDAMENTO.xlsx')
+    
+    unless File.exist?(arquivo)
+      puts "❌ Erro: O arquivo AGENDAMENTO.xlsx não foi encontrado em storage/planilhas/"
+      next
+    end
+
+    puts "🧹 Limpando tabela de Agendamentos antigos..."
+    Agendamento.delete_all
+
+    puts "🚀 Iniciando atualização da Grade Semanal (mantendo equipe)..."
+    ImportadorAgendaService.new(arquivo.to_s).executar
+    puts "✅ Atualização da Grade Finalizada!"
+  end
+
   # TASK 2: Enriquecimento com Especialidades (Guias e AVN)
   desc "Importa a planilha de Guias e AVN para enriquecer especialidades"
   task guias: :environment do

@@ -29,7 +29,7 @@
             <a href="/dashboard" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">📊 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Painel de Comando</span></a>
             <a href="/grade" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">📅 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Grade Horária</span></a>
             <a href="/equipe" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">👥 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Gestão de Equipe</span></a>
-            <a href="/espera" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">⏳ <span class="opacity-0 group-hover:opacity-100 transition-opacity">Lista de Espera</span></a>
+
             <a href="/pacientes" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">🧑‍⚕️ <span class="opacity-0 group-hover:opacity-100 transition-opacity">Pacientes</span></a>
             <a href="/convenios_view" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">🏢 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Convênios</span></a>
             <a href="/transferencias" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold bg-gradient-to-r from-blue-600/20 to-transparent text-blue-400 border-l-4 border-blue-500">📋 <span class="opacity-0 group-hover:opacity-100 transition-opacity">Central de Aprovação</span></a>
@@ -57,6 +57,40 @@
             <p class="text-slate-400 font-bold animate-pulse">Buscando pendências no servidor...</p>
         </div>
 
+        <!-- Abas de Navegação & Filtros Rápidos -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-10 bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
+            <div class="flex flex-wrap gap-2 bg-slate-50 p-1.5 rounded-[1.5rem]" id="tabs-central">
+                <button onclick="mudarAba('pendentes')" id="tab-pendentes" class="px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all bg-white text-blue-600 shadow-sm border border-slate-100">📥 Pendentes</button>
+                <button onclick="mudarAba('historico_geral')" id="tab-historico_geral" class="px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all text-slate-500 hover:text-slate-700">📜 Histórico Geral</button>
+                <button onclick="mudarAba('historico_transferencia')" id="tab-historico_transferencia" class="px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all text-slate-500 hover:text-slate-700">🔄 Trocas (Transf.)</button>
+                <button onclick="mudarAba('historico_reducao')" id="tab-historico_reducao" class="px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all text-slate-500 hover:text-slate-700">📉 Reduções</button>
+                <button onclick="mudarAba('historico_remocao')" id="tab-historico_remocao" class="px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all text-slate-500 hover:text-slate-700">❌ Retiradas</button>
+            </div>
+            
+            <!-- Filtros de Data (Visíveis apenas no Histórico) -->
+            <div id="filtros-historico" class="hidden flex items-center gap-2">
+                <select id="filtro-dia" class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-black text-slate-500 uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer" onchange="aplicarFiltros()">
+                    <option value="">Filtrar Dia</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+                    <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+                    <option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+                    <option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option>
+                    <option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option>
+                    <option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option>
+                    <option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option>
+                    <option value="29">29</option><option value="30">30</option><option value="31">31</option>
+                </select>
+                <select id="filtro-mes" class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-black text-slate-500 uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer" onchange="aplicarFiltros()">
+                    <option value="">Filtrar Mês</option>
+                    <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
+                    <option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option>
+                    <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
+                    <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+                </select>
+                <button onclick="limparFiltrosData()" title="Limpar Filtros" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl font-bold text-xs transition-all active:scale-95">🧹</button>
+            </div>
+        </div>
+
         <!-- Kanban Board para os Pedidos -->
         <div id="board" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             <!-- Cards entrarão aqui -->
@@ -70,6 +104,8 @@
     </main>
 
     <script>
+        let abaAtiva = 'pendentes';
+
         async function carregarLista() {
             document.getElementById('loader').classList.remove('hidden');
             document.getElementById('board').innerHTML = '';
@@ -77,8 +113,29 @@
             emptyState.classList.add('hidden');
 
             try {
-                const res = await fetch('/api/transferencias');
-                const transferencias = await res.json();
+                let url = '/api/transferencias';
+                
+                if (abaAtiva !== 'pendentes') {
+                    url += '?status=historico';
+                    
+                    const dia = document.getElementById('filtro-dia').value;
+                    const mes = document.getElementById('filtro-mes').value;
+                    
+                    if (dia) url += `&dia=${dia}`;
+                    if (mes) url += `&mes=${mes}`;
+                }
+                
+                const res = await fetch(url);
+                let transferencias = await res.json();
+                
+                // Filtra por tipo no frontend se for abas de histórico específicas
+                if (abaAtiva === 'historico_transferencia') {
+                    transferencias = transferencias.filter(t => t.tipo === 'transferencia');
+                } else if (abaAtiva === 'historico_reducao') {
+                    transferencias = transferencias.filter(t => t.tipo === 'reducao');
+                } else if (abaAtiva === 'historico_remocao') {
+                    transferencias = transferencias.filter(t => t.tipo === 'remocao');
+                }
                 
                 document.getElementById('loader').classList.add('hidden');
 
@@ -86,8 +143,8 @@
                     emptyState.classList.remove('hidden');
                     emptyState.innerHTML = `
                         <div class="text-6xl mb-4 opacity-50">✨</div>
-                        <h3 class="text-xl font-black text-slate-800 mb-2">Fila Limpa</h3>
-                        <p class="text-slate-500 font-medium">Não há solicitações de alteração na agenda aguardando aprovação.</p>
+                        <h3 class="text-xl font-black text-slate-800 mb-2">Sem Registros</h3>
+                        <p class="text-slate-500 font-medium">Nenhum item localizado com os critérios selecionados.</p>
                     `;
                 } else {
                     renderizarCards(transferencias);
@@ -156,6 +213,38 @@
                     `;
                 }
                 
+                let footerHtml = '';
+                if (abaAtiva === 'pendentes') {
+                    footerHtml = `
+                        <div class="pt-4 border-t border-slate-100 flex gap-3 text-xs uppercase font-black tracking-wider">
+                            <button onclick="responderTransferencia(${t.id}, 'rejeitar')" class="flex-1 py-3 bg-slate-55 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-xl transition-all">Recusar</button>
+                            <button onclick="responderTransferencia(${t.id}, 'aprovar')" class="flex-1 py-3 bg-slate-900 border border-slate-900 hover:bg-blue-600 hover:border-blue-600 text-white rounded-xl shadow-lg transition-all hover:-translate-y-0.5">${actionText}</button>
+                        </div>
+                    `;
+                } else {
+                    const statusLabel = t.status === 'aprovado' ? '✅ Aprovado' : '❌ Rejeitado';
+                    const statusColor = t.status === 'aprovado' ? 'emerald' : 'red';
+                    
+                    const dataFormatada = new Date(t.updated_at).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    footerHtml = `
+                        <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-2">
+                            <span class="bg-${statusColor}-50 text-${statusColor}-600 text-[9px] font-black uppercase px-3 py-1.5 rounded-xl border border-${statusColor}-100">
+                                ${statusLabel}
+                            </span>
+                            <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tight">
+                                Processado em: ${dataFormatada}
+                            </span>
+                        </div>
+                    `;
+                }
+
                 html += `
                 <div class="req-card bg-white rounded-3xl p-6 border border-slate-100 shadow-lg shadow-slate-200/40 relative">
                     <div class="absolute top-6 right-6 flex flex-col items-end gap-1">
@@ -177,10 +266,7 @@
                         </div>
                     </div>
                     
-                    <div class="pt-4 border-t border-slate-100 flex gap-3 text-xs uppercase font-black tracking-wider">
-                        <button onclick="responderTransferencia(${t.id}, 'rejeitar')" class="flex-1 py-3 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-xl transition-all">Recusar</button>
-                        <button onclick="responderTransferencia(${t.id}, 'aprovar')" class="flex-1 py-3 bg-slate-900 border border-slate-900 hover:bg-blue-600 hover:border-blue-600 text-white rounded-xl shadow-lg transition-all hover:-translate-y-0.5">${actionText}</button>
-                    </div>
+                    ${footerHtml}
                 </div>`;
             });
 
@@ -195,7 +281,11 @@
             if(!confirm(msgConfirm)) return;
             
             try {
-                const res = await fetch(`/api/transferencias/${id}/${acao}`, { method: 'POST' });
+                const res = await fetch(`/api/transferencias/${id}/${acao}`, { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: localStorage.getItem('userId') })
+                });
                 const json = await res.json();
                 
                 if(res.ok) {
@@ -206,6 +296,36 @@
             } catch (error) {
                 alert('Falha na comunicação com o servidor.');
             }
+        }
+
+        function mudarAba(aba) {
+            abaAtiva = aba;
+            
+            document.querySelectorAll('#tabs-central button').forEach(btn => {
+                btn.className = 'px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all text-slate-500 hover:text-slate-700';
+            });
+            
+            const btnAtivo = document.getElementById(`tab-${aba}`);
+            btnAtivo.className = 'px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all bg-white text-blue-600 shadow-sm border border-slate-100';
+            
+            const filtros = document.getElementById('filtros-historico');
+            if (aba === 'pendentes') {
+                filtros.classList.add('hidden');
+            } else {
+                filtros.classList.remove('hidden');
+            }
+            
+            carregarLista();
+        }
+
+        function aplicarFiltros() {
+            carregarLista();
+        }
+
+        function limparFiltrosData() {
+            document.getElementById('filtro-dia').value = '';
+            document.getElementById('filtro-mes').value = '';
+            carregarLista();
         }
 
         window.onload = carregarLista;

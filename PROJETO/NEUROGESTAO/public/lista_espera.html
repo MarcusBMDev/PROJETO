@@ -140,6 +140,16 @@
                 <!-- Checklist de necessidades virá aqui -->
             </div>
 
+            <!-- Abas de Navegação -->
+            <div class="flex gap-2 mb-8 bg-slate-100 p-1.5 rounded-[1.5rem] w-fit">
+                <button onclick="mudarModoSugestao('auto')" id="btn-modo-auto" class="px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all bg-white text-blue-600 shadow-sm">Sugestões Inteligentes</button>
+                <button onclick="mudarModoSugestao('manual')" id="btn-modo-manual" class="px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all text-slate-500 hover:text-slate-700">Agendamento Manual</button>
+            </div>
+
+            <div id="container-modo-manual" class="hidden space-y-8 animate-fade">
+                <!-- Conteúdo manual virá aqui -->
+            </div>
+
             <div id="lista-sugestoes" class="space-y-4">
                 <p class="text-center text-slate-400 font-medium py-10">Analisando agendas e buscando melhores combinações...</p>
             </div>
@@ -152,8 +162,33 @@
         let pacienteCriado = null;
         let esperaIdGlobal = null;
         let currentSugPacienteId = null;
-        let currentSugConvenioId = 3;
-        let sugestoesGlobais = []; // Armazena sugestões para filtro por dia
+        let currentSugConvenioId = null;
+        let sugestoesGlobais = []; 
+        let vagasBrutasGlobais = {}; // Novo: Armazena vagas por profissional
+
+        function mudarModoSugestao(modo) {
+            const btnAuto = document.getElementById('btn-modo-auto');
+            const btnManual = document.getElementById('btn-modo-manual');
+            const contAuto = document.getElementById('lista-sugestoes');
+            const contManual = document.getElementById('container-modo-manual');
+
+            if (modo === 'auto') {
+                btnAuto.classList.add('bg-white', 'text-blue-600', 'shadow-sm');
+                btnAuto.classList.remove('text-slate-500');
+                btnManual.classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
+                btnManual.classList.add('text-slate-500');
+                contAuto.classList.remove('hidden');
+                contManual.classList.add('hidden');
+            } else {
+                btnManual.classList.add('bg-white', 'text-blue-600', 'shadow-sm');
+                btnManual.classList.remove('text-slate-500');
+                btnAuto.classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
+                btnAuto.classList.add('text-slate-500');
+                contManual.classList.remove('hidden');
+                contAuto.classList.add('hidden');
+                renderizarModoManual();
+            }
+        }
 
         async function init() {
             await Promise.all([
@@ -254,7 +289,11 @@
                     specsDisplay = `<span class="bg-purple-50 text-purple-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase">${e.especialidade || 'Geral'}</span>`;
                 }
 
-                const escapedPlanned = (e.planned_specialties || '{}').replace(/'/g, "\\'");
+                // ESCAPE PARA EVITAR QUEBRA NO ONCLICK (aspas duplas quebram o atributo HTML)
+                const safeNome = (e.nome || '').replace(/'/g, "\\'").replace(/"/g, '\x26quot;');
+                const safeEsp = (e.especialidade || '').replace(/'/g, "\\'").replace(/"/g, '\x26quot;');
+                const escapedPlanned = (e.planned_specialties || '{}').replace(/"/g, '\x26quot;').replace(/'/g, "\\'");
+
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50/50 transition-colors">
                         <td class="p-5 font-bold text-slate-800 truncate max-w-xs">
@@ -266,7 +305,7 @@
                         </td>
                         <td class="p-5">${badgeTime}</td>
                         <td class="p-5 text-center flex justify-center gap-4">
-                            <button onclick="abrirFinalizarCadastro(${e.id}, '${e.nome}', '${e.especialidade}', ${e.age || 'null'}, '${e.birth_date || ''}', ${e.paciente_id || 'null'}, '${escapedPlanned}')" class="bg-blue-600 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase hover:bg-blue-700 transition-all shadow-md shadow-blue-500/20">Agendar Paciente</button>
+                            <button onclick="abrirFinalizarCadastro(${e.id}, '${safeNome}', '${safeEsp}', ${e.age || 'null'}, '${e.birth_date || ''}', ${e.paciente_id || 'null'}, '${escapedPlanned}')" class="bg-blue-600 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase hover:bg-blue-700 transition-all shadow-md shadow-blue-500/20">Agendar Paciente</button>
                             <button onclick="removerEspera(${e.id})" class="text-red-400 font-bold text-[10px] uppercase hover:text-red-600 transition-colors">Remover</button>
                         </td>
                     </tr>`;
@@ -288,7 +327,6 @@
                 plannedObj = JSON.parse(plannedJson || '{}');
             } catch(e) { console.error("Erro parse plannedJson:", e); }
 
-            // Se o plannedObj estiver vazio, usamos a especialidade string (fallback)
             if (Object.keys(plannedObj).length === 0) {
                 (especialidade || '').split(',').forEach(s => {
                     const esp = s.trim().toUpperCase();
@@ -323,7 +361,6 @@
             const esperaId = document.getElementById('p-espera-id').value;
             const pacienteId = document.getElementById('modal-cadastro').dataset.pacienteId;
             const nome = document.getElementById('p-nome').value.trim().toUpperCase();
-            // ... (resto igual)
             const birth_date = document.getElementById('p-nascimento').value;
             const age = document.getElementById('p-idade').value;
             const convenio_id = document.getElementById('p-convenio').value || null;
@@ -354,33 +391,35 @@
             const url = pacienteId ? `/api/pacientes/${pacienteId}` : '/api/pacientes';
             const method = pacienteId ? 'PUT' : 'POST';
 
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ paciente })
-            });
-
-            if(res.ok) {
-                pacienteCriado = await res.json();
-                
-                // Em vez de deletar, atualizamos o registro de espera com o ID do paciente
-                // Assim ele não "some" se o usuário não agendar agora.
-                await fetch(`/api/lista_esperas/${esperaId}`, {
-                    method: 'PUT',
+            try {
+                const res = await fetch(url, {
+                    method,
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        lista_espera: { 
-                            paciente_id: pacienteCriado.paciente.id,
-                            planned_specialties: planned_specialties
-                        } 
-                    })
+                    body: JSON.stringify({ paciente, user_id: localStorage.getItem('userId') })
                 });
 
-                document.getElementById('modal-cadastro').classList.add('hidden');
-                abrirSugestoes(pacienteCriado.paciente.id, nome, plannedObj, esperaId);
-            } else {
-                const data = await res.json();
-                alert(data.errors ? data.errors.join('\n') : 'Erro ao cadastrar paciente.');
+                if(res.ok) {
+                    pacienteCriado = await res.json();
+                    
+                    await fetch(`/api/lista_esperas/${esperaId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            lista_espera: { 
+                                paciente_id: pacienteCriado.paciente.id,
+                                planned_specialties: planned_specialties
+                            } 
+                        })
+                    });
+
+                    document.getElementById('modal-cadastro').classList.add('hidden');
+                    abrirSugestoes(pacienteCriado.paciente.id, nome, plannedObj, esperaId);
+                } else {
+                    const data = await res.json();
+                    alert(data.errors ? data.errors.join('\n') : 'Erro ao cadastrar paciente.');
+                }
+            } catch (err) {
+                alert("Erro ao conectar com o servidor: " + err.message);
             }
         }
 
@@ -391,8 +430,9 @@
             currentSugPacienteId = pacienteId;
             agendamentosPendentes = especialidades; // Agora recebe o objeto {"FONO": 2, ...}
             
-            // Tenta descobrir o convênio se vier do objeto global ou usa o padrão
-            currentSugConvenioId = (pacienteCriado && pacienteCriado.paciente.convenio_id) || 3;
+            // Tenta descobrir o convênio se vier do objeto global ou usa o primeiro da lista como fallback
+            const idDoPrimeiroConvenio = (conveniosGlobais && conveniosGlobais.length > 0) ? conveniosGlobais[0].id : null;
+            currentSugConvenioId = (pacienteCriado && pacienteCriado.paciente && pacienteCriado.paciente.convenio_id) || idDoPrimeiroConvenio;
 
             document.getElementById('sug-nome-paciente').innerText = nome;
             renderizarChecklist();
@@ -523,6 +563,7 @@
                 }
 
                 sugestoesGlobais = data.sugestoes;
+                vagasBrutasGlobais = data.vagas_por_profissional || {};
                 renderizarAbasDias();
             } catch (error) {
                 document.getElementById('lista-sugestoes').innerHTML = '<p class="text-center text-red-500 font-bold py-10">Erro ao buscar sugestões.</p>';
@@ -577,14 +618,14 @@
             const filtradas = sugestoesGlobais.filter(s => s.dia === dia);
             
             container.innerHTML = filtradas.map(s => {
-                const isDuplo = s.atendimento_2 !== null;
-                const isCombo = s.prioridade === 'consecutivo';
+                const totalAtendimentos = s.atendimentos.length;
+                const isCombo = totalAtendimentos > 1;
                 
                 const badgeClass = isCombo ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20' : 
-                                  (s.prioridade === 'proximo' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'bg-slate-100 text-slate-500 border border-slate-200');
+                                   'bg-slate-100 text-slate-500 border border-slate-200';
                 
-                const badgeLabel = isCombo ? '<span class="flex items-center gap-1.5">⚡ ATENDIMENTO SEGUIDO (COMBO)</span>' : 
-                                  (s.prioridade === 'proximo' ? '<span class="flex items-center gap-1.5">📅 MESMO DIA</span>' : '<span class="flex items-center gap-1.5">👤 VAGA UNITÁRIA</span>');
+                const badgeLabel = isCombo ? `<span class="flex items-center gap-1.5">⚡ COMBO DE ${totalAtendimentos} TERAPIAS</span>` : 
+                                   '<span class="flex items-center gap-1.5">👤 VAGA UNITÁRIA</span>';
                 
                 return `
                     <div class="bg-white border ${isCombo ? 'border-emerald-200 ring-2 ring-emerald-500/5' : 'border-slate-100'} p-8 rounded-[2.5rem] hover:border-blue-500 transition-all group shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-1 relative overflow-hidden">
@@ -598,24 +639,18 @@
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-1 ${isDuplo ? 'md:grid-cols-2' : ''} gap-6 mb-8 relative z-10">
-                            <div class="p-6 ${isCombo ? 'bg-emerald-50/30' : 'bg-slate-50/50'} rounded-[1.5rem] border border-slate-100 group-hover:bg-white transition-colors">
-                                <span class="bg-blue-100 text-blue-600 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase mb-4 inline-block">${s.atendimento_1.especialidade}</span>
-                                <div class="flex items-center gap-4">
-                                    <div class="text-2xl font-black text-slate-800 tabular-nums">${s.atendimento_1.horario}</div>
-                                    <div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                                    <div class="text-xs font-bold text-slate-500 uppercase tracking-tight">${s.atendimento_1.profissional}</div>
+                        <div class="grid grid-cols-1 ${totalAtendimentos > 1 ? 'md:grid-cols-2' : ''} gap-6 mb-8 relative z-10">
+                            ${s.atendimentos.map((at, idx) => `
+                                <div class="p-6 ${isCombo ? 'bg-emerald-50/30' : 'bg-slate-50/50'} rounded-[1.5rem] border border-slate-100 group-hover:bg-white transition-colors">
+                                    <span class="bg-blue-100 text-blue-600 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase mb-4 inline-block">${at.especialidade}</span>
+                                    <div class="flex items-center gap-4">
+                                        <div class="text-2xl font-black text-slate-800 tabular-nums">${at.horario}</div>
+                                        <div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                        <div class="text-xs font-bold text-slate-500 uppercase tracking-tight">${at.profissional}</div>
+                                    </div>
+                                    ${at.vinculo ? '<p class="text-[8px] font-black text-emerald-500 uppercase mt-2">✨ Terapeuta Atual</p>' : ''}
                                 </div>
-                            </div>
-                            ${isDuplo ? `
-                            <div class="p-6 ${isCombo ? 'bg-emerald-50/30' : 'bg-slate-50/50'} rounded-[1.5rem] border border-slate-100 group-hover:bg-white transition-colors">
-                                <span class="bg-purple-100 text-purple-600 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase mb-4 inline-block">${s.atendimento_2.especialidade}</span>
-                                <div class="flex items-center gap-4">
-                                    <div class="text-2xl font-black text-slate-800 tabular-nums">${s.atendimento_2.horario}</div>
-                                    <div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                                    <div class="text-xs font-bold text-slate-500 uppercase tracking-tight">${s.atendimento_2.profissional}</div>
-                                </div>
-                            </div>` : ''}
+                            `).join('')}
                         </div>
 
                         <div class="mb-6 flex items-center gap-3 bg-purple-50 p-4 rounded-2xl border border-purple-100 cursor-pointer hover:bg-purple-100 transition-all" onclick="const ck = this.querySelector('.encaixe-check'); ck.checked = !ck.checked; event.stopPropagation();">
@@ -626,48 +661,35 @@
                             </div>
                         </div>
 
-                        <button onclick='confirmarAgendamentoDuplo(${JSON.stringify(s)}, this.closest(".group").querySelector(".encaixe-check").checked)' 
+                        <button onclick='confirmarAgendamentoCadeia(${JSON.stringify(s)}, this.closest(".group").querySelector(".encaixe-check").checked)' 
                                 class="w-full py-5 ${isCombo ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-900 hover:bg-blue-600'} text-white font-black rounded-2xl transition-all uppercase text-xs tracking-widest shadow-lg shadow-slate-900/10 active:scale-[0.98]">
-                            Agendar ${isDuplo ? 'Atendimento Duplo' : 'Este Horário'}
+                            Agendar ${isCombo ? `Combo de ${totalAtendimentos} Horários` : 'Este Horário'}
                         </button>
                     </div>`;
             }).join('');
         }
 
-        async function confirmarAgendamentoDuplo(sugestao, comoEncaixe = false) {
-            const isDuplo = sugestao.atendimento_2 !== null;
-            let msg = `Deseja agendar ${isDuplo ? 'estes horários' : 'este horário'} para o dia ${sugestao.dia}?`;
+        async function confirmarAgendamentoCadeia(sugestao, comoEncaixe = false) {
+            const totalAtendimentos = sugestao.atendimentos.length;
+            let msg = `Deseja agendar ${totalAtendimentos > 1 ? 'estes horários' : 'este horário'} para o dia ${sugestao.dia}?`;
             if (comoEncaixe) msg += "\n(Será realizado como ENCAIXE)";
             
             if(!confirm(msg)) return;
 
             const ags = [];
             
-            if (!sugestao.atendimento_1.ja_agendado) {
+            sugestao.atendimentos.forEach(at => {
                 ags.push({
-                    _esp: sugestao.atendimento_1.especialidade,
-                    profissional_id: sugestao.atendimento_1.profissional_id,
+                    _esp: at.especialidade,
+                    profissional_id: at.profissional_id,
                     paciente_id: currentSugPacienteId,
                     convenio_id: currentSugConvenioId,
                     dia_semana: sugestao.dia,
-                    horario: sugestao.atendimento_1.horario,
+                    horario: at.horario,
                     encaixe: comoEncaixe,
                     observacoes: "Agendado via Sugestão Inteligente (Espera)" + (comoEncaixe ? " [ENCAIXE]" : "")
                 });
-            }
- 
-            if (isDuplo && !sugestao.atendimento_2.ja_agendado) {
-                ags.push({
-                    _esp: sugestao.atendimento_2.especialidade,
-                    profissional_id: sugestao.atendimento_2.profissional_id,
-                    paciente_id: currentSugPacienteId,
-                    convenio_id: currentSugConvenioId,
-                    dia_semana: sugestao.dia,
-                    horario: sugestao.atendimento_2.horario,
-                    encaixe: comoEncaixe,
-                    observacoes: "Agendado via Sugestão Inteligente (Espera)" + (comoEncaixe ? " [ENCAIXE]" : "")
-                });
-            }
+            });
 
             try {
                 const results = [];
@@ -679,7 +701,10 @@
                     const res = await fetch('/api/agendamentos', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-User-Role': 'Recepção' },
-                        body: JSON.stringify({ agendamento: payload })
+                        body: JSON.stringify({ 
+                            agendamento: payload,
+                            user_id: localStorage.getItem('userId')
+                        })
                     });
                     results.push({ ok: res.ok, res: res, _esp: ag._esp });
                 }
@@ -753,7 +778,6 @@
                             const planned = JSON.parse(p.planned_specialties);
                             abrirSugestoes(pacienteId, nome, planned, esperaId);
                         } else {
-                            // Fallback se não encontrar o JSON
                             const plannedFallback = {};
                             specsRaw.split(',').forEach(s => { if(s.trim()) plannedFallback[s.trim()] = 1; });
                             abrirSugestoes(pacienteId, nome, plannedFallback, esperaId);
@@ -767,11 +791,123 @@
             }
         }
 
+        function renderizarModoManual(filtroEsp = null) {
+            const container = document.getElementById('container-modo-manual');
+            const specs = Object.entries(agendamentosPendentes).filter(([_, q]) => q > 0).map(([esp, _]) => esp);
+            
+            if (specs.length === 0) {
+                container.innerHTML = '<p class="text-center text-slate-400 py-10 font-bold">Todas as terapias foram agendadas!</p>';
+                return;
+            }
+
+            const espSelecionada = filtroEsp || specs[0];
+
+            let html = `
+                <div class="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
+                    ${specs.map(esp => `
+                        <button onclick="renderizarModoManual('${esp}')" class="px-5 py-2.5 rounded-xl font-black text-[9px] uppercase transition-all border-2 ${esp === espSelecionada ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-400 border-slate-100 hover:border-blue-200'}">
+                            ${esp}
+                        </button>
+                    `).join('')}
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            `;
+
+            const profs = vagasBrutasGlobais[espSelecionada] || [];
+            
+            if (profs.length === 0) {
+                html += `<p class="col-span-2 text-center text-slate-400 py-10">Nenhum profissional encontrado para ${espSelecionada}.</p>`;
+            } else {
+                profs.forEach(p => {
+                    const totalVagas = Object.values(p.horarios).reduce((acc, current) => acc + current.length, 0);
+                    if (totalVagas === 0) return;
+
+                    html += `
+                        <div class="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-all">
+                            <div class="flex items-center gap-4 mb-6">
+                                <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 font-black text-lg">
+                                    ${p.nome.charAt(0)}
+                                </div>
+                                <div>
+                                    <p class="font-black text-slate-800 uppercase text-xs">${p.nome}</p>
+                                    <p class="text-[9px] font-bold text-slate-400 uppercase">${espSelecionada} • ${totalVagas} Vagas</p>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                ${Object.entries(p.horarios).filter(([_, slots]) => slots.length > 0).map(([dia, slots]) => `
+                                    <div class="mb-6 last:mb-0">
+                                        <div class="flex items-center gap-2 mb-3">
+                                            <div class="h-px flex-1 bg-slate-100"></div>
+                                            <p class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] px-3 py-1 bg-blue-50 rounded-lg shadow-sm border border-blue-100">${dia}</p>
+                                            <div class="h-px flex-1 bg-slate-100"></div>
+                                        </div>
+                                        <div class="flex flex-wrap gap-2 px-1">
+                                            ${slots.map(slot => `
+                                                <button onclick="agendarManual(${p.id}, '${p.nome}', '${espSelecionada}', '${dia}', '${slot}')" 
+                                                        class="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-[11px] font-black hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:shadow-lg hover:shadow-blue-500/20 transition-all active:scale-95">
+                                                    ${slot}
+                                                </button>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        async function agendarManual(profId, profNome, esp, dia, horario) {
+            if (!confirm(`Confirmar agendamento de ${esp} com ${profNome} na ${dia} às ${horario}?`)) return;
+
+            const agendamento = {
+                profissional_id: profId,
+                paciente_id: currentSugPacienteId,
+                convenio_id: currentSugConvenioId,
+                dia_semana: dia,
+                horario: horario,
+                encaixe: false,
+                observacoes: "Agendado via Modo Manual (Espera)"
+            };
+
+            try {
+                const res = await fetch('/api/agendamentos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ agendamento, user_id: localStorage.getItem('userId') })
+                });
+
+                if (res.ok) {
+                    if (agendamentosPendentes[esp] > 0) {
+                        agendamentosPendentes[esp]--;
+                    }
+                    
+                    const totalRestante = Object.values(agendamentosPendentes).reduce((a, b) => a + b, 0);
+                    if (totalRestante > 0) {
+                        buscarEspecialidadesRestantes();
+                        renderizarModoManual(esp);
+                    } else {
+                        renderizarChecklist();
+                    }
+                } else {
+                    const data = await res.json();
+                    alert("Erro ao agendar: " + (data.errors ? data.errors.join(", ") : "Erro desconhecido"));
+                }
+            } catch (err) {
+                alert("Erro de conexão ao agendar.");
+            }
+        }
+
         window.onload = async () => {
             await init();
             verificarParametros();
         };
     </script>
+
     <!-- Modal Grade do Paciente -->
     <div id="modal-grade-paciente" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 md:p-10">
         <div class="bg-white w-full max-w-5xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[90vh] flex flex-col border border-white/20">

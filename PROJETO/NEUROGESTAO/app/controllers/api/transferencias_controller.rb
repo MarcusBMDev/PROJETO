@@ -2,9 +2,35 @@ class Api::TransferenciasController < ApplicationController
   before_action :validar_acesso_gestao!
   # GET /transferencias
   def index
+    status_filter = params[:status].presence || 'pendente'
+    
     transferencias = Transferencia.includes(:paciente, :de_profissional, :para_profissional)
-                                  .where(status: 'pendente')
-                                  .order(created_at: :desc)
+    
+    if status_filter == 'historico'
+      transferencias = transferencias.where.not(status: 'pendente')
+    else
+      transferencias = transferencias.where(status: status_filter)
+    end
+
+    if params[:dia].present? || params[:mes].present?
+      year = Date.today.year
+      month = params[:mes].present? ? params[:mes].to_i : Date.today.month
+      day = params[:dia].present? ? params[:dia].to_i : 1
+      
+      begin
+        if params[:dia].present?
+          date = Date.new(year, month, day)
+          transferencias = transferencias.where(created_at: date.beginning_of_day..date.end_of_day)
+        else
+          start_date = Date.new(year, month, 1)
+          end_date = start_date.end_of_month
+          transferencias = transferencias.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+        end
+      rescue ArgumentError
+      end
+    end
+    
+    transferencias = transferencias.order(created_at: :desc)
     
     render json: transferencias.as_json(
       include: {
@@ -57,9 +83,7 @@ class Api::TransferenciasController < ApplicationController
         setor = request.headers['X-User-Role'] || 'Gestão'
         case t.tipo
         when 'transferencia'
-          NeurochatService.notificar_transferencia_paciente(t.paciente, t.de_profissional, t.para_profissional, t.motivo, setor, t.novo_dia_semana, t.novo_horario)
-        when 'remocao', 'reducao'
-          NeurochatService.notificar_remocao_paciente(t.paciente, t.motivo, setor)
+          NeurochatService.notificar_transferencia_paciente(t.paciente, t.de_profissional, t.para_profissional, t.motivo, setor, t.novo_dia_semana, t.novo_horario, params[:user_id])
         end
       rescue => e
         Rails.logger.error "Falha ao emitir notificação operacional: #{e.message}"
@@ -123,20 +147,17 @@ class Api::TransferenciasController < ApplicationController
 
     setor = t.solicitante.presence || 'Gestão'
 
-    # Captura os dados de cada agendamento ANTES de destruir e notifica o Grupo 14
-    agendamentos.each do |ag|
-      begin
-        NeurochatService.notificar_retirada_paciente(
-          t.paciente,
-          ag.profissional,
-          ag.dia_semana,
-          ag.horario,
-          t.motivo.presence || 'Remoção aprovada pela gestão',
-          setor
-        )
-      rescue => e
-        Rails.logger.error "Erro ao notificar retirada (agendamento #{ag.id}): #{e.message}"
-      end
+    # Notifica o Grupo 14 com TODOS os agendamentos de uma só vez antes de destruir
+    begin
+      NeurochatService.notificar_remocao_grade(
+        t.paciente,
+        agendamentos,
+        t.motivo.presence || 'Remoção aprovada pela gestão',
+        setor,
+        request.headers['X-User-Name'].presence
+      )
+    rescue => e
+      Rails.logger.error "Erro ao notificar remoção agrupada: #{e.message}"
     end
 
     agendamentos.destroy_all
@@ -144,11 +165,27 @@ class Api::TransferenciasController < ApplicationController
 
   def processar_aprovacao_reducao(t)
     ids = JSON.parse(t.agendamento_ids || "[]")
-    agendamentos = Agendamento.where(id: ids)
+    agendamentos = Agendamento.includes(:profissional).where(id: ids)
     raise "Nenhum agendamento encontrado para redução." if agendamentos.empty?
     
     # Quantidade de sessões removidas
     removidas = agendamentos.count
+    
+    setor = t.solicitante.presence || 'Gestão'
+    
+    # Notifica o Grupo 14 com TODOS os agendamentos de uma só vez antes de destruir
+    begin
+      NeurochatService.notificar_reducao_grade(
+        t.paciente,
+        agendamentos,
+        t.motivo.presence || 'Redução aprovada pela gestão',
+        setor,
+        request.headers['X-User-Name'].presence
+      )
+    rescue => e
+      Rails.logger.error "Erro ao notificar redução agrupada: #{e.message}"
+    end
+    
     agendamentos.destroy_all
     
     # Atualiza a frequência do paciente

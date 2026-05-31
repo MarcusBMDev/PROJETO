@@ -94,7 +94,10 @@ class Api::DataPacientesController < ActionController::API
     paciente = Paciente.find(params[:id])
     motivo = params[:motivo] || "Motivo não informado"
     setor = request.headers['X-User-Role'] || 'Desconhecido'
-    NeurochatService.notificar_remocao_paciente(paciente, motivo, setor)
+    # Notifica cada retirada individualmente para visibilidade total das vagas liberadas
+    Agendamento.where(paciente_id: paciente.id).includes(:profissional).each do |ag|
+      NeurochatService.notificar_retirada_paciente(paciente, ag.profissional, ag.dia_semana, ag.horario, motivo, setor)
+    end
     Agendamento.where(paciente_id: paciente.id).destroy_all
     if paciente.soft_delete
       AuditoriaService.log(request, 'EXCLUIR', paciente, "Motivo: #{motivo}")
