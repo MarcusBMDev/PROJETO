@@ -13,6 +13,13 @@
         <button class="sub-tab-link" onclick="openSubTab(event, 'beneficios', 'restaurante_veleiros_inner')">🍽️ Restaurante Veleiros</button>
         <button class="sub-tab-link" onclick="openSubTab(event, 'beneficios', 'droganita_inner')">💊 Farmácia Droganita</button>
         <button class="sub-tab-link" onclick="openSubTab(event, 'beneficios', 'fast_massagem_inner')">💆‍♀️ Fast Massagem</button>
+
+        <!-- Benefícios Dinâmicos Cadastrados no Cockpit -->
+        <% if (typeof beneficiosDinamicos !== 'undefined' && beneficiosDinamicos && beneficiosDinamicos.length > 0) { %>
+            <% beneficiosDinamicos.forEach(function(ben) { %>
+                <button class="sub-tab-link" onclick="openSubTab(event, 'beneficios', '<%= ben.slug %>_inner')"><%= ben.emoji %> <%= ben.nome_empresa %></button>
+            <% }); %>
+        <% } %>
     </div>
 
     <!-- Day Off -->
@@ -399,4 +406,90 @@
             </div>
         </div>
     </div>
+
+    <!-- Conteúdos dos Benefícios Dinâmicos -->
+    <% if (typeof beneficiosDinamicos !== 'undefined' && beneficiosDinamicos && beneficiosDinamicos.length > 0) { %>
+        <% beneficiosDinamicos.forEach(function(ben) { %>
+            <div id="<%= ben.slug %>_inner" class="sub-tab-content" style="display: none;">
+                <div class="glass-card" style="padding: 2.5rem; max-width: 850px; margin: 0 auto; border-radius: 20px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+                    <!-- Cabeçalho -->
+                    <div style="text-align: center; margin-bottom: 2.5rem;">
+                        <span style="font-size: 3.5rem;"><%= ben.emoji %></span>
+                        <h2 style="font-weight: 800; font-size: 2.2rem; color: #fff; margin-top: 10px;"><%= ben.titulo %></h2>
+                        <div style="width: 80px; height: 4px; background: var(--accent-color); margin: 15px auto; border-radius: 2px;"></div>
+                    </div>
+
+                    <!-- Grid de Planos/Preços -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 2.5rem;">
+                        <!-- Plano 1 -->
+                        <% if(ben.plano1_nome) { %>
+                            <div style="background: rgba(255,255,255,0.05); padding: 1.8rem; border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.08); transition: transform 0.3s;">
+                                <h4 style="font-size: 1.05rem; margin-bottom: 15px; color: #fff; font-weight: 700;"><%= ben.plano1_nome %></h4>
+                                <% if(ben.plano1_valor_antigo) { %>
+                                    <p style="text-decoration: line-through; font-size: 0.85rem; color: rgba(255,255,255,0.4); margin-bottom: 5px;">R$ <%= ben.plano1_valor_antigo %></p>
+                                <% } %>
+                                <p style="font-size: 1.6rem; font-weight: 800; color: var(--accent-color); margin: 0;">R$ <%= ben.plano1_valor_novo %></p>
+                                <% if(ben.plano1_detalhe) { %>
+                                    <p style="font-size: 0.75rem; margin-top: 8px; color: rgba(255,255,255,0.5);"><%= ben.plano1_detalhe %></p>
+                                <% } %>
+                            </div>
+                        <% } %>
+
+                        <!-- Plano 2 (Destaque com Borda Rosa) -->
+                        <% if(ben.plano2_nome) { %>
+                            <div style="background: rgba(255,255,255,0.08); padding: 1.8rem; border-radius: 15px; text-align: center; border: 2px solid var(--accent-color); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(216, 27, 96, 0.2); transition: transform 0.3s;">
+                                <h4 style="font-size: 1.05rem; margin-bottom: 15px; color: #fff; font-weight: 700;"><%= ben.plano2_nome %></h4>
+                                <% if(ben.plano2_valor_antigo) { %>
+                                    <p style="text-decoration: line-through; font-size: 0.85rem; color: rgba(255,255,255,0.4); margin-bottom: 5px;">R$ <%= ben.plano2_valor_antigo %></p>
+                                <% } %>
+                                <p style="font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0;">R$ <%= ben.plano2_valor_novo %></p>
+                                <% if(ben.plano2_detalhe) { %>
+                                    <p style="font-size: 0.75rem; margin-top: 8px; color: rgba(255,255,255,0.6); font-weight: 500;"><%= ben.plano2_detalhe %></p>
+                                <% } %>
+                            </div>
+                        <% } %>
+
+                        <!-- Plano 3 -->
+                        <% if(ben.plano3_nome) { %>
+                            <div style="background: rgba(255,255,255,0.05); padding: 1.8rem; border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.08); transition: transform 0.3s;">
+                                <h4 style="font-size: 1.05rem; margin-bottom: 15px; color: #fff; font-weight: 700;"><%= ben.plano3_nome %></h4>
+                                <% if(ben.plano3_valor_antigo) { %>
+                                    <p style="text-decoration: line-through; font-size: 0.85rem; color: rgba(255,255,255,0.4); margin-bottom: 5px;">R$ <%= ben.plano3_valor_antigo %></p>
+                                <% } %>
+                                <p style="font-size: 1.6rem; font-weight: 800; color: var(--accent-color); margin: 0;">R$ <%= ben.plano3_valor_novo %></p>
+                                <% if(ben.plano3_detalhe) { %>
+                                    <p style="font-size: 0.75rem; margin-top: 8px; color: rgba(255,255,255,0.5);"><%= ben.plano3_detalhe %></p>
+                                <% } %>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Caixas inferiores Lado a Lado -->
+                    <% if(ben.modalidades_texto || ben.avaliacao_texto) { %>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                            <!-- Caixa 1 -->
+                            <% if(ben.modalidades_texto) { %>
+                                <div style="padding: 1.8rem; background: rgba(0,0,0,0.25); border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); text-align: left;">
+                                    <p style="color: #fff; font-weight: 700; margin-bottom: 12px; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                                        <%= ben.modalidades_titulo || '💪 Informações inclusas:' %>
+                                    </p>
+                                    <p style="font-size: 0.92rem; color: rgba(255,255,255,0.7); line-height: 1.7; white-space: pre-wrap;"><%= ben.modalidades_texto %></p>
+                                </div>
+                            <% } %>
+
+                            <!-- Caixa 2 -->
+                            <% if(ben.avaliacao_texto) { %>
+                                <div style="padding: 1.8rem; background: rgba(52, 152, 219, 0.1); border-radius: 15px; border: 1px solid rgba(52, 152, 219, 0.25); text-align: left;">
+                                    <p style="color: #3498db; font-weight: 700; margin-bottom: 8px; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                                        <%= ben.avaliacao_titulo || '📝 Benefício extra:' %>
+                                    </p>
+                                    <p style="font-size: 1.25rem; color: #fff; font-weight: 800; line-height: 1.6; white-space: pre-wrap;"><%= ben.avaliacao_texto %></p>
+                                </div>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        <% }); %>
+    <% } %>
 </div>
