@@ -1,8 +1,10 @@
 const mysql = require('mysql2/promise');
 const dotenv = require('dotenv');
 
-// Carrega as variáveis do arquivo .env
-dotenv.config();
+const path = require('path');
+
+// Carrega as variáveis do arquivo .env usando caminho absoluto
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
 
 // Cria o Pool de Conexões
 const pool = mysql.createPool({

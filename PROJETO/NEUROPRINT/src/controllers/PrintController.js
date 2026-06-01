@@ -211,12 +211,21 @@ module.exports = {
             const tipoArquivo = files.length > 1 ? 'Múltiplos PDFs' : 'application/pdf';
 
             await connection.execute(sql, [
-                user_id, sector, fileNames, filePaths, tipoArquivo, page_range || 'Todas',
-                numCopies, color_mode || 'PB', 
-                (isDuplexTrue ? 1 : 0),
-                (twoPerPageTrue ? 1 : 0),
-                dataPrazo, (isUrgentTrue ? 1 : 0), observacao || '',
-                totalPagesRaw, totalImpressosFinal
+                user_id !== undefined ? user_id : null,
+                sector !== undefined ? sector : null,
+                fileNames !== undefined ? fileNames : '',
+                filePaths !== undefined ? filePaths : '',
+                tipoArquivo !== undefined ? tipoArquivo : 'application/pdf',
+                page_range || 'Todas',
+                numCopies !== undefined ? numCopies : 1,
+                color_mode || 'PB', 
+                isDuplexTrue ? 1 : 0,
+                twoPerPageTrue ? 1 : 0,
+                dataPrazo,
+                isUrgentTrue ? 1 : 0,
+                observacao !== undefined ? observacao : '',
+                totalPagesRaw !== undefined ? totalPagesRaw : 0,
+                totalImpressosFinal !== undefined ? totalImpressosFinal : 0
             ]);
 
             return res.status(201).json({ message: 'Solicitação enviada com sucesso!', total_pages: totalPagesRaw, total_printed: totalImpressosFinal });

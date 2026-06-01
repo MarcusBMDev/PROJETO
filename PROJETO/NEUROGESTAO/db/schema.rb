@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_14_140910) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_31_145554) do
   create_table "active_storage_attachments", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -54,6 +54,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_14_140910) do
     t.bigint "paciente_id"
     t.bigint "profissional_id", null: false
     t.string "status", default: "confirmado"
+    t.boolean "terapia_grupo", default: false
     t.datetime "updated_at", null: false
     t.index ["convenio_id"], name: "index_agendamentos_on_convenio_id"
     t.index ["lista_espera_id"], name: "index_agendamentos_on_lista_espera_id"

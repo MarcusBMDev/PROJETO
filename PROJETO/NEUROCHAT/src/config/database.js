@@ -1,6 +1,7 @@
 // src/config/database.js
 const mysql = require('mysql2/promise');
-require('dotenv').config(); // Garante que lê o arquivo .env
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') }); // Garante que lê o arquivo .env usando caminho absoluto
 
 // Configuração do Pool de Conexões (Mais eficiente que abrir/fechar toda hora)
 const pool = mysql.createPool({

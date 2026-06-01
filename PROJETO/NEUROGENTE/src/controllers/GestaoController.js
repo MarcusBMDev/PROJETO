@@ -92,8 +92,8 @@ const GestaoController = {
         RhModel.salvarArquivo(dados, (err) => {
             if (!err) {
                 const fromId = req.session.user ? req.session.user.id : 1;
-                // Busca apenas os grupos que estão ativos (is_active = 1)
-                const sqlGroups = "SELECT id FROM `groups` WHERE is_active = 1";
+                // Busca apenas os grupos que estão ativos (is_active = 1) e que não estão na lista de exclusão (10, 12, 13, 14, 15, 17, 18, 19)
+                const sqlGroups = "SELECT id FROM `groups` WHERE is_active = 1 AND id NOT IN (10, 12, 13, 14, 15, 17, 18, 19)";
                 
                 RhModel.query(sqlGroups, [], (errGroups, groups) => {
                     if (!errGroups && groups && groups.length > 0) {

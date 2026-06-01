@@ -28,6 +28,12 @@ class ImportadorAgendaService
     puts "--> Sincronizando dados adicionais (Terapia e Frequência)..."
     sincronizar_dados_adicionais_pacientes
 
+    puts "--> Bloqueando horários de produção nas segundas-feiras (10:40 e 11:20)..."
+    bloquear_producao_segunda
+
+    puts "--> Bloqueando horários não preenchidos (exclusivos para produção)..."
+    bloquear_horarios_vagos
+
     puts "✅ Fim da importação blindada!"
   end
 
@@ -391,10 +397,10 @@ class ImportadorAgendaService
     end
   end
 
-  # Bloqueia SEGUNDA-FEIRA 10:40 e 11:20 para TODOS os profissionais
+  # Bloqueia SEGUNDA-FEIRA 10:40 e 11:20 para TODOS os profissionais (exceto ATs)
   def bloquear_producao_segunda
     horarios_producao = ["10:40", "11:20"]
-    Profissional.find_each do |prof|
+    Profissional.where.not(especialidade: "ATENDENTE TERAPEUTICO").find_each do |prof|
       begin
         horarios_producao.each do |hora|
           next if Agendamento.exists?(profissional: prof, dia_semana: "segunda-feira", horario: hora)
@@ -413,12 +419,12 @@ class ImportadorAgendaService
     end
   end
 
-  # Bloqueia todos os horários vagos de cada profissional como HORÁRIO DE PRODUÇÃO
+  # Bloqueia todos os horários vagos de cada profissional como HORÁRIOS FECHADOS EXCLUSIVOS PARA PRODUÇÃO (exceto ATs)
   def bloquear_horarios_vagos
     slots_padrao = ["08:00", "08:40", "09:20", "10:00", "10:40", "11:20", "14:00", "14:40", "15:20", "16:00", "16:40", "17:20"]
     dias = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira"]
 
-    Profissional.find_each do |prof|
+    Profissional.where.not(especialidade: "ATENDENTE TERAPEUTICO").find_each do |prof|
       begin
         # Carrega agendamentos uma vez por profissional para performance
         ags = prof.agendamentos.pluck(:dia_semana, :horario)
@@ -446,7 +452,7 @@ class ImportadorAgendaService
               dia_semana: dia,
               horario: hora,
               status: "bloqueado",
-              motivo_bloqueio: "HORÁRIO DE PRODUÇÃO",
+              motivo_bloqueio: "HORÁRIOS FECHADOS EXCLUSIVOS PARA PRODUÇÃO",
               bloqueado_por: "SISTEMA"
             )
             count += 1

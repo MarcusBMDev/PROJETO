@@ -3,7 +3,7 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const { checkConnection } = require('./src/config/database');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 // Inicializa App e Server
 const app = express();

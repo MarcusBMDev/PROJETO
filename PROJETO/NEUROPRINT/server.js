@@ -3,8 +3,8 @@ const dotenv = require('dotenv');
 const path = require('path'); // Importante para gerenciar caminhos de pastas
 const printRoutes = require('./src/routes/printRoutes'); // Suas rotas
 
-// Carrega variáveis de ambiente
-dotenv.config();
+// Carrega variáveis de ambiente usando caminho absoluto
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3006;
@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: true })); // Permite receber dados de for
 
 // --- 1. Frontend (Arquivos do site: HTML, CSS, JS) ---
 // Isso permite acessar http://localhost:3006/index.html
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // --- 2. Área de Downloads (Arquivos para Visualização/Download) ---
 app.use('/files', express.static(path.join(__dirname, 'storage', 'uploads')));
