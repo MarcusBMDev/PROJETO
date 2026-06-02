@@ -5,6 +5,7 @@ class ImportadorAgendaService
 
   def initialize(caminho_arquivo)
     @xlsx = Roo::Excelx.new(caminho_arquivo)
+    @slots_presentes = {}
   end
 
   def executar
@@ -120,6 +121,33 @@ class ImportadorAgendaService
           horario_atual = h_parts.join(" - ")
         else
           horario_atual = col_a.strip
+        end
+      end
+
+      # Registra o horário como presente na planilha para o profissional, mesmo que esteja vazio (vaga)
+      if dia_atual.present? && horario_atual.present?
+        profs_para_registrar = []
+        if tem_coluna_profissional
+          prof_col_raw = sheet.cell(i, 3).to_s.strip
+          prof_nomes = limpar_e_dividir_profissionais(prof_col_raw)
+          
+          if prof_nomes.empty? || ["PROFISSIONAL", "PACIENTE", "CONVENIO"].include?(prof_nomes.first.upcase)
+            unless aba_combinada
+              profs_para_registrar = [prof_fixo_nome]
+            end
+          else
+            profs_para_registrar = prof_nomes.map(&:upcase)
+          end
+        else
+          profs_para_registrar = [prof_fixo_nome]
+        end
+
+        slots_expandidos = horario_atual.to_s.include?('-') ? expandir_range_para_slots(horario_atual) : [horario_atual]
+
+        profs_para_registrar.each do |prof_n|
+          slots_expandidos.each do |slot_h|
+            registrar_slot_presente(prof_n, dia_atual, slot_h)
+          end
         end
       end
 
@@ -447,6 +475,9 @@ class ImportadorAgendaService
 
             next if ja_ocupado
 
+            # Se o horário estava presente na planilha para este profissional, ele é uma vaga e não deve ser bloqueado
+            next if slot_presente_na_planilha?(prof.nome, dia, hora)
+
             Agendamento.create(
               profissional: prof,
               dia_semana: dia,
@@ -493,5 +524,15 @@ class ImportadorAgendaService
     end
 
     slots.uniq
+  end
+
+  def registrar_slot_presente(prof_nome, dia, hora)
+    key = [prof_nome.to_s.strip.upcase, dia.to_s.strip.downcase, hora.to_s.strip]
+    @slots_presentes[key] = true
+  end
+
+  def slot_presente_na_planilha?(prof_nome, dia, hora)
+    key = [prof_nome.to_s.strip.upcase, dia.to_s.strip.downcase, hora.to_s.strip]
+    @slots_presentes[key] == true
   end
 end
