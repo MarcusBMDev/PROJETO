@@ -39,6 +39,7 @@
                     <small style="color:#aaa; text-transform:uppercase; font-size:0.75rem; font-weight:bold;">Gestão Gente</small>
                     <button class="btn" style="width:100%; margin-bottom:5px;" onclick="showSection('solicitacoes')">📬 Solicitações</button>
                     <button class="btn" style="width:100%; margin-bottom:5px; background:#2980b9;" onclick="showSection('uploads')">📂 Arquivos</button>
+                    <button class="btn" style="width:100%; margin-bottom:5px; background:#9b59b6;" onclick="showSection('beneficios')">🎁 Benefícios</button>
                 </div>
             <% } %>
 
@@ -218,6 +219,153 @@
                             
                             <% if(arquivos.length === 0) { %>
                                 <tr><td colspan="4" style="text-align:center; padding:30px; color:#aaa;">Nenhum documento publicado.</td></tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <% } %>
+
+            <% if(isAdminSafe || userSetor !== 'ABA') { %>
+            <div id="sec-beneficios" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                    <h3>🎁 Cadastro de Novo Benefício</h3>
+                </div>
+
+                <!-- Formulário de Criação de Benefício Otimizado -->
+                <div class="upload-card" style="background: rgba(26, 37, 47, 0.98); border-radius: 16px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255, 255, 255, 0.1); color: white;">
+                    <div class="card-header" style="border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; margin-bottom:15px;">
+                        <h4 class="card-title" style="color:#9b59b6; margin:0;">➕ Novo Convênio / Benefício</h4>
+                        <div class="card-meta" style="font-size:0.8rem; color:#aaa; margin-top:4px;">Crie um novo benefício que aparecerá como aba e seguirá o padrão premium (Academia Inspire)</div>
+                    </div>
+
+                    <form action="/gestao/beneficio" method="POST">
+                        <!-- Linha 1: Nome, Emoji e Título -->
+                        <div style="display: grid; grid-template-columns: 2fr 1fr 2fr; gap: 15px; margin-bottom: 15px;">
+                            <div>
+                                <label>Nome da Empresa (curto para o botão)</label>
+                                <input type="text" name="nome_empresa" required placeholder="Ex: Academia Inspire" style="margin-top:5px; width:100%; border-radius:8px;">
+                            </div>
+                            <div>
+                                <label>Emoji da Aba</label>
+                                <input type="text" name="emoji" value="🎁" placeholder="Ex: 🏋️" style="margin-top:5px; text-align:center; width:100%; border-radius:8px;">
+                            </div>
+                            <div>
+                                <label>Título do Convênio (na página)</label>
+                                <input type="text" name="titulo" required placeholder="Ex: Convênio Academia Inspire" style="margin-top:5px; width:100%; border-radius:8px;">
+                            </div>
+                        </div>
+
+                        <!-- Seção Planos e Valores -->
+                        <h4 style="color:#9b59b6; border-bottom:1px dashed rgba(255,255,255,0.1); padding-bottom:5px; margin-top:25px; margin-bottom:15px;">💳 Configuração de Planos e Preços (Até 3)</h4>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                            <!-- Plano 1 -->
+                            <div style="background:rgba(0,0,0,0.25); padding:15px; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
+                                <h5 style="margin:0 0 10px 0; color:var(--accent-color);">Plano 1 (Esquerda)</h5>
+                                <label>Nome do Plano</label>
+                                <input type="text" name="plano1_nome" placeholder="Ex: Plano Mensal" style="margin: 5px 0; width:100%; border-radius:8px;">
+                                <label>Valor De (Antigo)</label>
+                                <input type="text" name="plano1_valor_antigo" placeholder="Ex: 159,90" style="margin: 5px 0; width:100%; border-radius:8px;">
+                                <label>Valor Por (Novo)</label>
+                                <input type="text" name="plano1_valor_novo" placeholder="Ex: 143,90" style="margin: 5px 0; width:100%; border-radius:8px;">
+                                <label>Detalhe (Opcional)</label>
+                                <input type="text" name="plano1_detalhe" placeholder="Ex: Cobrado mensalmente" style="margin: 5px 0; width:100%; border-radius:8px;">
+                            </div>
+
+                            <!-- Plano 2 (Destaque Central) -->
+                            <div style="background:rgba(216, 27, 96, 0.05); padding:15px; border-radius:10px; border:2px solid var(--accent-color);">
+                                <h5 style="margin:0 0 10px 0; color:#fff;">Plano 2 (Destaque Central)</h5>
+                                <label>Nome do Plano</label>
+                                <input type="text" name="plano2_nome" placeholder="Ex: Plano Semestral" style="margin: 5px 0; width:100%; border-radius:8px;">
+                                <label>Valor De (Antigo)</label>
+                                <input type="text" name="plano2_valor_antigo" placeholder="Ex: 129,90" style="margin: 5px 0; width:100%; border-radius:8px;">
+                                <label>Valor Por (Novo)</label>
+                                <input type="text" name="plano2_valor_novo" placeholder="Ex: 119,90" style="margin: 5px 0; width:100%; border-radius:8px;">
+                                <label>Detalhe (Recorrência)</label>
+                                <input type="text" name="plano2_detalhe" placeholder="Ex: Recorrência em 12x" style="margin: 5px 0; width:100%; border-radius:8px;">
+                            </div>
+
+                            <!-- Plano 3 -->
+                            <div style="background:rgba(0,0,0,0.25); padding:15px; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
+                                <h5 style="margin:0 0 10px 0; color:var(--accent-color);">Plano 3 (Direita)</h5>
+                                <label>Nome do Plano</label>
+                                <input type="text" name="plano3_nome" placeholder="Ex: Plano Anual" style="margin: 5px 0; width:100%; border-radius:8px;">
+                                <label>Valor De (Antigo)</label>
+                                <input type="text" name="plano3_valor_antigo" placeholder="Ex: 109,90" style="margin: 5px 0; width:100%; border-radius:8px;">
+                                <label>Valor Por (Novo)</label>
+                                <input type="text" name="plano3_valor_novo" placeholder="Ex: 99,90" style="margin: 5px 0; width:100%; border-radius:8px;">
+                                <label>Detalhe (Recorrência)</label>
+                                <input type="text" name="plano3_detalhe" placeholder="Ex: Recorrência em 12x" style="margin: 5px 0; width:100%; border-radius:8px;">
+                            </div>
+                        </div>
+
+                        <!-- Caixas de Informação Adicional -->
+                        <h4 style="color:#9b59b6; border-bottom:1px dashed rgba(255,255,255,0.1); padding-bottom:5px; margin-top:30px; margin-bottom:15px;">ℹ️ Caixas de Informação Adicional (Lado a Lado no Rodapé)</h4>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                            <!-- Caixa 1 -->
+                            <div style="background:rgba(0,0,0,0.25); padding:15px; border-radius:10px;">
+                                <label>Título da Caixa 1</label>
+                                <input type="text" name="modalidades_titulo" placeholder="Ex: 💪 Modalidades inclusas:" style="margin: 5px 0; width:100%; border-radius:8px;">
+                                <label>Conteúdo da Caixa 1</label>
+                                <textarea name="modalidades_texto" rows="4" placeholder="Ex: Musculação, Dança, Spinning, Kickboxing e Body balance." style="margin-top:5px; font-family:inherit; resize:vertical; width:100%; border-radius:8px;"></textarea>
+                            </div>
+
+                            <!-- Caixa 2 -->
+                            <div style="background:rgba(52, 152, 219, 0.05); border: 1px solid rgba(52, 152, 219, 0.2); padding:15px; border-radius:10px;">
+                                <label>Título da Caixa 2 (Destaque Azul)</label>
+                                <input type="text" name="avaliacao_titulo" placeholder="Ex: 📝 Avaliação Física:" style="margin: 5px 0; width:100%; border-radius:8px;">
+                                <label>Conteúdo da Caixa 2</label>
+                                <textarea name="avaliacao_texto" rows="4" placeholder="Ex: De R$ 50,00 por R$ 30,00" style="margin-top:5px; font-family:inherit; resize:vertical; width:100%; border-radius:8px;"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Botão de Enviar -->
+                        <div style="text-align: right; margin-top: 25px;">
+                            <button type="submit" class="btn" style="background:linear-gradient(135deg, #9b59b6, #8e44ad); padding:12px 30px; border-radius:30px; font-weight:800; font-size:0.95rem; text-transform:uppercase; letter-spacing:1px; box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3); margin:0;">
+                                🚀 Criar Benefício Agora
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tabela de Gerenciamento de Benefícios -->
+                <div style="margin-top: 40px; margin-bottom: 20px;">
+                    <h3>📚 Benefícios Cadastrados no Cockpit</h3>
+                    <p style="color:#222; margin-top:5px; font-weight:700; text-shadow: 0 1px 2px rgba(255,255,255,0.3);">Gerencie ou exclua os benefícios criados dinamicamente.</p>
+                </div>
+
+                <div style="background: rgba(26, 37, 47, 0.98); border-radius:16px; padding:20px; box-shadow:0 10px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 50px;">
+                    <table class="table-gestao">
+                        <thead>
+                            <tr>
+                                <th>Empresa</th>
+                                <th>Título</th>
+                                <th>Preços Disponíveis</th>
+                                <th style="text-align:center;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% beneficiosDinamicos.forEach(function(ben) { %>
+                            <tr>
+                                <td><span style="font-size:1.3rem; margin-right:8px;"><%= ben.emoji %></span><strong><%= ben.nome_empresa %></strong></td>
+                                <td><%= ben.titulo %></td>
+                                <td style="font-size: 0.85rem;">
+                                    <% if(ben.plano1_nome) { %> <span style="display:block;"><%= ben.plano1_nome %>: R$ <%= ben.plano1_valor_novo %></span> <% } %>
+                                    <% if(ben.plano2_nome) { %> <span style="display:block; font-weight:bold;"><%= ben.plano2_nome %>: R$ <%= ben.plano2_valor_novo %></span> <% } %>
+                                    <% if(ben.plano3_nome) { %> <span style="display:block;"><%= ben.plano3_nome %>: R$ <%= ben.plano3_valor_novo %></span> <% } %>
+                                </td>
+                                <td style="text-align:center;">
+                                    <div style="display:flex; justify-content:center; gap:10px;">
+                                        <a href="/gestao/beneficio/excluir/<%= ben.id %>" class="btn-action btn-reject" style="text-decoration:none; width:auto; padding: 5px 12px;" onclick="return confirm('Tem certeza que deseja apagar este benefício? Ele desaparecerá das abas do portal.');" title="Excluir">🗑️ Excluir</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% }); %>
+                            
+                            <% if(beneficiosDinamicos.length === 0) { %>
+                                <tr><td colspan="4" style="text-align:center; padding:30px; color:#aaa;">Nenhum benefício criado dinamicamente ainda.</td></tr>
                             <% } %>
                         </tbody>
                     </table>

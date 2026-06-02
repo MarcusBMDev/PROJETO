@@ -2,8 +2,12 @@ function showSection(id) {
     // 1. Esconde todas as seções
     document.getElementById('sec-solicitacoes').style.display = 'none';
     document.getElementById('sec-uploads').style.display = 'none';
+    
     const abaSec = document.getElementById('sec-aba');
     if (abaSec) abaSec.style.display = 'none';
+    
+    const benSec = document.getElementById('sec-beneficios');
+    if (benSec) benSec.style.display = 'none';
     
     // 2. Mostra a escolhida
     const section = document.getElementById('sec-' + id);
@@ -19,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (tab === 'uploads') {
         showSection('uploads');
+    } else if (tab === 'beneficios') {
+        showSection('beneficios');
     } else {
         // Se a seção padrão (solicitacoes) não existir (usuário ABA), tenta mostrar a ABA
         const secSol = document.getElementById('sec-solicitacoes');

@@ -75,5 +75,11 @@ router.post('/gestao/status', checkLogin, checkAdmin, GestaoController.atualizar
 router.get('/gestao/excluir/:id', checkLogin, checkAdmin, GestaoController.excluirArquivo);
 router.post('/gestao/editar', checkLogin, checkAdmin, GestaoController.editarArquivo);
 
+// =======================================================
+// ROTAS DE GESTÃO DE BENEFÍCIOS DINÂMICOS
+// =======================================================
+router.post('/gestao/beneficio', checkLogin, checkAdmin, GestaoController.salvarBeneficio);
+router.get('/gestao/beneficio/excluir/:id', checkLogin, checkAdmin, GestaoController.excluirBeneficio);
+
 
 module.exports = router;

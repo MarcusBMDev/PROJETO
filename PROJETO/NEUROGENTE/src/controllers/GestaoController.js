@@ -17,11 +17,18 @@ const GestaoController = {
                     solicitacoes = [];
                 }
 
-                res.render('painel', { 
-                    user: req.session.user, 
-                    isAdmin: !!req.session.isAdmin,
-                    arquivos: arquivos,
-                    solicitacoes: solicitacoes 
+                RhModel.getTodosBeneficios((err3, beneficiosDinamicos) => {
+                    if(err3) {
+                        beneficiosDinamicos = [];
+                    }
+
+                    res.render('painel', { 
+                        user: req.session.user, 
+                        isAdmin: !!req.session.isAdmin,
+                        arquivos: arquivos,
+                        solicitacoes: solicitacoes,
+                        beneficiosDinamicos: beneficiosDinamicos // Passando benefícios dinâmicos para a view
+                    });
                 });
             });
         });
@@ -149,6 +156,59 @@ const GestaoController = {
 
         RhModel.editarArquivo(id, dados, (err) => {
             res.redirect('/gestao/painel?tab=uploads');
+        });
+    },
+
+    // 6. Cadastrar Novo Benefício Dinâmico
+    salvarBeneficio: (req, res) => {
+        const {
+            nome_empresa, emoji, titulo,
+            plano1_nome, plano1_valor_antigo, plano1_valor_novo, plano1_detalhe,
+            plano2_nome, plano2_valor_antigo, plano2_valor_novo, plano2_detalhe,
+            plano3_nome, plano3_valor_antigo, plano3_valor_novo, plano3_detalhe,
+            modalidades_titulo, modalidades_texto,
+            avaliacao_titulo, avaliacao_texto
+        } = req.body;
+
+        if (!nome_empresa || !titulo) {
+            return res.send("<script>alert('ATENÇÃO: Nome da Empresa e Título são obrigatórios.'); window.history.back();</script>");
+        }
+
+        // Criar slug amigável único (ex: "Academia Inspire" -> "academia_inspire")
+        const slug = nome_empresa
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+            .replace(/[^a-z0-9\s-]/g, "") // Remove caracteres especiais
+            .trim()
+            .replace(/\s+/g, "_");
+
+        const dados = {
+            nome_empresa, slug, emoji: emoji || '🎁', titulo,
+            plano1_nome, plano1_valor_antigo, plano1_valor_novo, plano1_detalhe,
+            plano2_nome, plano2_valor_antigo, plano2_valor_novo, plano2_detalhe,
+            plano3_nome, plano3_valor_antigo, plano3_valor_novo, plano3_detalhe,
+            modalidades_titulo, modalidades_texto,
+            avaliacao_titulo, avaliacao_texto
+        };
+
+        RhModel.salvarBeneficio(dados, (err) => {
+            if (err) {
+                console.error("Erro ao salvar benefício:", err.message);
+                return res.send("<script>alert('Erro ao salvar benefício. Verifique se a empresa já está cadastrada.'); window.history.back();</script>");
+            }
+            res.redirect('/gestao/painel?tab=beneficios');
+        });
+    },
+
+    // 7. Excluir Benefício Dinâmico
+    excluirBeneficio: (req, res) => {
+        const id = req.params.id;
+        RhModel.deletarBeneficio(id, (err) => {
+            if (err) {
+                console.error("Erro ao deletar benefício:", err.message);
+            }
+            res.redirect('/gestao/painel?tab=beneficios');
         });
     }
 };

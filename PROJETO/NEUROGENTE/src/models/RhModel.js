@@ -76,6 +76,38 @@ const RhModel = {
     getSolicitacaoPorId: (id, callback) => {
         const sql = "SELECT * FROM rh_solicitacoes WHERE id = ?";
         db.query(sql, [id], callback);
+    },
+
+    // --- BENEFÍCIOS DINÂMICOS ---
+    salvarBeneficio: (dados, callback) => {
+        const sql = `
+            INSERT INTO rh_beneficios (
+                nome_empresa, slug, emoji, titulo, 
+                plano1_nome, plano1_valor_antigo, plano1_valor_novo, plano1_detalhe,
+                plano2_nome, plano2_valor_antigo, plano2_valor_novo, plano2_detalhe,
+                plano3_nome, plano3_valor_antigo, plano3_valor_novo, plano3_detalhe,
+                modalidades_titulo, modalidades_texto, 
+                avaliacao_titulo, avaliacao_texto
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        db.query(sql, [
+            dados.nome_empresa, dados.slug, dados.emoji, dados.titulo,
+            dados.plano1_nome || null, dados.plano1_valor_antigo || null, dados.plano1_valor_novo || null, dados.plano1_detalhe || null,
+            dados.plano2_nome || null, dados.plano2_valor_antigo || null, dados.plano2_valor_novo || null, dados.plano2_detalhe || null,
+            dados.plano3_nome || null, dados.plano3_valor_antigo || null, dados.plano3_valor_novo || null, dados.plano3_detalhe || null,
+            dados.modalidades_titulo || null, dados.modalidades_texto || null,
+            dados.avaliacao_titulo || null, dados.avaliacao_texto || null
+        ], callback);
+    },
+
+    getTodosBeneficios: (callback) => {
+        const sql = "SELECT * FROM rh_beneficios ORDER BY id DESC";
+        db.query(sql, callback);
+    },
+
+    deletarBeneficio: (id, callback) => {
+        const sql = "DELETE FROM rh_beneficios WHERE id = ?";
+        db.query(sql, [id], callback);
     }
 };
 

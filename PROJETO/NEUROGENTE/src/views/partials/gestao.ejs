@@ -1,40 +1,415 @@
 <div id="gestao" class="tab-content active">
     <h2>Mural de Informativos e Modelos</h2>
-    <div class="card-grid">
-        <% arquivos.filter(a => a.categoria == 'informativo' || a.categoria == 'modelo').forEach(function(arq) { %>
-        <div class="doc-card" style="padding: 10px;">
-            <% 
-               const ext = arq.caminho_arquivo ? arq.caminho_arquivo.split('.').pop().toLowerCase() : '';
-            %>
+    
+    <div class="mural-container">
+        <!-- BARRA DE CONTROLE SUPERIOR -->
+        <div class="mural-controls">
+            <!-- Busca -->
+            <div class="mural-search-wrapper">
+                <span class="mural-search-icon">🔍</span>
+                <input type="text" id="mural-search" class="mural-search-input" placeholder="Pesquisar comunicados ou modelos..." oninput="filtrarMural()">
+            </div>
             
-            <h3><%= arq.titulo %></h3>
+            <!-- Filtros de Categoria -->
+            <div class="mural-filter-tabs">
+                <button class="mural-tab-btn active" data-filter="todos" onclick="filtrarCategoria(this)">Todos</button>
+                <button class="mural-tab-btn" data-filter="informativo" onclick="filtrarCategoria(this)">📢 Informativos</button>
+                <button class="mural-tab-btn" data-filter="modelo" onclick="filtrarCategoria(this)">📂 Modelos</button>
+            </div>
+            
+            <!-- Limite por Página -->
+            <div class="mural-per-page">
+                <label for="mural-limit">Exibir:</label>
+                <select id="mural-limit" onchange="mudarLimiteMural()">
+                    <option value="3">3 posts</option>
+                    <option value="5" selected>5 posts</option>
+                    <option value="10">10 posts</option>
+                    <option value="all">Ver Tudo (Rolagem)</option>
+                </select>
+            </div>
+        </div>
 
-            <% if(arq.conteudo_texto) { %>
-                <div style="text-align:left; padding: 10px; background:#f9f9f9; border-radius:4px; margin-top:10px; font-size:0.95rem; white-space: pre-wrap; color:#444;">
-                    <%= arq.conteudo_texto %>
-                </div>
-            <% } %>
-
-            <% if(arq.caminho_arquivo) { %>
-                <% if(['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) { %>
-                    <img src="<%= arq.caminho_arquivo %>" style="width: 100%; height: auto; border: 1px solid #eee; border-radius: 4px; margin-top: 10px;">
-                <% } else if(ext === 'pdf') { %>
-                    <embed src="<%= arq.caminho_arquivo %>" type="application/pdf" style="width: 100%; height: 600px; border: 1px solid #eee; border-radius: 4px; margin-top: 10px;">
-                    <div style="text-align:right; margin-top:5px;">
-                        <a href="<%= arq.caminho_arquivo %>" target="_blank" style="font-size:0.8rem; color:#2980b9;">🔍 Expandir PDF</a>
+        <!-- FEED DE COMUNICADOS -->
+        <div class="mural-feed" id="mural-feed-container">
+            <% 
+                const muralArquivos = arquivos.filter(a => a.categoria == 'informativo' || a.categoria == 'modelo');
+                muralArquivos.forEach(function(arq, index) { 
+                    const ext = arq.caminho_arquivo ? arq.caminho_arquivo.split('.').pop().toLowerCase() : '';
+            %>
+            <div class="mural-card" 
+                 data-id="<%= arq.id %>"
+                 data-categoria="<%= arq.categoria %>"
+                 data-titulo="<%= arq.titulo.toLowerCase() %>"
+                 data-texto="<%= (arq.conteudo_texto || '').toLowerCase().replace(/\r?\n/g, ' ') %>">
+                 
+                <!-- Cabeçalho do Card -->
+                <div class="mural-card-header">
+                    <div class="mural-card-title-group">
+                        <h3 class="mural-card-title"><%= arq.titulo %></h3>
+                        <div class="mural-meta">
+                            <span>📅 <%= new Date(arq.data_upload).toLocaleDateString('pt-BR') %></span>
+                        </div>
                     </div>
-                <% } else { %>
-                    <div style="text-align:center; padding: 20px;">
-                        <span style="font-size: 2rem;">📎</span>
-                        <br>
-                        <a href="<%= arq.caminho_arquivo %>" target="_blank" class="btn" style="margin-top:10px;">Baixar Arquivo</a>
+                    <span class="mural-badge <%= arq.categoria %>">
+                        <%= arq.categoria == 'informativo' ? '📢 Informativo' : '📂 Modelo' %>
+                    </span>
+                </div>
+
+                <!-- Conteúdo de Texto -->
+                <% if(arq.conteudo_texto) { %>
+                    <div class="mural-card-body-wrapper">
+                        <div class="mural-card-body" id="body-<%= arq.id %>">
+                            <%= arq.conteudo_texto %>
+                        </div>
+                        <div class="mural-body-fade" id="fade-<%= arq.id %>"></div>
+                    </div>
+                    <button class="mural-expand-btn" id="expand-btn-<%= arq.id %>" onclick="toggleMuralText('<%= arq.id %>')" style="display: none;">
+                        <span>🔽 Ler Mais</span>
+                    </button>
+                <% } %>
+
+                <!-- Anexos Otimizados -->
+                <% if(arq.caminho_arquivo) { %>
+                    <div class="mural-attachments">
+                        <% if(['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) { %>
+                            <div class="mural-img-wrapper">
+                                <img src="<%= arq.caminho_arquivo %>" class="mural-img-preview" alt="<%= arq.titulo %>" onclick="openMuralLightbox(this.src)" onerror="this.closest('.mural-img-wrapper').style.display='none';">
+                            </div>
+                        <% } else if(['mp4', 'webm', 'ogg'].includes(ext)) { %>
+                            <div style="margin-top: 15px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0,0,0,0.25); box-shadow: 0 8px 25px rgba(0,0,0,0.35);">
+                                <video src="<%= arq.caminho_arquivo %>" controls style="width: 100%; max-height: 450px; display: block;" onerror="this.parentNode.style.display='none';"></video>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding: 0 5px;">
+                                <span style="font-size: 0.85rem; color: rgba(255,255,255,0.5);">🎬 Vídeo integrado</span>
+                                <a href="<%= arq.caminho_arquivo %>" download class="mural-btn-download" style="padding: 6px 14px; font-size: 0.8rem; margin: 0;">
+                                    📥 Baixar Vídeo
+                                </a>
+                            </div>
+                        <% } else if(ext === 'pdf') { %>
+                            <div style="margin-top: 15px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.15); background: #525659; box-shadow: 0 8px 25px rgba(0,0,0,0.35);">
+                                <embed src="<%= arq.caminho_arquivo %>" type="application/pdf" style="width: 100%; height: 600px; border: none; display: block;">
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding: 0 5px;">
+                                <span style="font-size: 0.85rem; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 5px;">
+                                    📄 Documento PDF integrado
+                                </span>
+                                <div style="display: flex; gap: 10px;">
+                                    <a href="<%= arq.caminho_arquivo %>" target="_blank" class="mural-btn-download" style="padding: 6px 14px; font-size: 0.8rem; margin: 0; display: inline-flex; align-items: center; gap: 4px;">
+                                        🔍 Expandir PDF
+                                    </a>
+                                    <a href="<%= arq.caminho_arquivo %>" download class="mural-btn-download" style="padding: 6px 14px; font-size: 0.8rem; margin: 0; display: inline-flex; align-items: center; gap: 4px; background: rgba(216, 27, 96, 0.15); color: var(--accent-color); border: 1px solid rgba(216, 27, 96, 0.3);">
+                                        📥 Baixar
+                                    </a>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <div class="mural-file-card">
+                                <div class="mural-file-info">
+                                    <span class="mural-file-icon">📎</span>
+                                    <div class="mural-file-meta">
+                                        <span class="mural-file-name">Arquivo Anexo</span>
+                                        <span class="mural-file-type"><%= ext.toUpperCase() || 'Arquivo' %></span>
+                                    </div>
+                                </div>
+                                <div class="mural-file-actions">
+                                    <a href="<%= arq.caminho_arquivo %>" target="_blank" class="mural-btn-download">
+                                        📥 Baixar Arquivo
+                                    </a>
+                                </div>
+                            </div>
+                        <% } %>
                     </div>
                 <% } %>
+            </div>
+            <% }); %>
+
+            <!-- Estado de busca vazia -->
+            <div id="mural-empty" class="mural-empty-state" style="display: none;">
+                <span class="mural-empty-icon">🔍</span>
+                <h3>Nenhuma publicação encontrada</h3>
+                <p>Tente ajustar a busca ou os filtros de categoria.</p>
+            </div>
+            
+            <% if(muralArquivos.length === 0) { %>
+                <div class="mural-empty-state">
+                    <span class="mural-empty-icon">📭</span>
+                    <h3>Sem publicações</h3>
+                    <p>Nenhum informativo publicado no momento.</p>
+                </div>
             <% } %>
         </div>
-        <% }); %>
-        <% if(arquivos.filter(a => a.categoria == 'informativo' || a.categoria == 'modelo').length === 0) { %>
-            <p style="color:#777;">Nenhum informativo publicado no momento.</p>
+
+        <!-- PAGINAÇÃO NO RODAPÉ -->
+        <% if(muralArquivos.length > 0) { %>
+            <div class="mural-pagination" id="mural-paginator">
+                <div class="mural-pagination-info" id="mural-pagination-info">
+                    Exibindo 0-0 de 0 publicações
+                </div>
+                <div class="mural-pagination-buttons" id="mural-pagination-buttons">
+                    <!-- Botões gerados via JS -->
+                </div>
+            </div>
         <% } %>
     </div>
 </div>
+
+
+
+<!-- LIGHTBOX DE IMAGENS -->
+<div id="mural-lightbox" class="mural-lightbox" onclick="closeMuralLightbox()">
+    <button class="mural-lightbox-close" onclick="closeMuralLightbox()">&times;</button>
+    <img id="mural-lightbox-img" class="mural-lightbox-img" alt="Zoom Anexo">
+</div>
+
+<!-- LÓGICA DE INTERAÇÃO DO MURAL -->
+<script>
+    // Armazenar estado local
+    const state = {
+        filter: 'todos',
+        searchQuery: '',
+        currentPage: 1,
+        itemsPerPage: 5
+    };
+
+    // Função de expandir/recolher texto
+    function toggleMuralText(id) {
+        const body = document.getElementById(`body-${id}`);
+        const btn = document.getElementById(`expand-btn-${id}`);
+        
+        if (body.classList.contains('expanded')) {
+            body.classList.remove('expanded');
+            btn.innerHTML = '<span>🔽 Ler Mais</span>';
+            // Scroll suave de volta para o card para não se perder
+            btn.closest('.mural-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            body.classList.add('expanded');
+            btn.innerHTML = '<span>🔼 Recolher</span>';
+        }
+    }
+
+    // Checar quais cards precisam do botão Ler Mais
+    function checkMuralTextsNeedExpand() {
+        const cards = document.querySelectorAll('.mural-card');
+        cards.forEach(card => {
+            const id = card.getAttribute('data-id');
+            const body = document.getElementById(`body-${id}`);
+            const btn = document.getElementById(`expand-btn-${id}`);
+            const fade = document.getElementById(`fade-${id}`);
+            
+            if (body && btn) {
+                if (body.scrollHeight > 150) {
+                    btn.style.display = 'inline-flex';
+                    if (fade) fade.style.display = 'block';
+                } else {
+                    btn.style.display = 'none';
+                    if (fade) fade.style.display = 'none';
+                    body.style.maxHeight = 'none'; // Sem limite se for pequeno
+                }
+            }
+        });
+    }
+
+
+
+    // Lightbox de Imagem
+    function openMuralLightbox(src) {
+        const lightbox = document.getElementById('mural-lightbox');
+        const img = document.getElementById('mural-lightbox-img');
+        img.src = src;
+        lightbox.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeMuralLightbox() {
+        document.getElementById('mural-lightbox').style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    // LÓGICA DE FILTRAGEM, PESQUISA E PAGINAÇÃO
+    function filtrarCategoria(btn) {
+        // Mudar tab ativa
+        document.querySelectorAll('.mural-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        state.filter = btn.getAttribute('data-filter');
+        state.currentPage = 1; // Reseta para primeira página
+        
+        processarMural();
+    }
+
+    function filtrarMural() {
+        state.searchQuery = document.getElementById('mural-search').value.toLowerCase().trim();
+        state.currentPage = 1;
+        
+        processarMural();
+    }
+
+    // Função necessária para escutar alterações no limite
+    function mudarLimiteMural() {
+        const select = document.getElementById('mural-limit');
+        const val = select.value;
+        
+        if (val === 'all') {
+            state.itemsPerPage = 999999;
+        } else {
+            state.itemsPerPage = parseInt(val, 10);
+        }
+        
+        state.currentPage = 1;
+        processarMural();
+    }
+
+    function processarMural() {
+        const cards = Array.from(document.querySelectorAll('.mural-card'));
+        let visibleCards = [];
+
+        cards.forEach(card => {
+            const cat = card.getAttribute('data-categoria');
+            const tit = card.getAttribute('data-titulo');
+            const txt = card.getAttribute('data-texto');
+            
+            // 1. Filtrar Categoria
+            const matchesCat = (state.filter === 'todos' || cat === state.filter);
+            
+            // 2. Filtrar Busca
+            const matchesSearch = (state.searchQuery === '' || tit.includes(state.searchQuery) || txt.includes(state.searchQuery));
+            
+            if (matchesCat && matchesSearch) {
+                visibleCards.push(card);
+                card.style.display = 'none'; // Esconde por padrão para o paginator controlar
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // 3. Tratar Empty State
+        const emptyState = document.getElementById('mural-empty');
+        if (visibleCards.length === 0) {
+            if (emptyState) emptyState.style.display = 'block';
+            const paginator = document.getElementById('mural-paginator');
+            if (paginator) paginator.style.display = 'none';
+            return;
+        } else {
+            if (emptyState) emptyState.style.display = 'none';
+            const paginator = document.getElementById('mural-paginator');
+            if (paginator) paginator.style.display = 'flex';
+        }
+
+        // 4. Paginar
+        const totalItems = visibleCards.length;
+        const totalPages = Math.ceil(totalItems / state.itemsPerPage);
+        
+        // Ajustar página atual caso ultrapasse o limite
+        if (state.currentPage > totalPages) {
+            state.currentPage = totalPages;
+        }
+        if (state.currentPage < 1) {
+            state.currentPage = 1;
+        }
+
+        const startIndex = (state.currentPage - 1) * state.itemsPerPage;
+        const endIndex = Math.min(startIndex + state.itemsPerPage, totalItems);
+
+        // Exibir apenas cards da página atual
+        for (let i = startIndex; i < endIndex; i++) {
+            visibleCards[i].style.display = 'block';
+        }
+
+        // 5. Atualizar Informações do Paginador
+        const info = document.getElementById('mural-pagination-info');
+        if (info) {
+            if (state.itemsPerPage >= 999999) {
+                info.innerText = `Exibindo todas as ${totalItems} publicações`;
+            } else {
+                info.innerText = `Exibindo ${startIndex + 1}-${endIndex} de ${totalItems} publicações`;
+            }
+        }
+
+        // 6. Desenhar Botões de Paginação
+        atualizarBotoesPaginacao(totalPages);
+    }
+
+    function atualizarBotoesPaginacao(totalPages) {
+        const btnContainer = document.getElementById('mural-pagination-buttons');
+        if (!btnContainer) return;
+        
+        btnContainer.innerHTML = '';
+        
+        if (totalPages <= 1 || state.itemsPerPage >= 999999) {
+            return; // Sem necessidade de botões se for apenas 1 página ou "Ver Tudo"
+        }
+
+        // Botão Anterior
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'mural-page-btn';
+        prevBtn.innerHTML = '❮';
+        prevBtn.disabled = (state.currentPage === 1);
+        prevBtn.onclick = () => {
+            state.currentPage--;
+            processarMural();
+            scrollMuralToTop();
+        };
+        btnContainer.appendChild(prevBtn);
+
+        // Números de Página
+        for (let i = 1; i <= totalPages; i++) {
+            // Regra simples para limitar quantidade de botões visíveis se houverem muitos
+            if (totalPages > 6) {
+                if (i !== 1 && i !== totalPages && Math.abs(state.currentPage - i) > 1) {
+                    if (i === 2 && state.currentPage > 3) {
+                        const dots = document.createElement('span');
+                        dots.innerText = '...';
+                        dots.style.alignSelf = 'center';
+                        dots.style.margin = '0 5px';
+                        dots.style.opacity = '0.5';
+                        btnContainer.appendChild(dots);
+                    }
+                    if (i === totalPages - 1 && state.currentPage < totalPages - 2) {
+                        const dots = document.createElement('span');
+                        dots.innerText = '...';
+                        dots.style.alignSelf = 'center';
+                        dots.style.margin = '0 5px';
+                        dots.style.opacity = '0.5';
+                        btnContainer.appendChild(dots);
+                    }
+                    continue;
+                }
+            }
+
+            const pageBtn = document.createElement('button');
+            pageBtn.className = `mural-page-btn ${state.currentPage === i ? 'active' : ''}`;
+            pageBtn.innerText = i;
+            pageBtn.onclick = () => {
+                state.currentPage = i;
+                processarMural();
+                scrollMuralToTop();
+            };
+            btnContainer.appendChild(pageBtn);
+        }
+
+        // Botão Próximo
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'mural-page-btn';
+        nextBtn.innerHTML = '❯';
+        nextBtn.disabled = (state.currentPage === totalPages);
+        nextBtn.onclick = () => {
+            state.currentPage++;
+            processarMural();
+            scrollMuralToTop();
+        };
+        btnContainer.appendChild(nextBtn);
+    }
+
+    function scrollMuralToTop() {
+        const el = document.getElementById('gestao');
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    // Inicialização ao carregar
+    window.addEventListener('load', () => {
+        checkMuralTextsNeedExpand();
+        processarMural();
+    });
+</script>
