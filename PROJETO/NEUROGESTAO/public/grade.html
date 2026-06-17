@@ -251,7 +251,6 @@
             select.innerHTML = '<option value="">Escolha um profissional...</option>';
             
             const isGestor = leadsGestao();
-            const isNeurochat = getNivelAcesso() === 'neurochat';
             const loggedUserName = (localStorage.getItem('userName') || '').toUpperCase();
             let profEncontrado = null;
 
@@ -269,6 +268,14 @@
                     profEncontrado = p.id;
                 }
             });
+
+            // Se não for gestor e o usuário não for encontrado na lista de profissionais,
+            // ou se o nível de acesso já for 'neurochat', consideramos como Neurochat.
+            let isNeurochat = getNivelAcesso() === 'neurochat';
+            if (!isGestor && !profEncontrado) {
+                isNeurochat = true;
+                localStorage.setItem('nivel_acesso', 'neurochat');
+            }
 
             // Se for terapeuta (não gestor nem neurochat), seleciona e trava o seletor
             if (!isGestor && !isNeurochat) {
@@ -440,7 +447,7 @@
                     if (agsNoSlot.length === 1 && agsNoSlot[0].status === 'bloqueado') {
                         const ag = agsNoSlot[0];
                         container.innerHTML += `
-                            <div class="slot-blocked p-4 rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform ${alturaPadrao} ${margemPadrao} flex flex-col justify-center" onclick="desbloquearVaga(${ag.id})">
+                            <div class="slot-blocked p-4 rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform ${alturaPadrao} ${margemPadrao} flex flex-col justify-center" onclick="desbloquearVaga(${ag.id}, ${id}, '${diaObj.db}', '${hStr}')">
                                 <p class="text-[10px] font-black text-amber-600 uppercase mb-1">${tagHora} - BLOQUEADO</p>
                                 <p class="font-bold text-slate-800 text-xs truncate" title="${ag.motivo_bloqueio}">${ag.motivo_bloqueio || 'Sem motivo'}</p>
                                 <p class="text-[10px] font-black text-amber-700 uppercase mt-2 pt-2 border-t border-amber-100">
@@ -460,9 +467,13 @@
                         const profAtual = profissionaisGlobais.find(p => p.id == id);
                         const listaPacientes = pacsGrupo.map(ag => {
                             const nome = ag.paciente ? ag.paciente.nome : 'Sem Nome';
+                            const conv = ag.convenio_nome || 'PARTICULAR';
                             return `
                                 <div class="flex items-center justify-between py-1 border-b border-purple-200 last:border-b-0 group/gpitem">
-                                    <span class="text-[10px] font-bold text-slate-700 truncate" title="${nome}">${nome}</span>
+                                    <div class="flex flex-col truncate max-w-[80%]">
+                                        <span class="text-[10px] font-bold text-slate-700 truncate" title="${nome}">${nome}</span>
+                                        <span class="text-[8px] font-black text-purple-400 uppercase">${conv}</span>
+                                    </div>
                                     <button onclick="event.stopPropagation(); abrirModalRemocao(${ag.id}, '${nome.replace(/'/g, "\\'")}', '${diaObj.db}', '${tagHora}', ${id})"
                                             class="w-4 h-4 bg-red-100 text-red-600 rounded flex items-center justify-center text-[9px] hover:bg-red-600 hover:text-white opacity-0 group-hover/gpitem:opacity-100 transition-all" title="Remover">×</button>
                                 </div>`;
@@ -485,11 +496,13 @@
                     if (temDivisao) {
                         const partes = [...pacsNormais, ...pacsEncaixe].map(ag => {
                             const nome = ag.paciente ? ag.paciente.nome : 'Sem Nome';
+                            const conv = ag.convenio_nome || 'PARTICULAR';
                             const enc  = !!ag.encaixe;
                             return `
                                 <div class="flex-1 p-2 border-r last:border-r-0 border-slate-200 group/subslot flex flex-col justify-center">
                                     <p class="text-[9px] font-black ${enc ? 'text-purple-600' : 'text-blue-600'} uppercase mb-1">${enc ? '⚡ ENCAIXE' : 'REGULAR'}</p>
                                     <p class="font-bold text-slate-800 text-[10px] leading-tight" title="${nome}">${nome}</p>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase mt-0.5">${conv}</p>
                                     <div class="flex gap-1 mt-1 opacity-0 group-hover/subslot:opacity-100 transition-all">
                                         <button onclick="abrirModalRemocao(${ag.id}, '${nome.replace(/'/g, "\\'")}',' ${diaObj.db}', '${tagHora}', ${id})" class="w-5 h-5 bg-red-100 text-red-600 rounded flex items-center justify-center text-[10px] hover:bg-red-600 hover:text-white" title="Remover">×</button>
                                     </div>
@@ -536,6 +549,7 @@
                                     </div>
                                 </div>
                                 <p class="font-bold text-slate-800 text-xs whitespace-normal leading-tight" title="${nomePaciente}">${nomePaciente}</p>
+                                <p class="text-[8px] font-black text-slate-400 uppercase mt-0.5">${ag.convenio_nome || 'PARTICULAR'}</p>
                                 <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
                                     ${especialidadeLabel ? `<span class="text-[9px] font-black uppercase tracking-wide px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full truncate max-w-[80%]">${especialidadeLabel}</span>` : '<span></span>'}
                                     ${temObs ? `<span class="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-black rounded-full border border-amber-200 animate-pulse" title="${obsTitle}">📝 NOTA</span>` : '<span class="text-[10px] text-slate-300">📝</span>'}
@@ -804,18 +818,24 @@
             }
         }
 
-        async function desbloquearVaga(id) {
+        async function desbloquearVaga(id, profId, dia, hora) {
             if (getNivelAcesso() === 'neurochat') {
                 alert("Usuários do Neurochat não têm permissão para liberar ou desbloquear vagas.");
                 return;
             }
             if(!confirm("Deseja liberar este horário para novos agendamentos?")) return;
             
+            const agendar = confirm("Deseja realizar um AGENDAMENTO (Encaixe/Grupo) neste horário logo após desbloquear?");
+            
             const userId = localStorage.getItem('userId');
             const res = await fetch(`/api/agendamentos/${id}?user_id=${userId}`, { method: 'DELETE' });
             
             if(res.ok) {
-                carregarGradeProfissional();
+                if (agendar) {
+                    abrirEncaixeDireto(profId, dia, hora);
+                } else {
+                    carregarGradeProfissional();
+                }
             } else {
                 const data = await res.json();
                 alert(data.error || "Erro ao liberar vaga.");

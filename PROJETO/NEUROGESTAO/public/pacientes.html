@@ -100,7 +100,10 @@
                         <option value="">TODOS PROFISSIONAIS</option>
                     </select>
                 </div>
-                <button onclick="abrirModalCadastro()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-all text-[12px] uppercase shadow-md shadow-blue-500/20 active:scale-95">+ Adicionar Paciente</button>
+                <div class="flex gap-3">
+                    <button onclick="abrirModalMesclar()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-6 py-3 rounded-xl font-bold transition-all text-[12px] uppercase active:scale-95">🔗 Unificar Pacientes</button>
+                    <button onclick="abrirModalCadastro()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-all text-[12px] uppercase shadow-md shadow-blue-500/20 active:scale-95">+ Adicionar Paciente</button>
+                </div>
             </div>
             <table class="min-w-full">
                 <thead class="bg-slate-50/80">
@@ -297,6 +300,36 @@
         </div>
     </div>
 
+    <!-- Modal de Mesclar Pacientes -->
+    <div id="modal-mesclar" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center p-6 z-50 backdrop-blur-md" onclick="if(event.target === this) fecharModalMesclar()">
+        <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-10 shadow-2xl animate-fade relative">
+            <button onclick="fecharModalMesclar()" class="absolute top-8 right-10 text-slate-400 hover:text-slate-600 font-black text-2xl transition-all">×</button>
+            <h2 class="text-2xl font-black text-slate-900 mb-2">Unificar Pacientes</h2>
+            <p class="text-xs text-slate-500 font-medium mb-6">Mova todos os horários e histórico do paciente duplicado para o paciente principal.</p>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Paciente Duplicado (Será REMOVIDO)</label>
+                    <select id="mesclar-origem" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 transition-all uppercase">
+                        <option value="">Selecione o paciente duplicado...</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Paciente Principal (Será MANTIDO)</label>
+                    <select id="mesclar-destino" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 transition-all uppercase">
+                        <option value="">Selecione o paciente principal...</option>
+                    </select>
+                </div>
+                
+                <div class="flex gap-4 pt-4">
+                    <button onclick="fecharModalMesclar()" class="flex-1 py-4 text-slate-500 font-bold">Cancelar</button>
+                    <button onclick="executarMescla()" class="flex-1 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all uppercase tracking-wider text-xs">Unificar Pacientes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let pacientesGlobais = [];
         let conveniosGlobais = [];
@@ -430,20 +463,11 @@
             tbody.innerHTML = dados.map(p => {
                 const convenioNome = p.convenio ? p.convenio.nome.toUpperCase() : 'PARTICULAR';
                 const idade = (p.age !== null && p.age !== undefined) ? `${p.age} anos` : '---';
-                const agendaHtml = p.agendamentos && p.agendamentos.length > 0
-                    ? p.agendamentos.map(a => `
-                        <div class="flex items-center gap-2 mb-1 last:mb-0">
-                            <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-[8px] font-black uppercase text-center min-w-[32px]">${(a.dia || '---').substring(0,3)}</span>
-                            <span class="text-slate-700 font-bold text-[10px]">${a.horario || '--:--'}</span>
-                            <span class="text-slate-400 font-medium text-[9px] truncate max-w-[80px]" title="${a.profissional || 'Prof. Indefinido'}">- ${a.profissional || '...'}</span>
-                        </div>
-                    `).join('')
-                    : '<span class="text-slate-300 italic text-[10px]">Sem horários fixos</span>';
 
                 return `
                     <tr class="hover:bg-blue-50/30 transition-colors group">
                         <td class="p-5 font-bold text-slate-800 text-sm">
-                            ${p.nome || 'NÃO INFORMADO'}
+                            <div>${p.nome || 'NÃO INFORMADO'}</div>
                         </td>
                         <td class="p-5 font-medium text-slate-600 text-xs">${idade}</td>
                         <td class="p-5"><span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase">${convenioNome}</span></td>
@@ -1038,7 +1062,7 @@
                             ${agsNoDia.length > 0 ? agsNoDia.map(a => `
                                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-all">
                                     <p class="text-xl font-black text-slate-800 tabular-nums leading-none mb-2">${a.horario}</p>
-                                    <p class="text-[9px] font-black text-blue-600 uppercase tracking-tight">${a.profissional || 'PROF.'}</p>
+                                    <p onclick="window.location.href='/grade?profissionalId=${a.profissional_id}'" class="text-[9px] font-black text-blue-600 uppercase tracking-tight hover:underline cursor-pointer" title="Ir para grade de ${a.profissional || 'PROF.'}">${a.profissional || 'PROF.'}</p>
                                 </div>
                             `).join('') : `
                                 <div class="flex-1 flex flex-col items-center justify-center opacity-20 py-10">
@@ -1194,6 +1218,78 @@
             } else {
                 const data = await res.json();
                 alert("Erro: " + (data.errors ? data.errors.join('\n') : 'Falha ao solicitar.'));
+            }
+        }
+
+        async function abrirModalMesclar() {
+            const orig = document.getElementById('mesclar-origem');
+            const dest = document.getElementById('mesclar-destino');
+            
+            orig.innerHTML = '<option value="">Carregando pacientes...</option>';
+            dest.innerHTML = '<option value="">Carregando pacientes...</option>';
+            document.getElementById('modal-mesclar').classList.remove('hidden');
+
+            try {
+                // Busca todos os pacientes sem paginação (per_page=5000)
+                const res = await fetch('/api/data_pacientes.json?per_page=5000');
+                const json = await res.json();
+                const todosPacientes = Array.isArray(json) ? json : (json.pacientes || []);
+                
+                // Ordena por nome
+                todosPacientes.sort((a, b) => a.nome.localeCompare(b.nome));
+
+                const optionsHtml = '<option value="">Selecione o paciente...</option>' + 
+                    todosPacientes.map(p => `<option value="${p.id}">${p.nome.toUpperCase()}</option>`).join('');
+                    
+                orig.innerHTML = optionsHtml;
+                dest.innerHTML = optionsHtml;
+            } catch(e) {
+                orig.innerHTML = '<option value="">Erro ao carregar</option>';
+                dest.innerHTML = '<option value="">Erro ao carregar</option>';
+            }
+        }
+        
+        function fecharModalMesclar() {
+            document.getElementById('modal-mesclar').classList.add('hidden');
+        }
+        
+        async function executarMescla() {
+            const idOrigem = document.getElementById('mesclar-origem').value;
+            const idDestino = document.getElementById('mesclar-destino').value;
+            
+            if(!idOrigem || !idDestino) {
+                return alert("Selecione ambos os pacientes para realizar a unificação.");
+            }
+            
+            if(idOrigem === idDestino) {
+                return alert("O paciente duplicado deve ser diferente do paciente principal.");
+            }
+            
+            const origNome = document.getElementById('mesclar-origem').options[document.getElementById('mesclar-origem').selectedIndex].text;
+            const destNome = document.getElementById('mesclar-destino').options[document.getElementById('mesclar-destino').selectedIndex].text;
+            
+            if(!confirm(`⚠️ ATENÇÃO: Tem certeza que deseja unificar o paciente "${origNome}" no paciente "${destNome}"?\n\nEsta ação moverá todos os agendamentos/históricos e DELETARÁ o cadastro de "${origNome}". Esta ação não pode ser desfeita.`)) {
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/data_pacientes/mesclar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_origem: idOrigem, id_destino: idDestino })
+                });
+                
+                const data = await res.json();
+                
+                if(res.ok) {
+                    alert("Pacientes unificados com sucesso!");
+                    fecharModalMesclar();
+                    carregarPacientes(paginaAtual);
+                } else {
+                    alert("Erro: " + (data.error || "Ocorreu um erro ao unificar."));
+                }
+            } catch(e) {
+                alert("Erro de conexão ao unificar pacientes.");
             }
         }
 

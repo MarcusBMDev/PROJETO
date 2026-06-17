@@ -7,6 +7,7 @@ Rails.application.routes.draw do
 
     resources :data_pacientes, controller: 'data_pacientes' do
       patch 'reativar', on: :member
+      post 'mesclar', on: :collection
     end
     
     # Endpoint principal para compatibilidade no front

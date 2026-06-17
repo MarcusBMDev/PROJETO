@@ -1,4 +1,5 @@
 class Api::DataPacientesController < ActionController::API
+
  # Responde ao GET /api/data_pacientes.json
   def index
     begin
@@ -115,6 +116,50 @@ class Api::DataPacientesController < ActionController::API
       render json: { success: true, message: "Paciente reativado", paciente: paciente }
     else
       render json: { success: false, errors: ['Não foi possível reativar o paciente.'] }, status: :unprocessable_entity
+    end
+  end
+
+  # POST /api/data_pacientes/mesclar
+  def mesclar
+    id_origem = params[:id_origem]
+    id_destino = params[:id_destino]
+
+    if id_origem.blank? || id_destino.blank?
+      return render json: { error: "Os pacientes de origem e destino são obrigatórios." }, status: :unprocessable_entity
+    end
+
+    if id_origem == id_destino
+      return render json: { error: "Os pacientes de origem e destino devem ser diferentes." }, status: :unprocessable_entity
+    end
+
+    paciente_origem = Paciente.find_by(id: id_origem)
+    paciente_destino = Paciente.find_by(id: id_destino)
+
+    if paciente_origem.nil? || paciente_destino.nil?
+      return render json: { error: "Paciente de origem ou destino não localizado." }, status: :not_found
+    end
+
+    begin
+      Paciente.transaction do
+        # 1. Atualiza agendamentos
+        Agendamento.where(paciente_id: id_origem).update_all(paciente_id: id_destino)
+
+        # 2. Atualiza lista de espera
+        ListaEspera.where(paciente_id: id_origem).update_all(paciente_id: id_destino, nome: paciente_destino.nome)
+
+        # 3. Atualiza transferências
+        Transferencia.where(paciente_id: id_origem).update_all(paciente_id: id_destino)
+
+        # 4. Remove o paciente de origem
+        paciente_origem.destroy!
+      end
+
+      # Registra em auditoria
+      AuditoriaService.log(request, 'MESCLAR_PACIENTES', paciente_destino, "Mesclou paciente #{paciente_origem.nome} (ID: #{id_origem}) para #{paciente_destino.nome} (ID: #{id_destino})")
+
+      render json: { success: true, message: "Pacientes unificados com sucesso!" }
+    rescue => e
+      render json: { error: "Erro ao mesclar pacientes: #{e.message}" }, status: :unprocessable_entity
     end
   end
 
