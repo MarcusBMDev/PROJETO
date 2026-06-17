@@ -1,12 +1,11 @@
 require 'roo'
-require 'set'
 
 class ImportadorAgendaService
   DIAS_VALIDOS = ["SEGUNDA-FEIRA", "TERÇA-FEIRA", "QUARTA-FEIRA", "QUINTA-FEIRA", "SEXTA-FEIRA", "SÁBADO"]
 
   def initialize(caminho_arquivo)
     @xlsx = Roo::Excelx.new(caminho_arquivo)
-    @slots_presentes = Hash.new { |h, k| h[k] = Set.new }
+    @slots_presentes = {}
   end
 
   def executar
@@ -41,102 +40,19 @@ class ImportadorAgendaService
 
   private
 
-  # Verifica se o texto da observação restringe o atendimento a dias específicos para determinado AT
-  def at_atende_no_dia?(nome_at, dia_semana, obs_texto)
+  # Verifica se o texto da observação restringe o atendimento a dias específicos
+  def atende_no_dia?(dia_semana, obs_texto)
     return true if obs_texto.blank?
-
-    texto_completo = obs_texto.downcase.strip
-    nome_at_down = nome_at.to_s.downcase.strip
-
-    # 1. Se a observação contém referências a múltiplos profissionais com regras separadas,
-    # tenta isolar a parte que se refere a este profissional.
-    texto_analise = texto_completo
-    if texto_completo.include?("/") || texto_completo.include?(";") || texto_completo.include?("|")
-      segmentos = texto_completo.split(%r{/|;|\|}).map(&:strip)
-      # Procura um segmento que mencione o nome do AT
-      segmento_prof = segmentos.find { |seg| seg.include?(nome_at_down) }
-      texto_analise = segmento_prof if segmento_prof
-    end
-
-    # Se o texto de análise não menciona nenhum dia da semana (ou abreviação), assume que atende todos os dias.
-    dias_palavras = ["seg", "ter", "qua", "qui", "sex", "sáb", "sab", "dom"]
-    return true unless dias_palavras.any? { |d| texto_analise.include?(d) }
-
-    # 2. Identifica quais dias da semana estão ativados no texto_analise.
-    dia_alvo = dia_semana.downcase.strip
-    dias_ativados = expandir_dias_do_texto(texto_analise)
     
-    dias_ativados.include?(dia_alvo)
-  end
+    texto = obs_texto.downcase
+    dias_semana = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"]
+    
+    # Se a observação não cita nenhum dia da semana, assume que atende todos (Seg a Sex na ATS)
+    return true unless dias_semana.any? { |d| texto.include?(d) }
 
-  def expandir_dias_do_texto(texto)
-    mapa_dias = {
-      "segunda-feira" => "segunda-feira",
-      "segunda" => "segunda-feira",
-      "seg" => "segunda-feira",
-      "terça-feira" => "terça-feira",
-      "terça" => "terça-feira",
-      "terca" => "terça-feira",
-      "ter" => "terça-feira",
-      "quarta-feira" => "quarta-feira",
-      "quarta" => "quarta-feira",
-      "quar" => "quarta-feira",
-      "qua" => "quarta-feira",
-      "quinta-feira" => "quinta-feira",
-      "quinta" => "quinta-feira",
-      "quin" => "quinta-feira",
-      "qui" => "quinta-feira",
-      "sexta-feira" => "sexta-feira",
-      "sexta" => "sexta-feira",
-      "sex" => "sexta-feira",
-      "sábado" => "sábado",
-      "sabado" => "sábado",
-      "sab" => "sábado"
-    }
-
-    ordem_dias = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"]
-
-    dias_encontrados = []
-    texto_limpo = texto.downcase.strip
-
-    # Normaliza plurais de dias de semana para o singular
-    texto_limpo = texto_limpo.gsub(/\bsegundas([-\s]+feiras)?\b/, 'segunda')
-    texto_limpo = texto_limpo.gsub(/\bterças([-\s]+feiras)?\b/, 'terça')
-    texto_limpo = texto_limpo.gsub(/\btercas([-\s]+feiras)?\b/, 'terca')
-    texto_limpo = texto_limpo.gsub(/\bquartas([-\s]+feiras)?\b/, 'quarta')
-    texto_limpo = texto_limpo.gsub(/\bquintas([-\s]+feiras)?\b/, 'quinta')
-    texto_limpo = texto_limpo.gsub(/\bsextas([-\s]+feiras)?\b/, 'sexta')
-    texto_limpo = texto_limpo.gsub(/\bsábados\b/, 'sábado')
-    texto_limpo = texto_limpo.gsub(/\bsabados\b/, 'sabado')
-
-    # 1. Encontra ranges do tipo "dia1 a dia2" (ex: "seg a quin")
-    regex_range = /\b(segunda-feira|segunda|seg|terça-feira|terça|terca|ter|quarta-feira|quarta|quar|qua|quinta-feira|quinta|quin|qui|sexta-feira|sexta|sex|sábado|sabado|sab)\b\s+(?:a|até|ate)\s+\b(segunda-feira|segunda|seg|terça-feira|terça|terca|ter|quarta-feira|quarta|quar|qua|quinta-feira|quinta|quin|qui|sexta-feira|sexta|sex|sábado|sabado|sab)\b/
-
-    while match = texto_limpo.match(regex_range)
-      d1_raw, d2_raw = match[1], match[2]
-      d1 = mapa_dias[d1_raw]
-      d2 = mapa_dias[d2_raw]
-      
-      if d1 && d2
-        idx1 = ordem_dias.index(d1)
-        idx2 = ordem_dias.index(d2)
-        if idx1 && idx2 && idx1 <= idx2
-          dias_encontrados.concat(ordem_dias[idx1..idx2])
-        end
-      end
-      texto_limpo = texto_limpo.sub(match[0], '')
-    end
-
-    # 2. Busca termos individuais restantes
-    mapa_dias.keys.sort_by { |k| -k.length }.each do |abrev|
-      dia_completo = mapa_dias[abrev]
-      if texto_limpo.match?(/\b#{Regexp.escape(abrev)}\b/)
-        dias_encontrados << dia_completo
-        texto_limpo = texto_limpo.gsub(/\b#{Regexp.escape(abrev)}\b/, '')
-      end
-    end
-
-    dias_encontrados.uniq
+    # Se cita dias, verifica se o dia atual está no texto
+    dia_busca = dia_semana.downcase.split('-').first # pega "segunda", "terça", etc
+    texto.include?(dia_busca)
   end
 
   def processar_lista_espera(sheet)
@@ -172,23 +88,9 @@ class ImportadorAgendaService
   def processar_agenda_comum(nome_aba, sheet)
     # Detecção Inteligente de Formato (Normal vs Supervisão)
     header_row_idx = (1..5).find { |r| sheet.row(r).any? { |c| c.to_s.upcase.include?("PACIENTE") } }
-    
-    if header_row_idx.nil?
-      col_horario = 1
-      col_paciente = 2
-      col_convenio = 3
-      col_obs = 4
-      col_profissional = 0
-      tem_coluna_profissional = false
-    else
-      header_row = sheet.row(header_row_idx).map { |c| c.to_s.strip.upcase }
-      col_horario = (header_row.index { |c| c.include?("HORÁRIO") || c.include?("HORARIO") } || 0) + 1
-      col_profissional_idx = header_row.index { |c| c.include?("PROFISSIONAL") }
-      col_profissional = col_profissional_idx ? col_profissional_idx + 1 : 0
-      tem_coluna_profissional = col_profissional > 0
-      col_paciente = (header_row.index { |c| c.include?("PACIENTE") } || 1) + 1
-      col_convenio = (header_row.index { |c| c.include?("CONVÊNIO") || c.include?("CONVENIO") } || 2) + 1
-      col_obs = (header_row.index { |c| c.include?("OBSERVAÇ") || c.include?("OBSERVAC") } || 3) + 1
+    tem_coluna_profissional = false
+    if header_row_idx
+      tem_coluna_profissional = sheet.row(header_row_idx).any? { |c| c.to_s.upcase.include?("PROFISSIONAL") }
     end
 
     # Criamos o prof_fixo apenas se não for uma aba "combinada" e se realmente for necessário
@@ -197,53 +99,13 @@ class ImportadorAgendaService
 
     dia_atual = nil
     horario_atual = nil
-    horario_anterior = nil
-    periodo_bloqueado = nil
 
-    # Primeiro scan: identifica todos os horários que possuem algum paciente agendado neste dia
-    slots_com_paciente = Set.new
-    scan_dia = nil
-    scan_hora = nil
-    start_row = header_row_idx ? header_row_idx + 1 : 1
-
-    (start_row..sheet.last_row).each do |i|
-      col_a = sheet.cell(i, col_horario).to_s.strip.upcase
-      if DIAS_VALIDOS.any? { |d| col_a.include?(d) }
-        scan_dia = col_a.downcase
-        scan_hora = nil
-        next
-      end
-
-      unless col_a.blank? || col_a.include?("HORÁRIO") || col_a.include?("PACIENTE") || col_a.include?("PROFISSIONAL")
-        if col_a.match?(/\d/)
-          h_parts = col_a.split('-').map do |p|
-            p_limpo = p.strip.downcase.tr('h', ':').gsub(/[^\d:]/, '')
-            next if p_limpo.blank?
-            h, m = p_limpo.split(':')
-            format("%02d:%02d", h.to_i, (m || 0).to_i)
-          end.compact
-          scan_hora = h_parts.join(" - ")
-        else
-          scan_hora = col_a.strip
-        end
-      end
-
-      next if scan_dia.nil? || scan_hora.nil?
-
-      pac_nome = sheet.cell(i, col_paciente).to_s.strip
-      if pac_nome.present? && pac_nome.split.size >= 2 && !["LIVRE", "---", "ALMOÇO", "RESERVADO", "PACIENTE", "PERÍODO FECHADO", "PERIODO FECHADO", "FECHADO"].include?(pac_nome.upcase)
-        slots_com_paciente.add([scan_dia, scan_hora])
-      end
-    end
-
-    (start_row..sheet.last_row).each do |i|
-      col_a = sheet.cell(i, col_horario).to_s.strip.upcase
+    (1..sheet.last_row).each do |i|
+      col_a = sheet.cell(i, 1).to_s.strip.upcase
       
       if DIAS_VALIDOS.any? { |d| col_a.include?(d) }
         dia_atual = col_a.downcase
         horario_atual = nil
-        horario_anterior = nil
-        periodo_bloqueado = nil
         next
       end
 
@@ -262,124 +124,89 @@ class ImportadorAgendaService
         end
       end
 
+      # Registra o horário como presente na planilha para o profissional, mesmo que esteja vazio (vaga)
+      if dia_atual.present? && horario_atual.present?
+        profs_para_registrar = []
+        if tem_coluna_profissional
+          prof_col_raw = sheet.cell(i, 3).to_s.strip
+          prof_nomes = limpar_e_dividir_profissionais(prof_col_raw)
+          
+          if prof_nomes.empty? || ["PROFISSIONAL", "PACIENTE", "CONVENIO"].include?(prof_nomes.first.upcase)
+            unless aba_combinada
+              profs_para_registrar = [prof_fixo_nome]
+            end
+          else
+            profs_para_registrar = prof_nomes.map(&:upcase)
+          end
+        else
+          profs_para_registrar = [prof_fixo_nome]
+        end
+
+        slots_expandidos = horario_atual.to_s.include?('-') ? expandir_range_para_slots(horario_atual) : [horario_atual]
+
+        profs_para_registrar.each do |prof_n|
+          slots_expandidos.each do |slot_h|
+            registrar_slot_presente(prof_n, dia_atual, slot_h)
+          end
+        end
+      end
+
+      paciente_nome = sheet.cell(i, 2).to_s.strip
+      next if paciente_nome.blank? || paciente_nome.split.size < 2
+      next if ["LIVRE", "---", "ALMOÇO", "RESERVADO", "PACIENTE"].include?(paciente_nome.upcase)
+      next if paciente_nome.match?(/^\d{1,2}H/i)
+
       next if dia_atual.nil? || horario_atual.nil?
 
-      # Se mudamos do período da manhã para a tarde, limpamos o bloco
-      if horario_atual && horario_anterior
-        if !tarde?(horario_anterior) && tarde?(horario_atual)
-          periodo_bloqueado = nil
-        end
-      end
-      horario_anterior = horario_atual
-
-      paciente_nome = sheet.cell(i, col_paciente).to_s.strip
-
-      # Pegamos apenas a coluna de observação específica para não puxar a legenda lateral
-      obs_val = sheet.cell(i, col_obs).to_s.strip
-      obs_final = nil
-      if obs_val.present? && !["OBSERVAÇÕES", "OBSERVAÇÃO", "HORÁRIO RESERVADO", "PACIENTE COM PLANO SUSPENSO", "PARTICULAR", "TAG", "FECHADO"].include?(obs_val.upcase)
-        obs_final = obs_val
-      end
-
-      # --- LÓGICA DE DETECÇÃO DE BLOQUEIO/FECHAMENTO ---
-      is_bloqueio = false
-      motivo_bloqueio = nil
-
-      # Reset do periodo_bloqueado se houver paciente real
-      if paciente_nome.present? && paciente_nome.split.size >= 2 && !["LIVRE", "---", "ALMOÇO", "RESERVADO", "PACIENTE", "PERÍODO FECHADO", "PERIODO FECHADO", "FECHADO"].include?(paciente_nome.upcase)
-        periodo_bloqueado = nil
-      end
-
-      # 1. Verifica se alguma célula das colunas da tabela indica fechamento (evita ler a legenda fora da tabela)
-      cols_verificar = [col_paciente, col_obs]
-      cols_verificar << col_profissional if tem_coluna_profissional
-      valores_linha = cols_verificar.map { |col| sheet.cell(i, col).to_s.strip }
-      termos_bloqueio = ["PERÍODO FECHADO", "PERIODO FECHADO", "FECHADO", "HORÁRIO RESERVADO", "HORARIO RESERVADO", "RESERVADO"]
-      celula_bloqueio = valores_linha.find do |val|
-        val_up = val.upcase
-        termos_bloqueio.any? { |term| val_up == term || val_up.include?(term) } || val_up.start_with?("BLOCK")
-      end
-
-      if celula_bloqueio
-        is_bloqueio = true
-        motivo_bloqueio = obs_final.present? ? "#{celula_bloqueio} - #{obs_final}" : celula_bloqueio
-        periodo_bloqueado = motivo_bloqueio
-      # 2. Caso de reposição sem paciente mas com observação
-      elsif paciente_nome.blank? && obs_final.present?
-        is_bloqueio = true
-        motivo_bloqueio = obs_final
-        periodo_bloqueado = motivo_bloqueio
-      # 3. Propagação do bloco ativo em células vazias
-      elsif paciente_nome.blank? && obs_final.blank? && periodo_bloqueado.present?
-        # Apenas propaga se este horário não possuir pacientes reais agendados
-        if slots_com_paciente.include?([dia_atual, horario_atual])
-          periodo_bloqueado = nil
-        else
-          is_bloqueio = true
-          motivo_bloqueio = periodo_bloqueado
-        end
-      end
-
-      # --- DETERMINAÇÃO DOS PROFISSIONAIS ---
       profs_finais = []
-      
+      convenio_nome = ""
+
+      obs_textos = []
       if tem_coluna_profissional
-        prof_col_raw = sheet.cell(i, col_profissional).to_s.strip
+        # Formato Supervisão: Col 2=Paciente, Col 3=Profissional, Col 4=Convênio
+        prof_col_raw = sheet.cell(i, 3).to_s.strip
         prof_nomes = limpar_e_dividir_profissionais(prof_col_raw)
         
         if prof_nomes.empty? || ["PROFISSIONAL", "PACIENTE", "CONVENIO"].include?(prof_nomes.first.upcase)
           if aba_combinada
-            # Para aba combinada, se o profissional for em branco (ou for uma tag de bloqueio),
-            # mas for um bloqueio de sala, nós bloqueamos para todos os profissionais da aba!
-            if is_bloqueio
-              profs_finais = obter_profissionais_da_aba(nome_aba)
-            else
-              next
-            end
+            # Se a aba é combinada e não tem profissional, pula a linha para não criar sujeiras/dummy professionals
+            next
           else
             profs_finais = [Profissional.find_or_create_by!(nome: prof_fixo_nome) { |p| p.especialidade = "Não Informada" }]
           end
         else
           profs_finais = prof_nomes.map { |n| Profissional.find_or_create_by!(nome: n.upcase) { |p| p.especialidade = "Não Informada" } }
         end
+        convenio_nome = sheet.cell(i, 4).to_s.strip
+
+        (5..10).each do |col|
+          val = sheet.cell(i, col).to_s.strip
+          obs_textos << val if val.present? && val.upcase != "OBSERVAÇÕES" && val.upcase != "OBSERVAÇÃO"
+        end
       else
-        profs_finais = obter_profissionais_da_aba(nome_aba)
+        # Formato Normal: Col 2=Paciente, Col 3=Convênio
+        profs_finais = [Profissional.find_or_create_by!(nome: prof_fixo_nome) { |p| p.especialidade = "Não Informada" }]
+        convenio_nome = sheet.cell(i, 3).to_s.strip
+
+        (4..10).each do |col|
+          val = sheet.cell(i, col).to_s.strip
+          obs_textos << val if val.present? && val.upcase != "OBSERVAÇÕES" && val.upcase != "OBSERVAÇÃO"
+        end
       end
 
-      # Registra a presença de horário na planilha para cada profissional da linha
+      obs_final = obs_textos.join(" | ")
+
+      # Detecta terapia em grupo pela coluna de observações
+      is_grupo = obs_textos.any? { |t| t.upcase.include?("TERAPIA EM GRUPO") }
+
       profs_finais.each do |prof|
-        if horario_atual.include?('-')
+        if is_grupo && horario_atual.to_s.include?('-')
+          # Terapia em grupo com range: expande para cada slot de 40 min dentro do range
           expandir_range_para_slots(horario_atual).each do |slot_hora|
-            @slots_presentes[prof.nome.upcase].add([dia_atual, slot_hora])
+            salvar_agendamento(paciente_nome, prof, convenio_nome, dia_atual, slot_hora, obs_final, true)
           end
         else
-          @slots_presentes[prof.nome.upcase].add([dia_atual, horario_atual])
-        end
-      end
-
-      # --- APLICAÇÃO DOS DADOS ---
-      if is_bloqueio
-        profs_finais.each do |prof|
-          salvar_bloqueio(prof, dia_atual, horario_atual, motivo_bloqueio)
-        end
-      else
-        # Processamento normal do paciente
-        next if paciente_nome.blank? || paciente_nome.split.size < 2
-        next if ["LIVRE", "---", "ALMOÇO", "RESERVADO", "PACIENTE"].include?(paciente_nome.upcase)
-        next if paciente_nome.match?(/^\d{1,2}H/i)
-
-        convenio_nome = sheet.cell(i, col_convenio).to_s.strip
-        is_grupo = obs_final.to_s.upcase.include?("TERAPIA EM GRUPO")
-
-        profs_finais.each do |prof|
-          if is_grupo && horario_atual.to_s.include?('-')
-            # Terapia em grupo com range: expande para cada slot de 40 min dentro do range
-            expandir_range_para_slots(horario_atual).each do |slot_hora|
-              salvar_agendamento(paciente_nome, prof, convenio_nome, dia_atual, slot_hora, obs_final, true)
-            end
-          else
-            salvar_agendamento(paciente_nome, prof, convenio_nome, dia_atual, horario_atual, obs_final, is_grupo)
-          end
+          salvar_agendamento(paciente_nome, prof, convenio_nome, dia_atual, horario_atual, obs_final, is_grupo)
         end
       end
     end
@@ -389,60 +216,38 @@ class ImportadorAgendaService
     header_row_idx = (1..5).find { |r| sheet.row(r).any? { |c| c.to_s.upcase.include?("PACIENTE") } }
     start_row = header_row_idx ? header_row_idx + 1 : 3
 
-    # Identifica as seções não vazias da planilha
-    sections = []
-    in_section = false
-    current_section = nil
-
+    # Identifica os blocos baseados na reinicialização da coluna SALA (coluna 4)
+    blocos = []
     (start_row..sheet.last_row).each do |i|
-      empty = (1..7).all? { |c| sheet.cell(i, c).to_s.strip.blank? }
-      if !empty
-        if !in_section
-          current_section = { start_row: i }
-          sections << current_section
-          in_section = true
-        end
-        current_section[:end_row] = i
-      else
-        in_section = false
+      sala_val = sheet.cell(i, 4).to_s.strip
+      # Se a sala for 1 ou 1.0, inicia um novo bloco
+      if sala_val == "1" || sala_val == "1.0"
+        blocos << { start_row: i }
       end
     end
 
-    # Identifica os blocos dinamicamente baseando-se nas tags de horário na coluna 1
-    blocos = []
-    sections.each do |section|
-      time_rows = []
-      (section[:start_row]..section[:end_row]).each do |i|
-        val = sheet.cell(i, 1).to_s.strip
-        if val.present? && val.match?(/\d/)
-          time_rows << { row: i, time: val }
-        end
-      end
-
-      next if time_rows.empty?
-
-      splits = []
-      if time_rows.first[:row] > section[:start_row]
-        splits << { start_row: section[:start_row], time: time_rows.first[:time] }
-      end
-
-      time_rows.each do |tr|
-        splits << { start_row: tr[:row], time: tr[:time] }
-      end
-
-      splits.each_with_index do |split, idx|
-        next_split = splits[idx + 1]
-        split[:end_row] = next_split ? next_split[:start_row] - 1 : section[:end_row]
-        blocos << split
-      end
+    # Define o fim de cada bloco (até o início do próximo ou fim da planilha)
+    blocos.each_with_index do |bloco, index|
+      proximo_bloco = blocos[index + 1]
+      bloco[:end_row] = proximo_bloco ? proximo_bloco[:start_row] - 1 : sheet.last_row
     end
 
     # Processa cada bloco identificado
     blocos.each do |bloco|
-      horario_raw = bloco[:time]
+      # Encontra o horário definido para este bloco (procurando em qualquer linha do intervalo)
+      horario_raw = nil
+      (bloco[:start_row]..bloco[:end_row]).each do |i|
+        val = sheet.cell(i, 1).to_s.strip
+        if val.present? && val.match?(/\d/)
+          horario_raw = val
+          break
+        end
+      end
+      
       next if horario_raw.nil?
 
-      # Prepara o horário formatado (ex: "8H - 9H20" vira "08:00 - 09:20")
+      # Prepara os horários (ex: "8H - 9H20" vira ["08:00", "08:40"])
+      horarios_para_salvar = []
       h_parts = horario_raw.split('-').map do |p|
         p_limpo = p.strip.downcase.tr('h', ':').gsub(/[^\d:]/, '')
         next if p_limpo.blank?
@@ -450,7 +255,13 @@ class ImportadorAgendaService
         format("%02d:%02d", h.to_i, (m || 0).to_i)
       end.compact
       
-      horario_final = h_parts.size >= 2 ? h_parts.join(" - ") : horario_raw
+      if h_parts.any?
+        hora_inicial = Time.parse(h_parts.first)
+        horarios_para_salvar << hora_inicial.strftime("%H:%M")
+        horarios_para_salvar << (hora_inicial + 40 * 60).strftime("%H:%M")
+      else
+        horarios_para_salvar << horario_raw
+      end
 
       # Processa cada linha individual dentro do bloco
       (bloco[:start_row]..bloco[:end_row]).each do |i|
@@ -471,10 +282,13 @@ class ImportadorAgendaService
             
             dias_padrao = ["SEGUNDA-FEIRA", "TERÇA-FEIRA", "QUARTA-FEIRA", "QUINTA-FEIRA", "SEXTA-FEIRA"]
             dias_padrao.each do |dia_extenso|
-              if at_atende_no_dia?(nome_at, dia_extenso, obs_ats_raw)
+              if atende_no_dia?(dia_extenso, obs_ats_raw)
                 dia = dia_extenso.downcase
-                # Salva o agendamento diretamente com a string do intervalo formatado
-                salvar_agendamento(paciente_nome, prof, convenio_nome, dia, horario_final, nil)
+                horarios_para_salvar.each do |hora_bloco|
+                  # Mantemos a observação como nil na ATS conforme pedido,
+                  # usando-a apenas para o controle interno de dias.
+                  salvar_agendamento(paciente_nome, prof, convenio_nome, dia, hora_bloco, nil)
+                end
               end
             end
           end
@@ -490,10 +304,7 @@ class ImportadorAgendaService
 
   def limpar_e_dividir_profissionais(texto)
     return [] if texto.blank?
-    texto.split(%r{/|,|;| e |&|\+}).map(&:strip).reject do |n|
-      n.blank? || n.size < 2 || 
-      ["PROFISSIONAL", "PACIENTE", "CONVENIO", "FECHADO", "BLOCK"].any? { |term| n.upcase.include?(term) }
-    end
+    texto.split(%r{/|,|;| e |&|\+}).map(&:strip).reject { |n| n.blank? || n.size < 2 }
   end
 
 
@@ -552,45 +363,6 @@ class ImportadorAgendaService
       esps = paciente.agendamentos.joins(:profissional).pluck('profissionais.especialidade').uniq.reject(&:blank?)
       esps = ["Não Informada"] if esps.empty?
       paciente.update(weekly_frequency: frequencia, planned_specialties: esps.join(", "))
-    end
-  end
-
-  def tarde?(horario_str)
-    return false if horario_str.blank?
-    hora = horario_str.split(':').first.to_i
-    hora >= 12
-  end
-
-  def obter_profissionais_da_aba(nome_aba)
-    # Se for a aba MÔNICALAURANATÁLIA, retorna os três profissionais
-    if nome_aba.upcase.include?("MÔNICALAURANATÁLIA") || nome_aba.upcase.include?("MONICALAURANATALIA")
-      ["MÔNICA", "LAURA", "NATÁLIA"].map { |n| Profissional.find_or_create_by!(nome: n) { |p| p.especialidade = "Não Informada" } }
-    else
-      [Profissional.find_or_create_by!(nome: nome_aba.strip.upcase) { |p| p.especialidade = "Não Informada" }]
-    end
-  end
-
-  def salvar_bloqueio(prof, dia, hora, motivo)
-    begin
-      agendamento = Agendamento.find_or_initialize_by(
-        profissional: prof,
-        dia_semana: dia.to_s.strip.downcase,
-        horario: hora.to_s.strip
-      )
-      
-      agendamento.assign_attributes(
-        paciente: nil,
-        convenio: nil,
-        observacoes: nil,
-        status: "bloqueado",
-        motivo_bloqueio: motivo.to_s.strip,
-        bloqueado_por: "SISTEMA"
-      )
-      
-      agendamento.save!
-      puts "   🔒 Bloqueio: #{prof.nome} | #{dia} às #{hora} | Motivo: #{motivo}"
-    rescue => e
-      puts "⚠️  Aviso: Erro ao salvar bloqueio para #{prof.nome} às #{hora}. (#{e.message})"
     end
   end
 
@@ -653,10 +425,10 @@ class ImportadorAgendaService
     end
   end
 
-  # Bloqueia SEGUNDA-FEIRA 10:40 e 11:20 para TODOS os profissionais
+  # Bloqueia SEGUNDA-FEIRA 10:40 e 11:20 para TODOS os profissionais (exceto ATs)
   def bloquear_producao_segunda
     horarios_producao = ["10:40", "11:20"]
-    Profissional.find_each do |prof|
+    Profissional.where.not(especialidade: "ATENDENTE TERAPEUTICO").find_each do |prof|
       begin
         horarios_producao.each do |hora|
           next if Agendamento.exists?(profissional: prof, dia_semana: "segunda-feira", horario: hora)
@@ -703,15 +475,15 @@ class ImportadorAgendaService
 
             next if ja_ocupado
 
-            # Só bloqueia se o horário NÃO estava presente na planilha para este profissional (ou seja, é um horário indisponível/não trabalhado)
-            next if @slots_presentes[prof.nome.upcase]&.include?([dia, hora])
+            # Se o horário estava presente na planilha para este profissional, ele é uma vaga e não deve ser bloqueado
+            next if slot_presente_na_planilha?(prof.nome, dia, hora)
 
             Agendamento.create(
               profissional: prof,
               dia_semana: dia,
               horario: hora,
               status: "bloqueado",
-              motivo_bloqueio: "HORÁRIO DE PRODUÇÃO",
+              motivo_bloqueio: "HORÁRIOS FECHADOS EXCLUSIVOS PARA PRODUÇÃO",
               bloqueado_por: "SISTEMA"
             )
             count += 1
@@ -752,5 +524,15 @@ class ImportadorAgendaService
     end
 
     slots.uniq
+  end
+
+  def registrar_slot_presente(prof_nome, dia, hora)
+    key = [prof_nome.to_s.strip.upcase, dia.to_s.strip.downcase, hora.to_s.strip]
+    @slots_presentes[key] = true
+  end
+
+  def slot_presente_na_planilha?(prof_nome, dia, hora)
+    key = [prof_nome.to_s.strip.upcase, dia.to_s.strip.downcase, hora.to_s.strip]
+    @slots_presentes[key] == true
   end
 end
