@@ -79,10 +79,7 @@ class ApplicationController < ActionController::API
 
   def user_is_gestao?
     role = request.headers['X-User-Role']&.to_s || 'desconhecido'
-    role_utf8 = role.dup.force_encoding('UTF-8')
-    unless role_utf8.valid_encoding?
-      role_utf8 = role_utf8.encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
-    end
+    role_utf8 = NeurochatService.clean_str(role)
     # Normaliza removendo acentos para comparação segura
     role_normalized = ActiveSupport::Inflector.transliterate(role_utf8).downcase.strip
     
@@ -93,7 +90,7 @@ class ApplicationController < ActionController::API
       is_super = NeurochatRecord.connection.select_value(
         ActiveRecord::Base.send(:sanitize_sql_array, ["SELECT is_super_admin FROM users WHERE id = ?", user_id])
       )
-      return true if is_super == 1
+      return true if is_super == 1 || is_super == true || is_super.to_s == '1' || is_super.to_s == 'true'
     end
 
     setores_normalizados = SETORES_GESTAO.map { |s| ActiveSupport::Inflector.transliterate(s.dup.force_encoding('UTF-8')).downcase }
@@ -105,6 +102,12 @@ class ApplicationController < ActionController::API
   def validar_acesso_gestao!
     unless user_is_gestao?
       render json: { error: "Acesso Negado. Seu setor não possui permissão administrativa." }, status: :forbidden
+    end
+  end
+
+  def validar_usuario_logado!
+    if request.headers['X-User-Id'].blank?
+      render json: { error: "Acesso Negado. Usuário não autenticado." }, status: :unauthorized
     end
   end
 

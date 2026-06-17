@@ -25,6 +25,10 @@ function isSuperAdmin() {
     return val === '1' || val === 'true' || val === true;
 }
 
+function getNivelAcesso() {
+    return localStorage.getItem('nivel_acesso') || 'profissional';
+}
+
 function leadsGestao() {
     const role = getUserRole();
     const isAdmin = isSuperAdmin();
@@ -86,10 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const role = localStorage.getItem('setor') || 'Desconhecido';
         const userId = localStorage.getItem('userId') || '';
         const userName = localStorage.getItem('userName') || '';
+        const nivelAcesso = localStorage.getItem('nivel_acesso') || 'profissional';
 
         config.headers['X-User-Role'] = role;
         config.headers['X-User-Id'] = userId;
         config.headers['X-User-Name'] = userName;
+        config.headers['X-User-Access-Level'] = nivelAcesso;
 
         return originalFetch(resource, config);
     };

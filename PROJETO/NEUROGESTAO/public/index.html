@@ -60,6 +60,7 @@
             localStorage.setItem('userId', dados.usuario.id);
             localStorage.setItem('userName', dados.usuario.nome);
             localStorage.setItem('is_super_admin', dados.usuario.is_super_admin);
+            localStorage.setItem('nivel_acesso', dados.usuario.nivel_acesso);
             window.location.href = "/dashboard"; // Redireciona via rota do Rails
         } else {
             msg.innerText = dados.erro;

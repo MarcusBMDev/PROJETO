@@ -6,8 +6,8 @@ class Api::AgendamentosController < ApplicationController
     # Filtra apenas confirmados para a grade principal (ou conforme necessidade do front)
     agendamentos = Agendamento.includes(:profissional, :paciente, :convenio)
 
-    # Regra de Privacidade: Se não for gestor, filtra pelo nome do profissional (userName)
-    unless user_is_gestao?
+    # Regra de Privacidade: Se não for gestor nem neurochat, filtra pelo nome do profissional (userName)
+    unless user_is_gestao? || request.headers['X-User-Access-Level'] == 'neurochat'
       user_name = request.headers['X-User-Name']
       if user_name.present?
         # Tenta bater o userName com o nome do profissional (flexível)
@@ -174,6 +174,10 @@ class Api::AgendamentosController < ApplicationController
 
   # POST /agendamentos
   def create
+    if request.headers['X-User-Access-Level'] == 'neurochat'
+      return render json: { error: "Usuários do Neurochat não têm permissão para agendar ou bloquear vagas diretamente." }, status: :forbidden
+    end
+
     agendamento = Agendamento.new(agendamento_params)
 
     # Se for um bloqueio, garantimos que o nome do bloqueador está correto.
@@ -244,6 +248,10 @@ class Api::AgendamentosController < ApplicationController
 
   # PATCH/PUT /agendamentos/:id
   def update
+    if request.headers['X-User-Access-Level'] == 'neurochat'
+      return render json: { error: "Usuários do Neurochat não têm permissão para alterar agendamentos diretamente." }, status: :forbidden
+    end
+
     agendamento = Agendamento.find(params[:id])
     
     old_dia = agendamento.dia_semana
@@ -272,15 +280,18 @@ class Api::AgendamentosController < ApplicationController
 
   # DELETE /agendamentos/:id
   def destroy
+    if request.headers['X-User-Access-Level'] == 'neurochat'
+      return render json: { error: "Usuários do Neurochat não têm permissão para liberar vagas ou remover agendamentos diretamente." }, status: :forbidden
+    end
+
     agendamento = Agendamento.find(params[:id])
     
     # Se for um bloqueio, validamos quem está tentando remover
     if agendamento.status == 'bloqueado'
       requester_id = params[:user_id].to_i
-      user_role = request.headers['X-User-Role']&.downcase || ''
       
-      setores_admin = ["diretoria geral", "recepção", "agendamento/recepção", "ti", "agendamento", "coordenação"]
-      is_admin = setores_admin.any? { |s| user_role.include?(s) }
+      # Utiliza a lógica centralizada de gestão (incluindo super admins e setores autorizados)
+      is_admin = user_is_gestao?
       
       unless is_admin || agendamento.bloqueado_por_id == requester_id
         return render json: { error: "Somente o usuário '#{agendamento.bloqueado_por}' ou a Gestão pode realizar este desbloqueio." }, status: :forbidden
@@ -312,7 +323,7 @@ class Api::AgendamentosController < ApplicationController
                      "📝 Motivo original: #{motivo}\n" \
                      "🛠️ Ação por: **#{operador_nome || setor}**"
       # Envia para o grupo de Agendamento (ID 7)
-      NeurochatService.send(:enviar_mensagem_grupo, msg_bloqueio, 7)
+      NeurochatService.enviar_mensagem_grupo(msg_bloqueio, 7)
     end
 
     render json: { mensagem: "Removido com sucesso!" }

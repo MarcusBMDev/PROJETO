@@ -36,8 +36,10 @@ class AuthController < ApplicationController
     # Aqui mapeamos as regras de negócio da clínica
     setores_admin = ["Diretoria Geral", "Recepção", "Agendamento/Recepção", "TI"]
     
-    if setores_admin.include?(usuario.department)
+    if setores_admin.include?(usuario.department) || usuario.is_super_admin
       "admin"
+    elsif usuario.is_a?(User)
+      "neurochat"
     else
       "profissional"
     end

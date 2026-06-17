@@ -1,5 +1,6 @@
 class Api::TransferenciasController < ApplicationController
-  before_action :validar_acesso_gestao!
+  before_action :validar_acesso_gestao!, except: [:create]
+  before_action :validar_usuario_logado!, only: [:create]
   # GET /transferencias
   def index
     status_filter = params[:status].presence || 'pendente'

@@ -11,23 +11,27 @@ class NeurochatService
   # ── Pacientes ──────────────────────────────────────────────────────────
 
   def self.notificar_novo_paciente(paciente, setor, user_id = nil)
-    convenio_nome = paciente.convenio&.nome || 'Sem convênio'
+    convenio_nome = clean_str(paciente.convenio&.nome || 'Sem convênio')
     mensagem = "🆕 **NOVO PACIENTE CADASTRADO**\n" \
-               "Nome: **#{paciente.nome}**\n" \
+               "Nome: **#{clean_str(paciente.nome)}**\n" \
                "Convênio: **#{convenio_nome}**\n" \
-               "Ação realizada por: **#{setor}**"
+               "Ação realizada por: **#{clean_str(setor)}**"
     enviar_para_grupos_operacionais(mensagem, user_id)
+  rescue => e
+    Rails.logger.error "Erro ao notificar novo paciente: #{e.message}"
   end
 
   def self.notificar_remocao_paciente(paciente, motivo, setor, user_id = nil)
-    profissionais = paciente.agendamentos.map { |a| a.profissional.nome }.uniq.join(', ')
+    profissionais = clean_str(paciente.agendamentos.map { |a| a.profissional&.nome }.compact.uniq.join(', '))
     mensagem = "⚠️ **PACIENTE REMOVIDO**\n" \
-               "O paciente **#{paciente.nome}**, que realizava terapias com: **#{profissionais.presence || 'Nenhum'}**,\n" \
+               "O paciente **#{clean_str(paciente.nome)}**, que realizava terapias com: **#{profissionais.presence || 'Nenhum'}**,\n" \
                "foi removido da lista de agendamentos.\n" \
-               "**Motivo:** #{motivo}\n" \
-               "**Ação realizada por:** **#{setor}**"
+               "**Motivo:** #{clean_str(motivo)}\n" \
+               "**Ação realizada por:** **#{clean_str(setor)}**"
     enviar_mensagem_grupo(mensagem, RETIRADAS_GROUP_ID, user_id)
     enviar_para_grupos_operacionais(mensagem, user_id)
+  rescue => e
+    Rails.logger.error "Erro ao notificar remoção de paciente: #{e.message}"
   end
 
   # Notifica o Grupo 14 (Retiradas) com todos os detalhes da remoção
@@ -91,99 +95,115 @@ class NeurochatService
   end
 
   def self.notificar_transferencia_paciente(paciente, de_profissional, para_profissional, motivo, setor, dia = nil, hora = nil, user_id = nil)
-    novo_horario_str = dia && hora ? "\n📅 **Novo Horário:** **#{dia} às #{hora}**" : ""
+    novo_horario_str = dia && hora ? "\n📅 **Novo Horário:** **#{clean_str(dia)} às #{clean_str(hora)}**" : ""
     
     # Mensagem customizada para troca de horário (mesmo profissional)
     if de_profissional.id == para_profissional.id
       mensagem = "🕒 **HORÁRIO ALTERADO**\n" \
-                 "👤 O paciente **#{paciente.nome}** teve seu horário alterado.\n" \
-                 "👨‍⚕️ **Profissional:** **#{de_profissional.nome}**#{novo_horario_str}\n" \
-                 "📝 **Motivo:** #{motivo}\n" \
-                 "🛠️ **Ação realizada por:** **#{setor}**"
+                 "👤 O paciente **#{clean_str(paciente.nome)}** teve seu horário alterado.\n" \
+                 "👨‍⚕️ **Profissional:** **#{clean_str(de_profissional.nome)}**#{novo_horario_str}\n" \
+                 "📝 **Motivo:** #{clean_str(motivo)}\n" \
+                 "🛠️ **Ação realizada por:** **#{clean_str(setor)}**"
     else
       mensagem = "🔄 **PACIENTE TRANSFERIDO**\n" \
-                 "👤 O paciente **#{paciente.nome}** foi transferido.\n" \
-                 "👨‍⚕️ **De:** **#{de_profissional.nome}**\n" \
-                 "👨‍⚕️ **Para:** **#{para_profissional.nome}**#{novo_horario_str}\n" \
-                 "📝 **Motivo:** #{motivo}\n" \
-                 "🛠️ **Ação realizada por:** **#{setor}**"
+                 "👤 O paciente **#{clean_str(paciente.nome)}** foi transferido.\n" \
+                 "👨‍⚕️ **De:** **#{clean_str(de_profissional.nome)}**\n" \
+                 "👨‍⚕️ **Para:** **#{clean_str(para_profissional.nome)}**#{novo_horario_str}\n" \
+                 "📝 **Motivo:** #{clean_str(motivo)}\n" \
+                 "🛠️ **Ação realizada por:** **#{clean_str(setor)}**"
     end
 
     # Envia para o grupo de transferências (17) E para os grupos operacionais padrão (6 e 7)
     enviar_mensagem_grupo(mensagem, TRANSFERENCIAS_GROUP_ID, user_id)
     enviar_para_grupos_operacionais(mensagem, user_id)
+  rescue => e
+    Rails.logger.error "Erro ao notificar transferência de paciente: #{e.message}"
   end
 
   def self.notificar_alteracao_agendamento(paciente, prof_antigo, prof_novo, dia_antigo, hora_antiga, dia_novo, hora_novo, setor, user_id = nil)
     mensagem = "🔄 **AGENDAMENTO ALTERADO**\n" \
-               "👤 Paciente: **#{paciente.nome}**\n"
+               "👤 Paciente: **#{clean_str(paciente.nome)}**\n"
                
     if prof_antigo.id != prof_novo.id
-      mensagem += "👨‍⚕️ Profissional: de **#{prof_antigo.nome}** para **#{prof_novo.nome}**\n"
+      mensagem += "👨‍⚕️ Profissional: de **#{clean_str(prof_antigo.nome)}** para **#{clean_str(prof_novo.nome)}**\n"
     else
-      mensagem += "👨‍⚕️ Profissional: **#{prof_novo.nome}**\n"
+      mensagem += "👨‍⚕️ Profissional: **#{clean_str(prof_novo.nome)}**\n"
     end
     
     if dia_antigo != dia_novo || hora_antiga != hora_novo
-      mensagem += "📅 Horário: de **#{dia_antigo} às #{hora_antiga}** para **#{dia_novo} às #{hora_novo}**\n"
+      mensagem += "📅 Horário: de **#{clean_str(dia_antigo)} às #{clean_str(hora_antiga)}** para **#{clean_str(dia_novo)} às #{clean_str(hora_novo)}**\n"
     end
     
-    mensagem += "🛠️ Ação realizada por: **#{setor}**"
+    mensagem += "🛠️ Ação realizada por: **#{clean_str(setor)}**"
     
     enviar_mensagem_grupo(mensagem, TRANSFERENCIAS_GROUP_ID, user_id)
+  rescue => e
+    Rails.logger.error "Erro ao notificar alteração de agendamento: #{e.message}"
   end
 
   def self.notificar_encaixe(agendamento, setor, user_id = nil)
     mensagem = "⚡ **NOVO ENCAIXE REALIZADO**\n" \
-               "👤 Paciente: **#{agendamento.paciente&.nome}**\n" \
-               "📅 Horário: #{agendamento.dia_semana} às #{agendamento.horario}\n" \
-               "👨‍⚕️ Profissional: #{agendamento.profissional.nome}\n" \
-               "🛠️ Realizado pela: #{setor}"
+               "👤 Paciente: **#{clean_str(agendamento.paciente&.nome)}**\n" \
+               "📅 Horário: #{clean_str(agendamento.dia_semana)} às #{clean_str(agendamento.horario)}\n" \
+               "👨‍⚕️ Profissional: #{clean_str(agendamento.profissional&.nome)}\n" \
+               "🛠️ Realizado pela: #{clean_str(setor)}"
     enviar_para_grupos_operacionais(mensagem, user_id)
+  rescue => e
+    Rails.logger.error "Erro ao notificar encaixe: #{e.message}"
   end
 
   def self.notificar_aprovacao_agendamento(agendamento, setor)
     mensagem = "✅ **AGENDAMENTO CONFIRMADO**\n" \
-               "O agendamento de **#{agendamento.paciente&.nome}** foi aprovado.\n" \
-               "📅 Horário: #{agendamento.dia_semana} às #{agendamento.horario}\n" \
-               "👨‍⚕️ Profissional: #{agendamento.profissional.nome}\n" \
-               "🛠️ Ação por: #{setor}"
+               "O agendamento de **#{clean_str(agendamento.paciente&.nome)}** foi aprovado.\n" \
+               "📅 Horário: #{clean_str(agendamento.dia_semana)} às #{clean_str(agendamento.horario)}\n" \
+               "👨‍⚕️ Profissional: #{clean_str(agendamento.profissional&.nome)}\n" \
+               "🛠️ Ação por: #{clean_str(setor)}"
     enviar_para_grupos_operacionais(mensagem)
+  rescue => e
+    Rails.logger.error "Erro ao notificar aprovação de agendamento: #{e.message}"
   end
 
   # ── Profissionais ──────────────────────────────────────────────────────
 
   def self.notificar_inativacao_profissional(profissional, setor)
-    pacientes_ativos = profissional.agendamentos
+    pacientes_ativos = clean_str(profissional.agendamentos
                                    .includes(:paciente)
-                                   .map { |a| a.paciente.nome }
-                                   .uniq.join(', ')
+                                   .map { |a| a.paciente&.nome }
+                                   .compact
+                                   .uniq.join(', '))
     mensagem = "🚫 **PROFISSIONAL INATIVADO**\n" \
-               "O profissional **#{profissional.nome}** (**#{profissional.especialidade}**) foi inativado.\n" \
+               "O profissional **#{clean_str(profissional.nome)}** (**#{clean_str(profissional.especialidade)}**) foi inativado.\n" \
                "Pacientes vinculados: **#{pacientes_ativos.presence || 'Nenhum'}**\n" \
-               "**Ação realizada por:** **#{setor}**"
+               "**Ação realizada por:** **#{clean_str(setor)}**"
     enviar_para_grupos_operacionais(mensagem)
+  rescue => e
+    Rails.logger.error "Erro ao notificar inativação de profissional: #{e.message}"
   end
 
   def self.notificar_curriculo_profissional(profissional, link_curriculo, setor)
     mensagem = "📄 **MINI CURRÍCULO COMPARTILHADO**\n" \
-               "Profissional: **#{profissional.nome}**\n" \
-               "Especialidade: #{profissional.especialidade}\n" \
-               "🔗 [Clique aqui para visualizar](#{link_curriculo})\n" \
-               "**Compartilhado por:** #{setor}"
+               "Profissional: **#{clean_str(profissional.nome)}**\n" \
+               "Especialidade: #{clean_str(profissional.especialidade)}\n" \
+               "🔗 [Clique aqui para visualizar](#{clean_str(link_curriculo)})\n" \
+               "**Compartilhado por:** #{clean_str(setor)}"
     enviar_mensagem_grupo(mensagem)
+  rescue => e
+    Rails.logger.error "Erro ao notificar currículo de profissional: #{e.message}"
   end
 
   def self.notificar_agendamento_espera(paciente, agendamento, setor)
-    convenio_nome = paciente.convenio&.nome || 'Particular/Direto'
+    return unless paciente
+    convenio_nome = clean_str(paciente.convenio&.nome || 'Particular/Direto')
     mensagem = "📢 **Novo Agendamento (via Espera)**\n" \
-               "👤 Paciente: **#{paciente.nome}**\n" \
-               "🩺 Área: **#{agendamento.profissional.especialidade}**\n" \
-               "📅 Horário: **#{agendamento.dia_semana}** às **#{agendamento.horario}**\n" \
-               "👩‍⚕️ Profissional: **#{agendamento.profissional.nome}**\n" \
+               "👤 Paciente: **#{clean_str(paciente.nome)}**\n" \
+               "🩺 Área: **#{clean_str(agendamento.profissional&.especialidade)}**\n" \
+               "📅 Horário: **#{clean_str(agendamento.dia_semana)}** às **#{clean_str(agendamento.horario)}**\n" \
+               "👩‍⚕️ Profissional: **#{clean_str(agendamento.profissional&.nome)}**\n" \
                "💳 Convênio: **#{convenio_nome}**\n" \
-               "🛠️ Painel: **#{setor}**"
+               "🛠️ Painel: **#{clean_str(setor)}**"
     enviar_para_grupos_operacionais(mensagem)
+  rescue => e
+    Rails.logger.error "Erro ao notificar agendamento via espera: #{e.message}"
   end
 
   # Notifica que há um agendamento PENDENTE aguardando aprovação
@@ -191,16 +211,18 @@ class NeurochatService
     paciente_nome = clean_str(agendamento.paciente&.nome || "Novo Paciente (Espera)")
     dia    = clean_str(agendamento.dia_semana)
     hora   = clean_str(agendamento.horario)
-    prof   = clean_str(agendamento.profissional.nome)
+    prof   = clean_str(agendamento.profissional&.nome)
     
     texto = "🕒 **AGENDAMENTO AGUARDANDO APROVAÇÃO**\n" \
             "👤 Paciente: **#{paciente_nome}**\n" \
             "📅 Horário Reservado: **#{dia} às #{hora}**\n" \
             "👨‍⚕️ Profissional: **#{prof}**\n" \
-            "🛠️ Solicitado por: **#{setor}**\n" \
+            "🛠️ Solicitado por: **#{clean_str(setor)}**\n" \
             "🔔 *Este horário está bloqueado na grade e aguarda confirmação da gestão.*"
     
     enviar_para_grupos_operacionais(texto)
+  rescue => e
+    Rails.logger.error "Erro ao notificar agendamento aguardando aprovação: #{e.message}"
   end
 
   # ── Privado ────────────────────────────────────────────────────────────
@@ -275,6 +297,25 @@ class NeurochatService
 
   def self.clean_str(str)
     return "" if str.nil?
-    str.to_s.force_encoding('UTF-8').encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
+    s = str.to_s
+    
+    # 1. Se já for UTF-8 válido, apenas garante remoção de qualquer caractere inválido
+    if s.encoding == Encoding::UTF_8 && s.valid_encoding?
+      return s.encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
+    end
+
+    # 2. Se estiver em ASCII-8BIT ou inválido, testa se pode ser interpretado como UTF-8 válido
+    utf8_str = s.dup.force_encoding('UTF-8')
+    if utf8_str.valid_encoding?
+      return utf8_str
+    end
+
+    # 3. Caso contrário, assume ISO-8859-1 (CP1252 comum em cabeçalhos HTTP Windows) e converte para UTF-8
+    begin
+      s.dup.force_encoding('ISO-8859-1').encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
+    rescue
+      # Fallback final se falhar
+      s.dup.force_encoding('UTF-8').scrub('')
+    end
   end
 end

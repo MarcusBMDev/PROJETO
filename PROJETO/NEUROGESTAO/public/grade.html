@@ -251,6 +251,7 @@
             select.innerHTML = '<option value="">Escolha um profissional...</option>';
             
             const isGestor = leadsGestao();
+            const isNeurochat = getNivelAcesso() === 'neurochat';
             const loggedUserName = (localStorage.getItem('userName') || '').toUpperCase();
             let profEncontrado = null;
 
@@ -269,8 +270,8 @@
                 }
             });
 
-            // Se for terapeuta (não gestor), seleciona e trava o seletor
-            if (!isGestor) {
+            // Se for terapeuta (não gestor nem neurochat), seleciona e trava o seletor
+            if (!isGestor && !isNeurochat) {
                 if (profEncontrado) {
                     select.value = profEncontrado;
                     select.disabled = true;
@@ -364,6 +365,7 @@
             const id = document.getElementById('select-prof').value;
             if(!id) return;
             document.getElementById('grid-container').classList.remove('hidden');
+            const isNeurochat = getNivelAcesso() === 'neurochat';
             const res = await fetch(`/api/agendamentos/por_profissional/${id}`);
             const agendamentos = await res.json();
             
@@ -522,7 +524,7 @@
                                         ${tagHora} ${isEncaixe ? '⚡ ENCAIXE' : ''}
                                     </p>
                                     <div class="flex gap-1 opacity-0 group-hover/slot:opacity-100 transition-all" onclick="event.stopPropagation()">
-                                        ${!isEncaixe ? `<button onclick="abrirEncaixeDireto(${id}, '${diaObj.db}', '${tagHora}')" class="w-6 h-6 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center hover:bg-purple-600 hover:text-white" title="Encaixar paciente aqui">⚡</button>` : ''}
+                                        ${(!isEncaixe && !isNeurochat) ? `<button onclick="abrirEncaixeDireto(${id}, '${diaObj.db}', '${tagHora}')" class="w-6 h-6 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center hover:bg-purple-600 hover:text-white" title="Encaixar paciente aqui">⚡</button>` : ''}
                                         <button onclick="abrirModalNovoHorario('${ag.id}', '${ag.paciente_id}', '${id}', '${nomePaciente.replace(/'/g, "\\'")}')"
                                                 class="w-6 h-6 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-600 hover:text-white" title="Mudar Horário">
                                             🕒
@@ -691,7 +693,7 @@
                             encaixe: encaixe,
                             motivo: motivo,
                             tipo: 'transferencia',
-                            solicitante: (localStorage.getItem('userRole') || 'Terapeutas').toUpperCase()
+                            solicitante: (localStorage.getItem('userName') || localStorage.getItem('setor') || 'Terapeutas').toUpperCase()
                         }
                     })
                 });
@@ -738,6 +740,10 @@
         }
 
         function abrirModalBloqueio(profId, dia, hora) {
+            if (getNivelAcesso() === 'neurochat') {
+                alert("Usuários do Neurochat não têm permissão para agendar ou bloquear vagas.");
+                return;
+            }
             document.getElementById('block-prof-id').value = profId;
             document.getElementById('block-dia').value = dia;
             document.getElementById('block-hora').value = hora;
@@ -799,6 +805,10 @@
         }
 
         async function desbloquearVaga(id) {
+            if (getNivelAcesso() === 'neurochat') {
+                alert("Usuários do Neurochat não têm permissão para liberar ou desbloquear vagas.");
+                return;
+            }
             if(!confirm("Deseja liberar este horário para novos agendamentos?")) return;
             
             const userId = localStorage.getItem('userId');
@@ -813,6 +823,10 @@
         }
 
         async function abrirEncaixeDireto(profId, dia, hora) {
+            if (getNivelAcesso() === 'neurochat') {
+                alert("Usuários do Neurochat não têm permissão para realizar encaixe.");
+                return;
+            }
             document.getElementById('enc-prof-id').value = profId;
             document.getElementById('enc-dia').value = dia;
             document.getElementById('enc-hora').value = hora;
@@ -920,12 +934,15 @@
                 if (!resAg.ok) throw new Error("Erro ao buscar dados do agendamento.");
                 const ag = await resAg.json();
 
+                const logUser = (localStorage.getItem('userName') || '').toUpperCase();
+                const solicitanteLabel = logUser ? `${setor} (${logUser})` : setor;
+
                 const payload = {
                     transferencia: {
                         paciente_id: ag.paciente_id,
                         de_profissional_id: ag.profissional_id,
                         tipo: 'remocao',
-                        solicitante: setor,
+                        solicitante: solicitanteLabel,
                         motivo: motivo,
                         agendamento_ids: JSON.stringify([parseInt(agId)])
                     }
