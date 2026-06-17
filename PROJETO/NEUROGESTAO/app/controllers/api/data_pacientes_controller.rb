@@ -1,4 +1,5 @@
 class Api::DataPacientesController < ActionController::API
+  before_action :bloquear_neurochat_escrita, only: [:create, :update, :destroy, :reativar, :mesclar]
 
  # Responde ao GET /api/data_pacientes.json
   def index
@@ -211,5 +212,13 @@ class Api::DataPacientesController < ActionController::API
 
   def paciente_params
     params.require(:paciente).permit(:nome, :age, :birth_date, :convenio_id, :weekly_frequency, :planned_specialties, :status)
+  end
+
+  private
+
+  def bloquear_neurochat_escrita
+    if request.headers['X-User-Access-Level'] == 'neurochat'
+      render json: { error: "Usuários do Neurochat não têm permissão para cadastrar, editar, excluir ou mesclar pacientes." }, status: :forbidden
+    end
   end
 end

@@ -284,7 +284,11 @@ class Api::AgendamentosController < ApplicationController
       return render json: { error: "Usuários do Neurochat não têm permissão para liberar vagas ou remover agendamentos diretamente." }, status: :forbidden
     end
 
-    agendamento = Agendamento.find(params[:id])
+    begin
+      agendamento = Agendamento.find(params[:id])
+    rescue ActiveRecord::RecordNotFound
+      return render json: { message: 'Vaga já liberada.' }
+    end
     
     # Se for um bloqueio, validamos quem está tentando remover
     if agendamento.status == 'bloqueado'

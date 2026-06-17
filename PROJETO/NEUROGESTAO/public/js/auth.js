@@ -45,31 +45,47 @@ function leadsGestao() {
 function aplicarRestricoesNavegacao() {
     const path = window.location.pathname;
     const isGestor = leadsGestao();
+    const nivelAcesso = getNivelAcesso();
+    const isNeurochat = (nivelAcesso === 'neurochat');
 
-    // Páginas Administrativas
-    const paginasAdmin = [
+    // Páginas totalmente administrativas (bloqueadas para qualquer um que não seja gestor)
+    const paginasAdminRestritas = [
         '/equipe',
-        '/pacientes',
         '/convenios_view',
         '/espera',
         '/transferencias'
     ];
 
-    // Se estiver em uma página admin e não for gestor, redireciona para a grade
-    if (!isGestor && paginasAdmin.some(p => path.includes(p))) {
+    // Se não for gestor e tentar acessar páginas administrativas restritas, redireciona para a grade
+    if (!isGestor && paginasAdminRestritas.some(p => path.includes(p))) {
         console.warn("Acesso negado: Redirecionando para Grade...");
+        window.location.href = '/grade';
+        return;
+    }
+
+    // Se for profissional comum (não gestor e não neurochat), não tem acesso a pacientes
+    if (!isGestor && !isNeurochat && path.includes('/pacientes')) {
+        console.warn("Acesso negado aos pacientes: Redirecionando para Grade...");
         window.location.href = '/grade';
         return;
     }
 
     // Ocultar links da sidebar que são administrativos
     const sidebar = document.querySelector('aside nav');
-    if (sidebar && !isGestor) {
+    if (sidebar) {
         const links = sidebar.querySelectorAll('a');
         links.forEach(link => {
             const href = link.getAttribute('href');
-            if (paginasAdmin.some(p => href.includes(p))) {
-                link.classList.add('hidden'); // Oculta o link
+            
+            // Ocultar equipe, convênios, transferências para quem não for gestor
+            if (!isGestor && paginasAdminRestritas.some(p => href.includes(p))) {
+                link.classList.add('hidden');
+                link.style.display = 'none';
+            }
+            
+            // Ocultar pacientes para profissionais comuns (não gestor e não neurochat)
+            if (!isGestor && !isNeurochat && href.includes('/pacientes')) {
+                link.classList.add('hidden');
                 link.style.display = 'none';
             }
         });

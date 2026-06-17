@@ -825,20 +825,18 @@
             }
             if(!confirm("Deseja liberar este horário para novos agendamentos?")) return;
             
-            const agendar = confirm("Deseja realizar um AGENDAMENTO (Encaixe/Grupo) neste horário logo após desbloquear?");
-            
             const userId = localStorage.getItem('userId');
             const res = await fetch(`/api/agendamentos/${id}?user_id=${userId}`, { method: 'DELETE' });
             
             if(res.ok) {
-                if (agendar) {
-                    abrirEncaixeDireto(profId, dia, hora);
-                } else {
-                    carregarGradeProfissional();
-                }
+                carregarGradeProfissional();
             } else {
-                const data = await res.json();
-                alert(data.error || "Erro ao liberar vaga.");
+                let errMsg = "Erro ao liberar vaga.";
+                try {
+                    const data = await res.json();
+                    errMsg = data.error || errMsg;
+                } catch(e) {}
+                alert(errMsg);
             }
         }
 

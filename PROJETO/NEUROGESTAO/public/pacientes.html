@@ -348,6 +348,16 @@
 
         async function init() {
             console.log("Iniciando carregamento de dados...");
+            
+            const isReadOnly = getNivelAcesso() === 'neurochat';
+            if (isReadOnly) {
+                // Oculta os botões de ação do topo
+                const btnMesclar = document.querySelector('button[onclick="abrirModalMesclar()"]');
+                const btnCadastro = document.querySelector('button[onclick="abrirModalCadastro()"]');
+                if (btnMesclar) btnMesclar.style.display = 'none';
+                if (btnCadastro) btnCadastro.style.display = 'none';
+            }
+
             await Promise.all([
                 carregarConvenios(),
                 carregarEspecialidades(),
@@ -460,9 +470,18 @@
                 tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400 font-medium">Nenhum paciente localizado.</td></tr>';
                 return;
             }
+            
+            const isReadOnly = getNivelAcesso() === 'neurochat';
+            
             tbody.innerHTML = dados.map(p => {
                 const convenioNome = p.convenio ? p.convenio.nome.toUpperCase() : 'PARTICULAR';
                 const idade = (p.age !== null && p.age !== undefined) ? `${p.age} anos` : '---';
+
+                const botoesAcao = isReadOnly ? '' : `
+                    <div class="h-8 w-[1px] bg-slate-100 mx-2"></div>
+                    <button onclick='editarPaciente(${JSON.stringify(p)})' class="text-amber-500 hover:text-amber-700 text-[10px] font-black uppercase">Editar</button>
+                    <button onclick="excluirPaciente(${p.id}, '${p.nome}')" class="text-red-500 hover:text-red-700 text-[10px] font-black uppercase">Excluir</button>
+                `;
 
                 return `
                     <tr class="hover:bg-blue-50/30 transition-colors group">
@@ -475,9 +494,7 @@
                             <button onclick='abrirGradePaciente(${p.id})' class="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-blue-600 hover:text-white transition-all">
                                 📅 Grade Semanal
                             </button>
-                            <div class="h-8 w-[1px] bg-slate-100 mx-2"></div>
-                            <button onclick='editarPaciente(${JSON.stringify(p)})' class="text-amber-500 hover:text-amber-700 text-[10px] font-black uppercase">Editar</button>
-                            <button onclick="excluirPaciente(${p.id}, '${p.nome}')" class="text-red-500 hover:text-red-700 text-[10px] font-black uppercase">Excluir</button>
+                            ${botoesAcao}
                         </td>
                     </tr>`;
             }).join('');
