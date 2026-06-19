@@ -362,7 +362,8 @@
                 carregarConvenios(),
                 carregarEspecialidades(),
                 carregarProfissionais(),
-                carregarPacientes()
+                carregarPacientes(),
+                carregarUsuarios()
             ]);
         }
 
@@ -395,6 +396,35 @@
             } catch (error) {
                 console.error("Erro ao carregar convênios:", error);
                 // alert("Erro ao carregar lista de convênios: " + error.message);
+            }
+        }
+
+        async function carregarUsuarios() {
+            try {
+                const res = await fetch('/api/users');
+                const users = await res.json();
+                
+                const selectReducao = document.getElementById('reducao-setor');
+                const selectRemocao = document.getElementById('remocao-setor');
+                
+                [selectReducao, selectRemocao].forEach(select => {
+                    if (select) {
+                        const existingValues = Array.from(select.options).map(opt => opt.value.toUpperCase().trim());
+                        users.forEach(u => {
+                            if (u.nome) {
+                                const nameUpper = u.nome.toUpperCase().trim();
+                                if (!existingValues.includes(nameUpper)) {
+                                    const option = document.createElement('option');
+                                    option.value = u.nome;
+                                    option.textContent = u.nome.toUpperCase();
+                                    select.appendChild(option);
+                                }
+                            }
+                        });
+                    }
+                });
+            } catch(e) {
+                console.error("Erro ao carregar usuários:", e);
             }
         }
 

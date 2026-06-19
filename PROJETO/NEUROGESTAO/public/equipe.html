@@ -46,7 +46,10 @@
             <div class="grid grid-cols-1 md:grid-cols-6 gap-6 items-end">
                 <div class="md:col-span-2"><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Nome Completo</label><input type="text" id="p-nome" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold uppercase"></div>
                 <div class="md:col-span-1">
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Especialidades</label>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase">Especialidades</label>
+                        <button type="button" onclick="promptNovaEspecialidade()" class="text-blue-500 hover:text-blue-700 text-[9px] font-black uppercase tracking-wider">+ Nova</button>
+                    </div>
                     <div id="p-esp-container" class="max-h-32 overflow-y-auto p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2"></div>
                 </div>
                 <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Idade Mín.</label><input type="number" id="p-min-age" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" placeholder="Ex: 1"></div>
@@ -94,7 +97,10 @@
                 <input type="hidden" id="edit-id">
                 <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Nome Completo</label><input type="text" id="edit-nome" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold uppercase"></div>
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Especialidades</label>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase">Especialidades</label>
+                        <button type="button" onclick="promptNovaEspecialidade()" class="text-blue-500 hover:text-blue-700 text-[9px] font-black uppercase tracking-wider">+ Nova</button>
+                    </div>
                     <div id="edit-esp-container" class="max-h-40 overflow-y-auto p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -138,6 +144,33 @@
         let equipeGlobal = [];
 
         async function init() { await Promise.all([carregarEspecialidades(), carregarEquipe()]); }
+        
+        async function promptNovaEspecialidade() {
+            const nome = prompt("Digite o nome da nova especialidade:");
+            if (!nome || !nome.trim()) return;
+
+            try {
+                const res = await fetch('/api/profissionais/especialidades', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nome: nome.trim() })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    alert(data.message);
+                    await carregarEspecialidades();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Erro ao criar especialidade.');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Erro na comunicação com o servidor.');
+            }
+        }
         
         async function carregarEspecialidades() {
             try {

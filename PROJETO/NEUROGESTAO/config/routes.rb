@@ -17,11 +17,15 @@ Rails.application.routes.draw do
     patch 'pacientes/:id', to: 'data_pacientes#update'
 
     resources :profissionais do
-      get 'especialidades', on: :collection
+      collection do
+        get 'especialidades'
+        post 'especialidades', action: :criar_especialidade
+      end
       post 'share_curriculo', on: :member
     end
 
     resources :convenios
+    resources :users, only: [:index]
     resources :lista_esperas, only: [:index, :create, :update, :destroy]
     
     post 'importar_agenda', to: 'importacoes#upload_planilha'

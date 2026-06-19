@@ -21,6 +21,23 @@ class Api::ProfissionaisController < ApplicationController
     render json: Especialidade.order(:nome).pluck(:nome)
   end
 
+  # POST /profissionais/especialidades
+  def criar_especialidade
+    nome = params[:nome]
+    if nome.blank?
+      render json: { error: "O nome da especialidade é obrigatório." }, status: :unprocessable_entity
+      return
+    end
+
+    @especialidade = Especialidade.new(nome: nome)
+    if @especialidade.save
+      AuditoriaService.log(request, 'CRIAR_ESPECIALIDADE', @especialidade, "Nome: #{@especialidade.nome}")
+      render json: { message: "Especialidade '#{@especialidade.nome}' criada com sucesso!", nome: @especialidade.nome }, status: :created
+    else
+      render json: { error: @especialidade.errors.full_messages.join(', ') }, status: :unprocessable_entity
+    end
+  end
+
   # POST /profissionais
   def create
     @profissional = Profissional.new(profissional_params)
