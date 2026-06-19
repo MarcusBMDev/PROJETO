@@ -1,7 +1,8 @@
 class Api::DataPacientesController < ActionController::API
   before_action :bloquear_neurochat_escrita, only: [:create, :update, :destroy, :reativar, :mesclar]
 
- # Responde ao GET /api/data_pacientes.json
+
+  # Responde ao GET /api/data_pacientes.json
   def index
     begin
       page = (params[:page] || 1).to_i

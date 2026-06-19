@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/neurogestao.css">
     <script src="/js/auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         body { font-family: 'Outfit', sans-serif; margin: 0; overflow-x: hidden; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -101,6 +102,7 @@
                     </select>
                 </div>
                 <div class="flex gap-3">
+                    <button onclick="exportarPacientes()" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-6 py-3 rounded-xl font-bold transition-all text-[12px] uppercase active:scale-95 flex items-center gap-2">📥 Exportar Excel</button>
                     <button onclick="abrirModalMesclar()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-6 py-3 rounded-xl font-bold transition-all text-[12px] uppercase active:scale-95">🔗 Unificar Pacientes</button>
                     <button onclick="abrirModalCadastro()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-all text-[12px] uppercase shadow-md shadow-blue-500/20 active:scale-95">+ Adicionar Paciente</button>
                 </div>
@@ -1337,6 +1339,98 @@
                 }
             } catch(e) {
                 alert("Erro de conexão ao unificar pacientes.");
+            }
+        }
+
+        async function exportarPacientes() {
+            try {
+                const btn = document.querySelector('button[onclick="exportarPacientes()"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '⏳ Exportando...';
+                btn.disabled = true;
+
+                // Solicitamos uma quantidade muito grande por página para obter todos
+                const res = await fetch('/api/data_pacientes?per_page=100000');
+                if (!res.ok) {
+                    alert('Erro ao exportar pacientes. Verifique suas permissões.');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
+                const data = await res.json();
+                if (!data || !data.pacientes) {
+                    alert('Nenhum paciente encontrado para exportação.');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
+                const rows = data.pacientes.map(p => {
+                    let freq = '';
+                    if (p.weekly_frequency) {
+                        freq = p.weekly_frequency === 1 ? '1x por semana' : `${p.weekly_frequency}x por semana`;
+                    }
+
+                    let esps = '';
+                    try {
+                        esps = JSON.parse(p.planned_specialties || "[]").join(', ');
+                    } catch(e) {
+                        esps = p.planned_specialties || '';
+                    }
+
+                    let agends = (p.agendamentos || []).map(a => 
+                        `${a.dia_semana} às ${a.horario} (${a.profissional || 'Sem profissional'})`
+                    ).join(' | ');
+
+                    let formattedDate = '';
+                    if (p.birth_date) {
+                        const parts = p.birth_date.split('-');
+                        if (parts.length === 3) {
+                            formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                        }
+                    }
+
+                    return {
+                        'ID': p.id,
+                        'Nome': p.nome,
+                        'Data de Nascimento': formattedDate,
+                        'Idade': p.age || '',
+                        'Convênio': p.convenio ? p.convenio.nome : 'Sem convênio',
+                        'Frequência Semanal': freq,
+                        'Status': p.status || 'Ativo',
+                        'Especialidades Planejadas': esps,
+                        'Agendamentos': agends
+                    };
+                });
+
+                const worksheet = XLSX.utils.json_to_sheet(rows);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Pacientes");
+                
+                // Ajuste dinâmico de largura de coluna para melhor leitura
+                const max_widths = [];
+                rows.forEach(r => {
+                    Object.keys(r).forEach((k, i) => {
+                        const val = r[k] ? r[k].toString() : '';
+                        max_widths[i] = Math.max(max_widths[i] || 10, val.length, k.length);
+                    });
+                });
+                worksheet['!cols'] = max_widths.map(w => ({ w: Math.min(w + 3, 50) }));
+
+                const filename = `pacientes_neurogestao_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '_')}.xlsx`;
+                XLSX.writeFile(workbook, filename);
+
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            } catch (error) {
+                console.error(error);
+                alert('Erro ao se conectar com o servidor ou ao gerar arquivo Excel.');
+                const btn = document.querySelector('button[onclick="exportarPacientes()"]');
+                if (btn) {
+                    btn.innerHTML = '📥 Exportar Excel';
+                    btn.disabled = false;
+                }
             }
         }
 
