@@ -33,15 +33,20 @@ class AuthController < ApplicationController
   private
 
   def definir_nivel_de_acesso(usuario)
-    # Aqui mapeamos as regras de negócio da clínica
-    setores_admin = ["Diretoria Geral", "Recepção", "Agendamento/Recepção", "TI"]
-    
-    if setores_admin.include?(usuario.department) || usuario.is_super_admin
-      "admin"
-    elsif usuario.is_a?(User)
+    # Se for super_admin (seja local ou do neurochat), é admin total
+    return "admin" if usuario.is_super_admin
+
+    if usuario.is_a?(User)
+      # Usuários do Neurochat normais (não super admin) sempre têm nível "neurochat"
       "neurochat"
     else
-      "profissional"
+      # Usuários locais do banco agendamentos_clinica_dev
+      setores_admin = ["Diretoria Geral", "Recepção", "Agendamento/Recepção", "TI"]
+      if setores_admin.include?(usuario.department)
+        "admin"
+      else
+        "profissional"
+      end
     end
   end
 end

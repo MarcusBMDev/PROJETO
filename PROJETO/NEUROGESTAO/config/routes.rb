@@ -63,6 +63,7 @@ Rails.application.routes.draw do
   get '/pacientes', to: 'application#renderizar_pacientes'
   get '/transferencias', to: 'application#renderizar_transferencias'
   get '/convenios_view', to: 'application#renderizar_convenios'
+  get '/primeiros', to: 'application#renderizar_primeiros'
   
   post '/login', to: 'auth#login'
 end

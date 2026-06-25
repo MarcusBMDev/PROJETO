@@ -48,45 +48,44 @@ function aplicarRestricoesNavegacao() {
     const nivelAcesso = getNivelAcesso();
     const isNeurochat = (nivelAcesso === 'neurochat');
 
-    // Páginas totalmente administrativas (bloqueadas para qualquer um que não seja gestor)
-    const paginasAdminRestritas = [
-        '/equipe',
-        '/convenios_view',
-        '/espera',
-        '/transferencias'
-    ];
+    // Central de aprovação (/transferencias): apenas gestores locais (não neurochat) OU adm super do neurochat
+    const canAccessTransferencias = (isGestor && !isNeurochat) || (isNeurochat && isSuperAdmin());
 
-    // Se não for gestor e tentar acessar páginas administrativas restritas, redireciona para a grade
-    if (!isGestor && paginasAdminRestritas.some(p => path.includes(p))) {
+    // Outras páginas administrativas (/equipe, /convenios_view, /espera) e pacientes: gestores locais OU neurochat
+    const canAccessOutrosAdmin = isGestor || isNeurochat;
+
+    // Se tentar acessar a Central de Aprovação (/transferencias) sem permissão, redireciona para a grade
+    if (path.includes('/transferencias') && !canAccessTransferencias) {
+        console.warn("Acesso negado à Central de Aprovação: Redirecionando para Grade...");
+        window.location.href = '/grade';
+        return;
+    }
+
+    // Se tentar acessar outras páginas administrativas ou pacientes sem permissão, redireciona para a grade
+    const paginasAdminOutras = ['/equipe', '/convenios_view', '/espera', '/pacientes'];
+    if (paginasAdminOutras.some(p => path.includes(p)) && !canAccessOutrosAdmin) {
         console.warn("Acesso negado: Redirecionando para Grade...");
         window.location.href = '/grade';
         return;
     }
 
-    // Se for profissional comum (não gestor e não neurochat), não tem acesso a pacientes
-    if (!isGestor && !isNeurochat && path.includes('/pacientes')) {
-        console.warn("Acesso negado aos pacientes: Redirecionando para Grade...");
-        window.location.href = '/grade';
-        return;
-    }
-
-    // Ocultar links da sidebar que são administrativos
+    // Ocultar links da sidebar que são restritos
     const sidebar = document.querySelector('aside nav');
     if (sidebar) {
         const links = sidebar.querySelectorAll('a');
         links.forEach(link => {
             const href = link.getAttribute('href');
-            
-            // Ocultar equipe, convênios, transferências para quem não for gestor
-            if (!isGestor && paginasAdminRestritas.some(p => href.includes(p))) {
-                link.classList.add('hidden');
-                link.style.display = 'none';
-            }
-            
-            // Ocultar pacientes para profissionais comuns (não gestor e não neurochat)
-            if (!isGestor && !isNeurochat && href.includes('/pacientes')) {
-                link.classList.add('hidden');
-                link.style.display = 'none';
+
+            if (href.includes('/transferencias')) {
+                if (!canAccessTransferencias) {
+                    link.classList.add('hidden');
+                    link.style.display = 'none';
+                }
+            } else if (paginasAdminOutras.some(p => href.includes(p))) {
+                if (!canAccessOutrosAdmin) {
+                    link.classList.add('hidden');
+                    link.style.display = 'none';
+                }
             }
         });
     }

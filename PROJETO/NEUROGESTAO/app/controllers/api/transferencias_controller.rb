@@ -1,5 +1,6 @@
 class Api::TransferenciasController < ApplicationController
   before_action :validar_acesso_gestao!, except: [:create]
+  before_action :validar_acesso_exclusivo_agendamento!, except: [:create]
   before_action :validar_usuario_logado!, only: [:create]
   # GET /transferencias
   def index
@@ -219,5 +220,23 @@ class Api::TransferenciasController < ApplicationController
       :motivo, :tipo, :solicitante, :agendamento_ids,
       :agendamento_origem_id, :novo_dia_semana, :novo_horario, :encaixe
     )
+  end
+
+  def validar_acesso_exclusivo_agendamento!
+    access_level = request.headers['X-User-Access-Level']&.to_s&.downcase&.strip
+    if access_level == 'neurochat'
+      user_id = request.headers['X-User-Id']
+      is_super = false
+      if user_id.present?
+        is_super_val = NeurochatRecord.connection.select_value(
+          ActiveRecord::Base.send(:sanitize_sql_array, ["SELECT is_super_admin FROM users WHERE id = ?", user_id])
+        )
+        is_super = [1, true, '1', 'true'].include?(is_super_val)
+      end
+
+      unless is_super
+        render json: { error: "Acesso Negado. Esta funcionalidade é exclusiva para o agendamento local." }, status: :forbidden
+      end
+    end
   end
 end

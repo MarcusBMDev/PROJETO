@@ -69,6 +69,10 @@
                 <span class="text-xl min-w-[24px] text-center">📋</span>
                 <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Central de Aprovação</span>
             </a>
+            <a href="/primeiros" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                <span class="text-xl min-w-[24px] text-center">🌱</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Primeiros Agendamentos</span>
+            </a>
         </nav>
         <div class="p-4 border-t border-slate-700/50">
             <button onclick="window.location.href='/'" class="w-full flex items-center gap-6 bg-slate-950 text-white p-4 rounded-2xl transition-all hover:bg-red-500 hover:shadow-lg hover:shadow-red-500/20">🚪 <span class="opacity-0 group-hover:opacity-100 transition-opacity font-black text-[10px] uppercase">Sair do Sistema</span></button>
@@ -883,7 +887,7 @@
                     dia_semana: sugestao.dia,
                     horario: at.horario,
                     encaixe: false,
-                    observacoes: "Agendado diretamente via tela de Pacientes"
+                    observacoes: ""
                 });
             });
 
@@ -1010,7 +1014,7 @@
                 dia_semana: dia,
                 horario: horario,
                 encaixe: false,
-                observacoes: "Agendado manualmente via tela de Pacientes"
+                observacoes: ""
             };
 
             try {
@@ -1349,8 +1353,8 @@
                 btn.innerHTML = '⏳ Exportando...';
                 btn.disabled = true;
 
-                // Solicitamos uma quantidade muito grande por página para obter todos
-                const res = await fetch('/api/data_pacientes?per_page=100000');
+                // CORREÇÃO: adicionar .json para garantir resposta JSON correta
+                const res = await fetch('/api/data_pacientes.json?per_page=100000');
                 if (!res.ok) {
                     alert('Erro ao exportar pacientes. Verifique suas permissões.');
                     btn.innerHTML = originalText;
@@ -1359,27 +1363,39 @@
                 }
 
                 const data = await res.json();
-                if (!data || !data.pacientes) {
+
+                // Suporta tanto { pacientes: [...] } quanto array direto
+                const lista = Array.isArray(data) ? data : (data.pacientes || []);
+
+                if (!lista || lista.length === 0) {
                     alert('Nenhum paciente encontrado para exportação.');
                     btn.innerHTML = originalText;
                     btn.disabled = false;
                     return;
                 }
 
-                const rows = data.pacientes.map(p => {
+                const rows = lista.map(p => {
                     let freq = '';
                     if (p.weekly_frequency) {
                         freq = p.weekly_frequency === 1 ? '1x por semana' : `${p.weekly_frequency}x por semana`;
                     }
 
+                    // CORREÇÃO: planned_specialties pode ser objeto {ESP: freq} ou array ["ESP"]
                     let esps = '';
                     try {
-                        esps = JSON.parse(p.planned_specialties || "[]").join(', ');
+                        const parsed = JSON.parse(p.planned_specialties || 'null');
+                        if (Array.isArray(parsed)) {
+                            esps = parsed.join(', ');
+                        } else if (parsed && typeof parsed === 'object') {
+                            esps = Object.keys(parsed).join(', ');
+                        } else {
+                            esps = p.planned_specialties || '';
+                        }
                     } catch(e) {
                         esps = p.planned_specialties || '';
                     }
 
-                    let agends = (p.agendamentos || []).map(a => 
+                    let agends = (p.agendamentos || []).map(a =>
                         `${a.dia_semana} às ${a.horario} (${a.profissional || 'Sem profissional'})`
                     ).join(' | ');
 
@@ -1393,9 +1409,9 @@
 
                     return {
                         'ID': p.id,
-                        'Nome': p.nome,
+                        'Nome': p.nome || '',
                         'Data de Nascimento': formattedDate,
-                        'Idade': p.age || '',
+                        'Idade': (p.age !== null && p.age !== undefined) ? p.age : '',
                         'Convênio': p.convenio ? p.convenio.nome : 'Sem convênio',
                         'Frequência Semanal': freq,
                         'Status': p.status || 'Ativo',
@@ -1407,8 +1423,8 @@
                 const worksheet = XLSX.utils.json_to_sheet(rows);
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, "Pacientes");
-                
-                // Ajuste dinâmico de largura de coluna para melhor leitura
+
+                // Ajuste dinâmico de largura de coluna
                 const max_widths = [];
                 rows.forEach(r => {
                     Object.keys(r).forEach((k, i) => {

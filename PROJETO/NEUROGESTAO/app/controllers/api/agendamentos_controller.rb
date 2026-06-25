@@ -403,17 +403,22 @@ class Api::AgendamentosController < ApplicationController
   end
 
   def por_profissional
-    @agendamentos = Agendamento.includes(:paciente, :convenio)
+    @agendamentos = Agendamento.includes(:paciente => :convenio, :convenio => [])
       .where(profissional_id: params[:id])
       .where("(encaixe = FALSE OR encaixe IS NULL OR data_encaixe IS NULL OR data_encaixe >= CURDATE())")
     
     render json: @agendamentos.map { |a|
+      # Usa o convênio do PACIENTE como fonte de verdade (se o paciente tiver convênio cadastrado)
+      # Só usa o convênio do agendamento como fallback se o paciente não tiver convênio.
+      convenio_exibir = a.paciente&.convenio || a.convenio
+      convenio_nome = convenio_exibir&.nome || "Sem Convênio"
+
       a.as_json.merge(
         dia_semana: a.dia_semana.to_s.strip.downcase,
         paciente_nome: a.paciente&.nome || "Sem Nome",
-        convenio_nome: a.convenio&.nome || "Sem Convênio",
+        convenio_nome: convenio_nome,
         paciente: a.paciente,
-        convenio: a.convenio,
+        convenio: convenio_exibir,
         terapia_grupo: a.terapia_grupo
       )
     }
