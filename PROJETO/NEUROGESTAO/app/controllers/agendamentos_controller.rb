@@ -89,6 +89,6 @@ class AgendamentosController < ApplicationController
   private
 
   def agendamento_params
-    params.require(:agendamento).permit(:profissional_id, :paciente_id, :convenio_id, :dia_semana, :horario, :observacoes)
+    params.require(:agendamento).permit(:profissional_id, :paciente_id, :convenio_id, :dia_semana, :horario, :observacoes, :cor)
   end
 end

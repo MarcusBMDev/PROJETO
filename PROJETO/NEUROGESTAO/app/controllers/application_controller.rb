@@ -31,6 +31,10 @@ class ApplicationController < ActionController::API
     render html: File.read(Rails.root.join('public', 'convenios.html')).html_safe
   end
 
+  def renderizar_auditoria
+    render html: File.read(Rails.root.join('public', 'auditoria.html')).html_safe
+  end
+
   def renderizar_primeiros
     render html: File.read(Rails.root.join('public', 'primeiros.html')).html_safe
   end

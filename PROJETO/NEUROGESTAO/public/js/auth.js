@@ -48,8 +48,9 @@ function aplicarRestricoesNavegacao() {
     const nivelAcesso = getNivelAcesso();
     const isNeurochat = (nivelAcesso === 'neurochat');
 
-    // Central de aprovação (/transferencias): apenas gestores locais (não neurochat) OU adm super do neurochat
+    // Central de aprovação (/transferencias) e histórico (/auditoria): apenas gestores locais (não neurochat) OU adm super do neurochat
     const canAccessTransferencias = (isGestor && !isNeurochat) || (isNeurochat && isSuperAdmin());
+    const canAccessAuditoria = canAccessTransferencias;
 
     // Outras páginas administrativas (/equipe, /convenios_view, /espera) e pacientes: gestores locais OU neurochat
     const canAccessOutrosAdmin = isGestor || isNeurochat;
@@ -57,6 +58,13 @@ function aplicarRestricoesNavegacao() {
     // Se tentar acessar a Central de Aprovação (/transferencias) sem permissão, redireciona para a grade
     if (path.includes('/transferencias') && !canAccessTransferencias) {
         console.warn("Acesso negado à Central de Aprovação: Redirecionando para Grade...");
+        window.location.href = '/grade';
+        return;
+    }
+
+    // Se tentar acessar o Histórico (/auditoria) sem permissão, redireciona para a grade
+    if (path.includes('/auditoria') && !canAccessAuditoria) {
+        console.warn("Acesso negado ao Histórico: Redirecionando para Grade...");
         window.location.href = '/grade';
         return;
     }
@@ -78,6 +86,11 @@ function aplicarRestricoesNavegacao() {
 
             if (href.includes('/transferencias')) {
                 if (!canAccessTransferencias) {
+                    link.classList.add('hidden');
+                    link.style.display = 'none';
+                }
+            } else if (href.includes('/auditoria')) {
+                if (!canAccessAuditoria) {
                     link.classList.add('hidden');
                     link.style.display = 'none';
                 }

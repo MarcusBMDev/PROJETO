@@ -27,6 +27,7 @@ Rails.application.routes.draw do
     resources :convenios
     resources :users, only: [:index]
     resources :lista_esperas, only: [:index, :create, :update, :destroy]
+    resources :auditorias, only: [:index]
     
     post 'importar_agenda', to: 'importacoes#upload_planilha'
     
@@ -63,6 +64,7 @@ Rails.application.routes.draw do
   get '/pacientes', to: 'application#renderizar_pacientes'
   get '/transferencias', to: 'application#renderizar_transferencias'
   get '/convenios_view', to: 'application#renderizar_convenios'
+  get '/auditoria', to: 'application#renderizar_auditoria'
   get '/primeiros', to: 'application#renderizar_primeiros'
   
   post '/login', to: 'auth#login'

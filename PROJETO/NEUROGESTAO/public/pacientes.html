@@ -69,6 +69,10 @@
                 <span class="text-xl min-w-[24px] text-center">📋</span>
                 <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Central de Aprovação</span>
             </a>
+            <a href="/auditoria" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                <span class="text-xl min-w-[24px] text-center">📜</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Histórico</span>
+            </a>
             <a href="/primeiros" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
                 <span class="text-xl min-w-[24px] text-center">🌱</span>
                 <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Primeiros Agendamentos</span>
@@ -1432,7 +1436,7 @@
                         max_widths[i] = Math.max(max_widths[i] || 10, val.length, k.length);
                     });
                 });
-                worksheet['!cols'] = max_widths.map(w => ({ w: Math.min(w + 3, 50) }));
+                worksheet['!cols'] = max_widths.map(w => ({ wch: Math.min(w + 3, 50) }));
 
                 const filename = `pacientes_neurogestao_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '_')}.xlsx`;
                 XLSX.writeFile(workbook, filename);

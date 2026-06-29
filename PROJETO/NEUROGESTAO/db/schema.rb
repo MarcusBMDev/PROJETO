@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_31_145554) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_28_215800) do
   create_table "active_storage_attachments", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -43,6 +43,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_31_145554) do
     t.string "bloqueado_por"
     t.integer "bloqueado_por_id"
     t.bigint "convenio_id"
+    t.string "cor"
     t.datetime "created_at", null: false
     t.date "data_encaixe"
     t.string "dia_semana"
@@ -62,6 +63,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_31_145554) do
     t.index ["profissional_id", "dia_semana", "horario"], name: "idx_agendamentos_busca"
     t.index ["profissional_id"], name: "index_agendamentos_on_profissional_id"
     t.index ["status"], name: "index_agendamentos_on_status"
+  end
+
+  create_table "auditoria", id: :integer, charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+    t.string "action"
+    t.datetime "created_at", precision: nil
+    t.text "details"
+    t.string "ip_address", limit: 45
+    t.integer "record_id"
+    t.string "record_type"
+    t.string "user_agent"
+    t.integer "user_id"
   end
 
   create_table "auditorias", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
@@ -169,10 +181,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_31_145554) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "agendamentos", "convenios"
-  add_foreign_key "agendamentos", "pacientes"
-  add_foreign_key "agendamentos", "profissionais"
-  add_foreign_key "transferencias", "pacientes"
-  add_foreign_key "transferencias", "profissionais", column: "de_profissional_id"
-  add_foreign_key "transferencias", "profissionais", column: "para_profissional_id"
+  add_foreign_key "agendamentos", "convenios", name: "fk_agendamentos_convenios"
+  add_foreign_key "agendamentos", "pacientes", name: "fk_agendamentos_pacientes"
+  add_foreign_key "agendamentos", "profissionais", name: "fk_agendamentos_profissionais"
+  add_foreign_key "transferencias", "pacientes", name: "fk_transferencias_pacientes"
+  add_foreign_key "transferencias", "profissionais", column: "de_profissional_id", name: "fk_transferencias_de_profissional"
+  add_foreign_key "transferencias", "profissionais", column: "para_profissional_id", name: "fk_transferencias_para_profissional"
 end

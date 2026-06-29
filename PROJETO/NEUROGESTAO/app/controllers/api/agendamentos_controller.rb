@@ -18,14 +18,21 @@ class Api::AgendamentosController < ApplicationController
       end
     end
 
-    render json: agendamentos.all.as_json(
-      except: [:created_at, :updated_at],
-      include: {
-        profissional: { only: [:id, :nome, :especialidade] },
-        paciente: { only: [:id, :nome] },
-        convenio: { only: [:id, :nome] }
-      }
-    )
+    render json: agendamentos.all.map { |a|
+      convenio_exibir = a.paciente&.convenio || a.convenio
+      convenio_nome = convenio_exibir&.nome || "Sem Convênio"
+
+      a.as_json(
+        except: [:created_at, :updated_at],
+        include: {
+          profissional: { only: [:id, :nome, :especialidade] },
+          paciente: { only: [:id, :nome] }
+        }
+      ).merge(
+        convenio: convenio_exibir.as_json(only: [:id, :nome]),
+        convenio_nome: convenio_nome
+      )
+    }
   end
 
   # GET /agendamentos/:id
@@ -174,7 +181,7 @@ class Api::AgendamentosController < ApplicationController
 
   # POST /agendamentos
   def create
-    if request.headers['X-User-Access-Level'] == 'neurochat'
+    if request.headers['X-User-Access-Level'] == 'neurochat' && !user_is_gestao?
       return render json: { error: "Usuários do Neurochat não têm permissão para agendar ou bloquear vagas diretamente." }, status: :forbidden
     end
 
@@ -248,7 +255,7 @@ class Api::AgendamentosController < ApplicationController
 
   # PATCH/PUT /agendamentos/:id
   def update
-    if request.headers['X-User-Access-Level'] == 'neurochat'
+    if request.headers['X-User-Access-Level'] == 'neurochat' && !user_is_gestao?
       return render json: { error: "Usuários do Neurochat não têm permissão para alterar agendamentos diretamente." }, status: :forbidden
     end
 
@@ -280,7 +287,7 @@ class Api::AgendamentosController < ApplicationController
 
   # DELETE /agendamentos/:id
   def destroy
-    if request.headers['X-User-Access-Level'] == 'neurochat'
+    if request.headers['X-User-Access-Level'] == 'neurochat' && !user_is_gestao?
       return render json: { error: "Usuários do Neurochat não têm permissão para liberar vagas ou remover agendamentos diretamente." }, status: :forbidden
     end
 
@@ -427,7 +434,7 @@ class Api::AgendamentosController < ApplicationController
   private
 
   def agendamento_params
-    params.require(:agendamento).permit(:profissional_id, :paciente_id, :convenio_id, :dia_semana, :horario, :observacoes, :status, :lista_espera_id, :motivo_bloqueio, :bloqueado_por, :bloqueado_por_id, :encaixe, :data_encaixe, :terapia_grupo)
+    params.require(:agendamento).permit(:profissional_id, :paciente_id, :convenio_id, :dia_semana, :horario, :observacoes, :status, :lista_espera_id, :motivo_bloqueio, :bloqueado_por, :bloqueado_por_id, :encaixe, :data_encaixe, :terapia_grupo, :cor)
   end
 
   # Interpreta o campo planned_specialties que pode ser JSON ou texto separado por vírgulas

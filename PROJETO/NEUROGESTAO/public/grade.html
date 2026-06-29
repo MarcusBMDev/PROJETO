@@ -44,6 +44,10 @@
                 <span class="text-xl min-w-[24px] text-center">📋</span>
                 <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Central de Aprovação</span>
             </a>
+            <a href="/auditoria" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
+                <span class="text-xl min-w-[24px] text-center">📜</span>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Histórico</span>
+            </a>
             <a href="/primeiros" class="flex items-center gap-6 px-3 py-4 rounded-2xl transition-all duration-300 font-bold text-slate-400 hover:text-white hover:bg-slate-800/50">
                 <span class="text-xl min-w-[24px] text-center">🌱</span>
                 <span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Primeiros Agendamentos</span>
@@ -224,6 +228,26 @@
                 <div>
                     <label class="text-[10px] font-black text-slate-400 uppercase">Observação / Nota do Atendimento</label>
                     <textarea id="obs-texto" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-sm text-slate-700 mt-1 resize-none focus:outline-none focus:ring-2 focus:ring-blue-400" rows="5" placeholder="Ex: Paciente faltou. Retorno marcado para... / Evoluiu bem na sessão..."></textarea>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase">Pintar Horário (Destaque)</label>
+                    <div class="flex flex-wrap gap-2.5 mt-2" id="obs-cores">
+                        <!-- Cor Padrão (Sem cor) -->
+                        <button type="button" onclick="selecionarCorObs('', this)" id="btn-cor-padrao" class="w-8 h-8 rounded-full border-2 border-slate-300 flex items-center justify-center text-xs bg-white hover:scale-110 transition-all" title="Sem Destaque">⚪</button>
+                        <!-- Vermelho -->
+                        <button type="button" onclick="selecionarCorObs('red', this)" id="btn-cor-red" class="w-8 h-8 rounded-full bg-red-400 hover:scale-110 transition-all border-2 border-transparent" title="Vermelho"></button>
+                        <!-- Amarelo -->
+                        <button type="button" onclick="selecionarCorObs('yellow', this)" id="btn-cor-yellow" class="w-8 h-8 rounded-full bg-yellow-400 hover:scale-110 transition-all border-2 border-transparent" title="Amarelo"></button>
+                        <!-- Verde -->
+                        <button type="button" onclick="selecionarCorObs('green', this)" id="btn-cor-green" class="w-8 h-8 rounded-full bg-emerald-400 hover:scale-110 transition-all border-2 border-transparent" title="Verde"></button>
+                        <!-- Azul -->
+                        <button type="button" onclick="selecionarCorObs('blue', this)" id="btn-cor-blue" class="w-8 h-8 rounded-full bg-blue-400 hover:scale-110 transition-all border-2 border-transparent" title="Azul"></button>
+                        <!-- Roxo -->
+                        <button type="button" onclick="selecionarCorObs('purple', this)" id="btn-cor-purple" class="w-8 h-8 rounded-full bg-purple-400 hover:scale-110 transition-all border-2 border-transparent" title="Roxo"></button>
+                        <!-- Laranja -->
+                        <button type="button" onclick="selecionarCorObs('orange', this)" id="btn-cor-orange" class="w-8 h-8 rounded-full bg-orange-400 hover:scale-110 transition-all border-2 border-transparent" title="Laranja"></button>
+                    </div>
+                    <input type="hidden" id="obs-cor-selecionada" value="">
                 </div>
                 <div class="flex gap-4 pt-2">
                     <button onclick="fecharModais()" class="flex-1 py-4 text-slate-500 font-bold hover:text-slate-800 transition-colors">Cancelar</button>
@@ -546,14 +570,23 @@
                     const temObs = ag.observacoes && ag.observacoes.trim() !== '';
                     const obsTitle = temObs ? ag.observacoes.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
 
-                    const cardStyle = isBlueDay 
-                        ? 'background-color: #dbeafe; border-color: #60a5fa;' 
-                        : 'background-color: #ffffff; border-color: #cbd5e1;';
-                    const styleAttr = isEncaixe ? '' : `style="${cardStyle}"`;
+                    const corMap = {
+                        red: { bg: '#fee2e2', border: '#fca5a5' },
+                        yellow: { bg: '#fef9c3', border: '#fde047' },
+                        green: { bg: '#d1fae5', border: '#6ee7b7' },
+                        blue: { bg: '#dbeafe', border: '#93c5fd' },
+                        purple: { bg: '#f3e8ff', border: '#d8b4fe' },
+                        orange: { bg: '#ffedd5', border: '#ffb74d' }
+                    };
+                    const customColor = corMap[ag.cor];
+                    const cardStyle = customColor
+                        ? `background-color: ${customColor.bg}; border-color: ${customColor.border};`
+                        : (isBlueDay ? 'background-color: #dbeafe; border-color: #60a5fa;' : 'background-color: #ffffff; border-color: #cbd5e1;');
+                    const styleAttr = isEncaixe && !ag.cor ? '' : `style="${cardStyle}"`;
 
                     html += `
-                        <div class="slot-occupied p-3 rounded-2xl group/slot relative border-2 ${isEncaixe ? 'border-purple-500 bg-purple-50/20' : ''} shadow-md cursor-pointer flex flex-col justify-center text-center h-full min-h-[90px]" ${styleAttr}
-                             onclick="abrirModalObservacao(${ag.id}, '${nomePaciente.replace(/'/g, "\\'")}',' ${diaObj.db}', '${tagHora}', '${obsTitle}')">
+                        <div class="slot-occupied p-3 rounded-2xl group/slot relative border-2 ${(isEncaixe && !ag.cor) ? 'border-purple-500 bg-purple-50/20' : ''} shadow-md cursor-pointer flex flex-col justify-center text-center h-full min-h-[90px]" ${styleAttr}
+                             onclick="abrirModalObservacao(${ag.id}, '${nomePaciente.replace(/'/g, "\\'")}',' ${diaObj.db}', '${tagHora}', '${obsTitle}', '${ag.cor || ''}')">
                             <div class="flex justify-between items-start mb-0.5">
                                 <p class="text-[9px] font-black ${isEncaixe ? 'text-purple-600' : 'text-blue-600'} uppercase">
                                     ${tagHora} ${isEncaixe ? '⚡' : ''}
@@ -1078,10 +1111,31 @@
             }
         }
 
-        function abrirModalObservacao(agId, pacienteNome, dia, hora, obsAtual) {
+        function selecionarCorObs(cor, btn) {
+            document.getElementById('obs-cor-selecionada').value = cor;
+            document.querySelectorAll('#obs-cores button').forEach(b => {
+                b.classList.remove('ring-2', 'ring-offset-2', 'ring-slate-800');
+            });
+            if (btn) {
+                btn.classList.add('ring-2', 'ring-offset-2', 'ring-slate-800');
+            }
+        }
+
+        function abrirModalObservacao(agId, pacienteNome, dia, hora, obsAtual, corAtual) {
             document.getElementById('obs-agendamento-id').value = agId;
             document.getElementById('obs-info-header').innerText = `${pacienteNome.trim()} · ${dia.trim().split('-')[0]} às ${hora}`;
             document.getElementById('obs-texto').value = obsAtual || '';
+
+            // Pré-seleciona a cor
+            const cor = corAtual || '';
+            document.getElementById('obs-cor-selecionada').value = cor;
+            document.querySelectorAll('#obs-cores button').forEach(b => {
+                b.classList.remove('ring-2', 'ring-offset-2', 'ring-slate-800');
+            });
+            const btnId = cor ? `btn-cor-${cor}` : 'btn-cor-padrao';
+            const btn = document.getElementById(btnId);
+            if (btn) btn.classList.add('ring-2', 'ring-offset-2', 'ring-slate-800');
+
             document.getElementById('modal-observacao').classList.remove('hidden');
             setTimeout(() => document.getElementById('obs-texto').focus(), 100);
         }
@@ -1089,6 +1143,7 @@
         async function salvarObservacao() {
             const agId = document.getElementById('obs-agendamento-id').value;
             const texto = document.getElementById('obs-texto').value.trim();
+            const cor = document.getElementById('obs-cor-selecionada').value || null;
 
             const btn = document.querySelector('#modal-observacao button[onclick="salvarObservacao()"]');
             btn.disabled = true;
@@ -1102,7 +1157,7 @@
                         'X-User-Name': localStorage.getItem('userName') || '',
                         'X-User-Role': localStorage.getItem('userRole') || ''
                     },
-                    body: JSON.stringify({ agendamento: { observacoes: texto } })
+                    body: JSON.stringify({ agendamento: { observacoes: texto, cor: cor } })
                 });
 
                 if (res.ok) {

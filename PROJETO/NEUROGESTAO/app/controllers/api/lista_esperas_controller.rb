@@ -3,8 +3,12 @@ class Api::ListaEsperasController < ApplicationController
   include SugestaoAgendamento
 
   def index
-    lista = ListaEspera.all.order(created_at: :desc)
-    render json: lista
+    lista = ListaEspera.includes(:paciente).all.order(created_at: :desc)
+    render json: lista.map { |item|
+      item.as_json.merge(
+        convenio_id: item.paciente&.convenio_id
+      )
+    }
   end
 
   def create
